@@ -1,6 +1,6 @@
-60 micron Band
-Wavelength  Relative
-(microns)   response
+#60 micron Band
+#Wavelength  Relative
+#(microns)   response
   27.0       0.000
   30.0       0.010
   33.0       0.036

@@ -48,12 +48,12 @@ import os
 class charyelbaz:
     def __init__(self,infile):
         mypath=os.getcwd()
-        if mypath.find('Users') > -1:
+        if mypath.find('/Users/rfinn') > -1:
             print "Running on Rose's mac pro or laptop"
             homedir='/Users/rfinn/'
-        elif mypath.find('home') > -1:
-            print "Running on coma"
-            homedir='/home/rfinn/'
+        elif mypath.find('Users/kellywhalen') > -1:
+            print "Running on Kelly's Laptop"
+            homedir='/Users/kellywhalen/Github/Virgo/'
 
         cefile=idlsave.read(infile)
         self.nulnu_iras25=cefile['nulnu_iras25']
