@@ -159,9 +159,6 @@ nsa_sc = SkyCoord(nsa.RA*u.degree, nsa.DEC*u.degree)
 V_H = nsa.Z*c.to('km/s')
 
 
-
-
-
 # 1. correction of observed heliocentric velocity to centroid of local group
 # VLG = VH - 79 cos l cos b + 296 sin l cos b - 36 sin b
 
@@ -176,9 +173,12 @@ V_fid = 200.*u.km/u.second # infall of LG into Virgo?
 # Virgo coordinates given by Mould+2000
 Virgo = SkyCoord('12h28m19s', '+12d40m00s', frame='fk5',equinox='J1950.') # epoch = 1950
 Virgo = Virgo.transform_to(FK5(equinox='J2000'))
-theta = np.sqrt((nsa_sc.ra.radian - Virgo.ra.radian)**2 + (nsa_sc.dec.radian - Virgo.dec.radian)**2)
+### need to fix this to use spherical distance
+#theta = np.sqrt((nsa_sc.ra.radian - Virgo.ra.radian)**2 + (nsa_sc.dec.radian - Virgo.dec.radian)**2)
+theta = Virgo.separation(nsa_sc).radian 
 # cluster radius in deg
 gamma = 2.
+
 V_a = 1035.*u.km/u.second # recession vel of Virgo from Mould+2000
 V_o = nsa.Z*c.to('km/s') + V_LG # recession velocities of the galaxies
 r_oa = np.sqrt(V_o**2 + V_a**2 - 2.*V_o*V_a*np.cos(theta))
@@ -192,7 +192,8 @@ V_fid = 400.*u.km/u.second # infall of LG into Virgo?
 # GA coordinates given by Mould+2000
 GA = SkyCoord('13h20m00s', '+44d00m00s', frame='fk5',equinox='J1950.') # epoch = 1950
 GA = GA.transform_to(FK5(equinox='J2000'))
-theta = np.sqrt((nsa_sc.ra.radian - GA.ra.radian)**2 + (nsa_sc.dec.radian - GA.dec.radian)**2)
+theta = GA.separation(nsa_sc).radian
+#theta = np.sqrt((nsa_sc.ra.radian - GA.ra.radian)**2 + (nsa_sc.dec.radian - GA.dec.radian)**2)
 
 gamma = 2.
 V_a = 4380.*u.km/u.second # recession vel of Virgo from Mould+2000
@@ -213,7 +214,7 @@ V_GA = V_fid*(np.cos(theta) + (V_o - V_a*np.cos(theta))/r_oa*(r_oa/V_a)**(1-gamm
 # https://arxiv.org/abs/1611.00437
 
 #Plot of Virgo Cluster in galactic coordinates
-V_cosmic = V_H + V_LG #+ V_infall +V_GA
+V_cosmic = V_H + V_LG + V_infall #+V_GA
 V = V_cosmic
 #V = nsa.Z*c.to('km/s')
 #V = nsa.ZDIST*c.to('km/s')
@@ -254,14 +255,16 @@ dist_flag = dist.value > 3.6
 kim_vflag = nsa.Z*3.e5 < 3300.  
 kim_raflag = (nsa.RA > 115.) & (nsa.RA < 240.)
 kim_decflag = (nsa.DEC > -35.) & (nsa.DEC < 60.)
-kim_flag = kim_vflag & kim_raflag & kim_decflag #& dist_flag 
+kim_flag = kim_vflag & kim_raflag & kim_decflag & dist_flag 
 
-d_split = 25.
+d_split = 16.
 #In front of cluster
 SGYfront_flag = (SGY > 4. * u.Mpc) & (SGY < d_split * u.Mpc)
-SGYback_flag = (SGY > d_split * u.Mpc) & (SGY < 50. * u.Mpc)
+SGYback_flag = (SGY > d_split * u.Mpc) & (SGY < 40. * u.Mpc)
+#SGYback_flag = (SGY > 21. * u.Mpc) & (SGY < 27. * u.Mpc)
 
 SGYvirgo =  (SGY > 4.*u.Mpc) & (SGY < d_split*u.Mpc)
+
 
 
 # ** First plot 2-D projections in SGX-SGZ plane, and SGX-SGZ **
@@ -276,13 +279,13 @@ def compare_vel():
     plt.ylabel('V_cosmic')
 def plotxzplane():
     plt.figure(figsize=(6,4))
-    plt.scatter(DSGX[kim_flag & SGYvirgo],DSGZ[kim_flag & SGYvirgo],alpha=.5,c=DSGY[kim_flag & SGYvirgo])
+    plt.scatter(SGX[kim_flag & SGYvirgo],SGZ[kim_flag & SGYvirgo],alpha=.5,c=SGY[kim_flag & SGYvirgo])
     plt.colorbar(fraction=.08,label='SGY (Mpc)')
     plt.subplots_adjust(bottom=.15)
     #plt.axis([-15,10,-10,20])
     plt.xlabel('$\Delta SGX \ (Mpc)$')
     plt.ylabel('$\Delta SGZ \ (Mpc)$')
-    plt.title('Region around Virgo Cluster')
+    plt.title('Region around Virgo Cluster (Compare to Kim Fig 2)')
     plt.axis([-15,18,-17,12])
     plt.axvline(x=0,ls='--',color='k')
     plt.axhline(y=0,ls='--',color='k')
@@ -299,16 +302,30 @@ def plotxzplane():
 
     plt.figure(figsize=(6,4))
     plt.subplots_adjust(bottom=.15)
-    plt.scatter(DSGX[kim_flag & SGYback_flag],DSGZ[kim_flag & SGYback_flag],alpha=.5,c=DSGY[kim_flag & SGYback_flag])
+    plt.scatter(DSGX[kim_flag & SGYback_flag],DSGZ[kim_flag & SGYback_flag],alpha=.5,c=SGY[kim_flag & SGYback_flag])
     #plt.scatter(SGX[NGCfilament],SGZ[NGCfilament],alpha=1,c=SGY[NGCfilament],s=60)
     plt.colorbar(fraction=.08,label='SGY (Mpc)')
     plt.axis([-15,10,-10,20])
     plt.xlabel('$\Delta SGX \ (Mpc)$')
     plt.ylabel('$\Delta SGZ \ (Mpc)$')
-    plt.title('Region Behind Virgo Cluster')
+    plt.title('Region Behind Virgo Cluster (Compare to Kim Fig 3)')
     plt.axvline(x=0,ls='--',color='k')
     plt.axhline(y=0,ls='--',color='k')
     plt.axis([-18,7,-10,14])
+
+
+def plotxyplane():
+    plt.figure(figsize=(6,4))
+    plt.scatter(DSGX[kim_flag & SGYvirgo],DSGY[kim_flag & SGYvirgo],alpha=.5,c=DSGZ[kim_flag & SGYvirgo])
+    plt.colorbar(fraction=.08,label='SGZ (Mpc)')
+    plt.subplots_adjust(bottom=.15)
+    #plt.axis([-15,10,-10,20])
+    plt.xlabel('$\Delta SGX \ (Mpc)$')
+    plt.ylabel('$\Delta SGY \ (Mpc)$')
+    plt.title('Region around Virgo Cluster')
+    plt.axis([-15,18,-17,12])
+    plt.axvline(x=0,ls='--',color='k')
+    plt.axhline(y=0,ls='--',color='k')
 
 
 
