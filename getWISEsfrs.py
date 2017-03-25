@@ -3,9 +3,14 @@ import sys
 sys.path.append('./CharyElbaz/')
 import chary_elbaz_24um as chary
 import numpy as np
+import os
 
-catpath = '/Users/rfinn/github/Virgo/tables/'
-
+mypath=os.getcwd()
+if mypath.find('rfinn') > -1:
+    catpath='/Users/rfinn/github/Virgo/tables'
+elif mypath.find('kelly') > -1:
+    print "Running on Kellys's computer"
+    catpath='/Users/kellywhalen/Github/Virgo/tables/'
 
 
 wise = fits.getdata(catpath+'WISE_virgo.fits')
@@ -31,5 +36,16 @@ w4_flux_Jy[wflag] = F0*10**(-1*wise.W4MPRO[wflag]/2.5)
 ce_lir[wflag],ce_sfr[wflag]=chary.chary_elbaz_24um(nsa.Z[wflag],w4_flux_Jy[wflag]*1.e6)
 
 # write out sfr and Lir to a fits table
+wdat = fits.open(catpath + 'WISE_virgo.fits')[1].data
+sfrcol = np.zeros(len(wdat))
+sfrcol[wflag] = ce_sfr[wflag]
+sfrcol_new = fits.Column(name = 'SFR', format = 'D', array = sfrcol)
 
+lircol = np.zeros(len(wdat))
+lircol[wflag] = ce_lir[wflag]
+lircol_new = fits.Column(name = 'Lir', format = 'D', array = lircol)
 
+origcols = wdat.columns
+hdu = fits.BinTableHDU.from_columns(origcols + sfrcol_new + lircol_new)
+outfile = catpath + 'WISE_virgo.fits'
+hdu.writeto(outfile, clobber = 'True')
