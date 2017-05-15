@@ -10,6 +10,14 @@ import time
 infile = 'tables/Jablonka-MasterFile-Finn.list'
 
 infile = 'tables/Master_file_fm.dat'
+infile = 'tables/Combes-2017May09-masterfile.dat'
+infile = 'tables/CO-masterfile-2017May09.dat'
+
+'''
+UGCA201 - changed 1? to 2 for CO 
+NGC3595 - changed HI detect from xxxx to xxx
+'''
+
 
 filaments = ['Filament1','Filament1-complement','N5353group','Filament3','LeoII-B','LeoII-A','LeoMinorFilament4','VirgoIIIcenter','VirgoIIIWest']
 
@@ -29,7 +37,7 @@ upperlimit=[]
 i=0
 for line in inf1:
     i+=1
-    if i < 15: # skipp first 15 header lines - this may change with future versions - check!!
+    if i < 14: # skipp first 15 header lines - this may change with future versions - check!!
         continue
     if len(line) < 1: # skip blank lines
         continue
@@ -99,7 +107,7 @@ cols = fits.ColDefs([col1,col2,col3,col4,col5,col6,col7,col8,col9,col10,col11])
 tbhdu = fits.BinTableHDU.from_columns(cols)
 
 date_stamp = time.strftime("%Y%b%d")
-tbhdu.writeto('tables/Jablonka-MasterFile-'+date_stamp+'.fits',clobber=True)
+tbhdu.writeto('tables/CO-MasterFile-'+date_stamp+'.fits',clobber=True)
 #tbhdu.writeto('tables/Jablonka-MasterFile-'+date_stamp+'.fits',clobber=True)
 #tbhdu.writeto('tables/Jablonka-MasterFile.fits',clobber=True)
 
