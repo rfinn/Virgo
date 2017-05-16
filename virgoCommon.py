@@ -16,6 +16,7 @@ elif mypath.find('kelly') > -1:
     gswlpath = '/Users/kellywhalen/RESEARCH/GSWLC/'
     agcpath = '/Users/kellywhalen/RESEARCH/AGC/'
 
+tablepath = gitpath+'Virgo/tables/'
 galex_file = gitpath+'Virgo/tables/GALEX-WISE-allsky_virgo.fits'
 nsa_file = gitpath+'Virgo/tables/VirgoCatalog.fits'
 mass_file = gitpath+'Virgo/tables/StellarMasstoNSA_virgo.fits'
