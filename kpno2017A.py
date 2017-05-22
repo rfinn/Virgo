@@ -250,7 +250,7 @@ def finding_chart(i):
     plt.xlabel('RA (deg)')
     plt.ylabel('DEC (deg)')
     plt.gca().invert_yaxis()
-    plt.savefig('plots/2017May-Pointing%02d.png'%(i+1))
+    plt.savefig('observing/2017May-Pointing%02d.png'%(i+1))
 
 def airmass_plots():
 
@@ -283,7 +283,7 @@ def airmass_plots():
         plt.subplots_adjust(bottom=.15)
         #plt.axvline(x=7*u.hour,ls='--',color='k')
         plt.axhline(y=2,ls='--',color='k')
-        plt.savefig('plots/2017May-airmass-%02d.png'%(j+1))
+        plt.savefig('observing/2017May-airmass-%02d.png'%(j+1))
         
 
     ##     delta_hours = np.linspace(0, 12, 100)*u.hour
