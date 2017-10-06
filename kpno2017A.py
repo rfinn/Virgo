@@ -3,6 +3,16 @@
 
 '''
 
+Written by Rose Finn
+
+PURPOSE:
+- to help plan Halpha observations for Virgo Filament galaxies
+- to make airmass plots
+- to make finding charts
+
+USEAGE:
+
+
 USEFUL SITES FOR SKY CHART
 
 http://astroweb.case.edu/jakub/TA/Query_databases.html
@@ -87,11 +97,16 @@ pointing_ra = np.array([ 196.95 ,#1
                          208.861,
                          208.64 ,
                          207.39 ,
-                         206.3  ,
+                         206.3  ,#20
                          207.94 ,
                          207.1  ,
-                         202.1  ,
-                         202.34 ])
+                         202.25  ,
+                         202.34,
+                         205.124 ,#25
+                         209.272,
+                         200.752,
+                         200.73,
+                         204.434])
 pointing_dec = np.array([ 21.14  ,#1
                           21.59  ,
                           22.95  ,
@@ -106,16 +121,21 @@ pointing_dec = np.array([ 21.14  ,#1
                           39.575 ,
                           39.6   ,
                           39.887 ,
-                          40.2799,
+                          40.2799,#15
                           40.34  ,
                           40.37  ,
                           41.308 ,
                           41.55  ,
-                          41.59  ,
+                          41.59  ,#20
                           43.345 ,
                           43.56  ,
                           46.47  ,
-                          46.78  ])
+                          46.78 ,
+                          42.998,#25
+                          41.8254,
+                          23.2995,
+                          26.977,
+                          33.0055 ])
 
 def find_CO_noNSA():
 
@@ -216,7 +236,8 @@ def finding_chart_all():
     for i in range(len(pointing_ra)):
         finding_chart(i)
 
-def finding_chart(i):
+def finding_chart(npointing):
+    i = npointing-1
     galsize=0.033
     plt.figure(figsize=(6,6))
     ax=plt.gca()
@@ -232,11 +253,13 @@ def finding_chart(i):
     gals = (filament | ngcflag) & (nsa.RA > (pointing_ra[i]-0.5)) & (nsa.RA < (pointing_ra[i]+0.5)) & (nsa.DEC > (pointing_dec[i]-0.5)) & (nsa.DEC < (pointing_dec[i]+0.5))
     print 'pointing ',i+1,' ngal = ',np.sum(gals)
     gindex=np.arange(len(nsa.RA))[gals]
+    print 'Pointing %02d Galaxies'%(npointing),': ',nsa.NSAID[gals]
     for j in gindex:
         ran,decn=fix_project(nsa.RA[j],nsa.DEC[j],b)
         rect= plt.Rectangle((ran-galsize/2.,decn-galsize/2.), galsize, galsize,fill=False, color='c')
         plt.gca().add_artist(rect)
         plt.text(ran,decn+galsize/2.,nsa.NSAID[j],fontsize=10,clip_on=True,horizontalalignment='center')
+        plt.text(ran,decn-galsize/2.,co.NED_name[j],fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='top')
         if COflag[j]:
             size=galsize-.005
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='g')
