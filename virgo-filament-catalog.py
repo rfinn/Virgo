@@ -1,18 +1,19 @@
+#Load in all packages
+import numpy as np
+from astropy.io import fits
+from astropy.coordinates import SkyCoord
+from astropy import units as u
+import os
+import sys
+from astropy.coordinates import ICRS, Galactic, FK4, FK5  # Low-level frames
+from astropy.coordinates import Angle, Latitude, Longitude  # Angles
+from mpl_toolkits.mplot3d import Axes3D
+from astropy.cosmology import WMAP9 as cosmo
+from astropy.constants import c
+
 def VirgoCatalog(NSA_file):
 
-    #Load in all packages
-    import numpy as np
-    from astropy.io import fits
-    from astropy.coordinates import SkyCoord
-    from astropy import units as u
-    import os
-    import sys
-    from astropy.coordinates import ICRS, Galactic, FK4, FK5  # Low-level frames
-    from astropy.coordinates import Angle, Latitude, Longitude  # Angles
-    from mpl_toolkits.mplot3d import Axes3D
-    from astropy.cosmology import WMAP9 as cosmo
-    from astropy.constants import c
-    
+
     #read in .fits file
     nsa = fits.getdata(NSA_file)
     nsadict=dict((a,b) for a,b in zip(nsa.NSAID,np.arange(len(nsa.NSAID))))

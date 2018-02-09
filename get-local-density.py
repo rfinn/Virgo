@@ -3,12 +3,13 @@
 '''
  written by Rose A. Finn on 2/3/2013
  updated on 2/22/2016
+ updated on 4/19/2017 to calculate local densities around Virgo
 
  GOAL:
     - this program is only used to calculate local density and write out local density files
 
  METHOD:
-    - read in NSA catalog
+    - read in Virgo catalog
     - calculate various local density estimates
     - write output
 
@@ -16,28 +17,22 @@
 
    from w/in ipython 
 
-   %run ~/Dropbox/pythonCode/LCSCalcLocalDensity.py
+   %run ~/Dropbox/pythonCode/getLocalDensity.py
 
    from command line
 
-   python ~/Dropbox/pythonCode/LCSCalcLocalDensity.py
+   python ~/Dropbox/pythonCode/getLocalDensity.py
  
 
  UPDATES:
 
    
 '''
-
-
-from pylab import *
 import os
-from astropy.io import fits
-from LCScommon import *
-
-#import ReadAGCsav
-from pyraf import iraf
-import mystuff as my
 import argparse
+from virgoCommon import *
+from astropy.io import fits
+from matplotlib import pyplot as plt
 
 parser=argparse.ArgumentParser()
 parser.add_argument('-v',"--velocitycut",help='velocity cut to use when calculating local density.  Galaxies within +/- vcut will be used.  Default value is 1500 km/s.',default=1500.,type=float)
@@ -46,6 +41,18 @@ parser.add_argument('-m',"--magnitudecut",help='r-band absolute magnitude cut.  
 args = parser.parse_args()
 
 
+#Read in files needed to create plots
+galex = fits.getdata()
+#galexD = fits.getdata(gitpath+'Virgo/tables/GALEX-WISE-deepsky_virgo.fits')
+#galexMID = fits.getdata(gitpath+'Virgo/tables/GALEX-WISE-mid_virgo.fits')
+nsa = fits.getdata(gitpath+'Virgo/tables/VirgoCatalog.fits')
+#nsa = fits.getdata('/Users/kellywhalen/Github/Virgo/tables/nsa_v0_1_2.fits')
+nsadict=dict((a,b) for a,b in zip(nsa.NSAID,np.arange(len(nsa.NSAID))))
+massFile = fits.getdata()
+targets = fits.getdata()
+wise = fits.getdata()
+fullnsa = fits.getdata )
+
 class cluster:
     def __init__(self,clustername):
         self.prefix=clustername
@@ -53,22 +60,6 @@ class cluster:
         # read NSA table for each cluster
         infile=homedir+'research/NSA/'+self.prefix+'_NSA.Fits'
         self.ndat=fits.getdata(infile)
-        self.nsadir=homedir+'research/NSA/'
-
-        self.cra=clusterRA[self.prefix]
-        self.cdec=clusterDec[self.prefix]
-        self.cz=clusterz[self.prefix] 
-        self.biweightvel=clusterbiweightcenter[self.prefix]
-        self.biweightscale=clusterbiweightscale[self.prefix]
-        self.r200=2.02*(self.biweightscale)/1000./sqrt(OmegaL+OmegaM*(1.+self.cz)**3)*H0/70. # in Mpc
-        self.r200deg=self.r200*1000./my.DA(self.cz,h)/3600.
-
-        self.cdMpc=self.biweightvel/H0
-        self.cdcm=self.cdMpc*3.e24
-        self.csigma=self.biweightscale
-        self.mcl=my.clusterMass(self.csigma,self.cz,h)
-        self.AngDistance=my.DA(self.cz,h)
-        self.sdssflag=(self.ndat.ISDSS > -1) & (self.ndat.ABSMAG[:,4] < args.magnitudecut)
 
 
     def localdensity5(self):
