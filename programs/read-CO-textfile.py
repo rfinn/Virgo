@@ -17,7 +17,7 @@ USEAGE:
 
 in ipython -pylab
 
-%run readCOMasterFile.py
+%run read-CO-textfie.py
 
 
 
@@ -29,12 +29,14 @@ from astropy.coordinates import SkyCoord
 import astropy.units as u
 from astropy.io import fits
 import time
+
+gitpath = '/Users/rfinn/git/Virgo/'
 # I removed some extra lines from Pascale's file
 infile = 'tables/Jablonka-MasterFile-Finn.list'
 
-infile = 'tables/Master_file_fm.dat'
-infile = 'tables/Combes-2017May09-masterfile.dat'
-infile = 'tables/CO-masterfile-2017May09.dat'
+infile = gitpath+'tables/Master_file_fm.dat'
+infile = gitpath+'tables/Combes-2017May09-masterfile.dat'
+infile = gitpath+'tables/CO-masterfile-2017May09.dat'
 
 '''
 UGCA201 - changed 1? to 2 for CO 
