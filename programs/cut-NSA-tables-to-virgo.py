@@ -21,6 +21,7 @@ CO is matched in a separate program: match-CO-NSA.py
 
 from astropy.io import fits
 import os
+import numpy as np
 
 mypath=os.getcwd()
 if mypath.find('rfinn') > -1:
@@ -38,8 +39,8 @@ nsa=fits.getdata(nsafile)
 
 
 # select galaxies near Virgo
-raflag = (nsa.RA > 150.) & (nsa.RA < 220.) 
-decflag= (nsa.DEC > -10.) & (nsa.DEC < 50.) 
+raflag = (nsa.RA > 120.) & (nsa.RA < 220.) 
+decflag= (nsa.DEC > -10.) & (nsa.DEC < 70.) 
 velflag = (nsa.Z*3.e5 > 1000.) & (nsa.Z*3.e5 < 3000.)
 vflag = raflag & decflag & velflag
 vra=187.69708
@@ -68,8 +69,8 @@ simard1=fits.getdata(infile)
 fits.writeto(gitpath+'Virgo/tables/nsa.virgo.fits',nsa[vflag],overwrite=True)
 
 # just contains wise columns, line-matched to above table
-fits.writeto(gitpath+'Virgo/tables/nsa_wise.virgo.fits',wise[vflag],clobber=True)
-fits.writeto(gitpath+'Virgo/tables/nsa_mstar.virgo.fits',jmass[vflag],clobber=True)
-fits.writeto(gitpath+'Virgo/tables/nsa_gswlc.virgo.fits',gswlc[vflag],clobber=True)
-fits.writeto(gitpath+'Virgo/tables/nsa_simard1.virgo.fits',gswlc[vflag],clobber=True)
+fits.writeto(gitpath+'Virgo/tables/nsa_wise.virgo.fits',wise[vflag],overwrite=True)
+fits.writeto(gitpath+'Virgo/tables/nsa_mstar.virgo.fits',jmass[vflag],overwrite=True)
+fits.writeto(gitpath+'Virgo/tables/nsa_gswlc.virgo.fits',gswlc[vflag],overwrite=True)
+fits.writeto(gitpath+'Virgo/tables/nsa_simard1.virgo.fits',gswlc[vflag],overwrite=True)
 
