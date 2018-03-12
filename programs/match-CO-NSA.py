@@ -11,7 +11,8 @@ table_ext = gitpath+'Virgo/tables/'
 
 vdat = fits.getdata(table_ext +'nsa.virgo.fits')
 #jdat = fits.getdata(table_ext + 'CO-MasterFile-2017May15.fits')
-jdat = fits.getdata(table_ext + 'CO-MasterFile-2018Feb16.fits')
+#jdat = fits.getdata(table_ext + 'CO-MasterFile-2018Feb16.fits')
+jdat = fits.getdata(table_ext + 'All-virgo-20feb18_env_H070-FITS.fits')
 
 
 virgocat = SkyCoord(vdat.RA*u.degree,vdat.DEC*u.degree,frame='icrs')
@@ -24,10 +25,11 @@ matchflag = dist2d.degree < 2./3600
 
 # write out line-matched catalog
 outfile= table_ext + 'nsa_CO-HI.virgo.fits'
+outfile= table_ext + 'nsa_CO-Gianluca.virgo.fits'
 matchedarray1=np.zeros(len(vdat),dtype=jdat.dtype)
 matchedarray1[matchflag] = jdat[index[matchflag]]
 
-fits.writeto(outfile,matchedarray1,clobber=True)
+fits.writeto(outfile,matchedarray1,overwrite=True)
 #t = fits.getdata(outfile)
 #t.add_column()
 

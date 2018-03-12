@@ -24,3 +24,11 @@ co_targets = gitpath+'Virgo/tables/CO-HI_virgo.fits'
 wise_file = gitpath+'Virgo/tables/WISE_virgo.fits'
 full_nsa = nsapath + 'nsa_v0_1_2.fits'
 
+galex_file = gitpath+'Virgo/tables/GALEX-WISE-allsky_virgo.fits'
+nsa_file = gitpath+'Virgo/tables/nsa.virgo.fits'
+mass_file = gitpath+'Virgo/tables/nsa_mstar.virgo.fits'
+co_targets = gitpath+'Virgo/tables/nsa_CO-Gianluca.virgo.fits'
+wise_file = gitpath+'Virgo/tables/nsa_wise.virgo.fits'
+halpha_file = gitpath+'Virgo/tables/nsa_Halpha.virgo.fits'
+full_nsa = nsapath + 'nsa_v0_1_2.fits'
+
