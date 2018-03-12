@@ -405,11 +405,12 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     center_ra = pointing_ra[i]+offset_ra
     center_dec = pointing_dec[i] + offset_dec
     print 'center ra, dec = ',center_ra,center_dec
-    if delta_image > .3:
-        plt.subplots_adjust(right=.9,top=.9,bottom=.1,left=.1)
-        plt.figure(figsize=(10,9))
-    else:
-        plt.figure(figsize=(6,6))
+    if plotsingle:
+        if delta_image > .3:
+            plt.subplots_adjust(right=.9,top=.9,bottom=.1,left=.1)
+            plt.figure(figsize=(10,9))
+        else:
+            plt.figure(figsize=(6,6))
     ax=plt.gca()
     pos = coords.SkyCoord(center_ra,center_dec,frame='icrs',unit='degree')
     xout = SkyView.get_images(pos,survey=['DSS'],height=2*delta_image*u.degree,width=2.*delta_image*u.degree)
@@ -422,23 +423,8 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     # add footprint of HDI
     rect= plt.Rectangle((center_ra-.25,center_dec-.25), 0.5, 0.5,fill=False, color='k')
     plt.gca().add_artist(rect)
-    # add guidestar cameras
-    # North camera
-    delta_ra = 0
-    delta_dec = 2610./3600
-    width_ra = 3.3/60.
-    width_dec = 2.2/60.
-    rect= plt.Rectangle((center_ra+delta_ra - 0.5*width_ra,center_dec+delta_dec - 0.5*width_dec), width_ra, width_dec,fill=False, color='k')
-    plt.gca().add_artist(rect)
-    # South camera
-    delta_ra = -25./3600
-    delta_dec = -2410./3600
-    width_ra = 3.3/60.
-    width_dec = 2.2/60.
-    rect= plt.Rectangle((center_ra+delta_ra - 0.5*width_ra,center_dec+delta_dec - 0.5*width_dec), width_ra, width_dec,fill=False, color='k')
-    plt.gca().add_artist(rect)
+    #add_cameras()
     # find galaxies on FOV
-
     gals = (nsa.RA > (center_ra-delta_image)) & (nsa.RA < (center_ra+delta_image)) & (nsa.DEC > (center_dec-delta_image)) & (nsa.DEC < (center_dec+delta_image))
     print 'pointing ',i+1,' ngal = ',np.sum(gals)
     gindex=np.arange(len(nsa.RA))[gals]
@@ -469,11 +455,122 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     if plotsingle:
         plt.savefig(outfile_prefix+'Pointing%02d.png'%(i+1))
 
+def add_cameras():
+    # add guidestar cameras
+    # North camera
+    delta_ra = 0
+    delta_dec = 2610./3600
+    width_ra = 3.3/60.
+    width_dec = 2.2/60.
+    rect= plt.Rectangle((center_ra+delta_ra - 0.5*width_ra,center_dec+delta_dec - 0.5*width_dec), width_ra, width_dec,fill=False, color='k')
+    plt.gca().add_artist(rect)
+    # South camera
+    delta_ra = -25./3600
+    delta_dec = -2410./3600
+    width_ra = 3.3/60.
+    width_dec = 2.2/60.
+    rect= plt.Rectangle((center_ra+delta_ra - 0.5*width_ra,center_dec+delta_dec - 0.5*width_dec), width_ra, width_dec,fill=False, color='k')
+    plt.gca().add_artist(rect)
 
-def guide_stars(npointing,offset_ra=0.,offset_dec=0.):
+    
+def finding_chart_with_guide_stars(npointing,offset_ra=0.,offset_dec=0.):
     finding_chart(npointing, delta_image=.75,offset_ra=offset_ra, offset_dec=offset_dec,plotsingle=False)
     plt.savefig(outfile_prefix+'Pointing%02d-guiding.png'%(npointing))
 
+def make_all_platinum():
+    if max_pointing != None:
+        pointing_range = range(max_pointing)
+    else:
+        pointing_range = range(len(pointing_ra))
+    for i in pointing_range:
+        plt.close('all')
+        platinum_finding_chart(i+1)
+
+def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.):
+    fig = plt.figure(figsize = (10,6))
+    grid = plt.GridSpec(2,3,hspace=.4,wspace=.2,left=.05)
+    hdi = fig.add_subplot(grid[:,:-1])
+    finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
+    south_camera = fig.add_subplot(grid[1,2])
+    show_guide_camera(npointing,south_camera=True,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
+    north_camera = fig.add_subplot(grid[0,2])
+    show_guide_camera(npointing,south_camera=False,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
+    plt.savefig(outfile_prefix+'Pointing%02d-platinum.png'%(npointing))
+    
+def guide_cameras(npointing,offset_ra=0,offset_dec=0):
+    i = npointing - 1
+
+    plt.figure(figsize=(10,5))
+    plt.subplots_adjust(wspace=.3)
+    plt.subplot(1,2,1)
+    show_guide_camera(npointing,south_camera=False,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
+    plt.subplot(1,2,2)
+    show_guide_camera(npointing,south_camera=True,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
+
+    mytitle = "Guide Cameras: Pointing %02d (NSAID %i)"%((i+1),pointing_id[i])
+    ax = plt.gca()
+    plt.text(-.1,1.15,mytitle,transform=ax.transAxes,horizontalalignment='center',fontsize=18)
+
+        
+def show_guide_camera(npointing,south_camera=True,offset_ra=0,offset_dec=0,plotsingle=True):
+    '''
+    offset_ra in arcsec
+    offset_dec in arcsec
+
+    camera = 0 for south
+    camera = 1 for north
+    '''
+    i = npointing-1
+    if south_camera:
+        # South camera
+        delta_ra = -25./3600
+        delta_dec = -2410./3600
+        width_ra = 3.3/60.
+        width_dec = 2.2/60.
+        outputfile=outfile_prefix+'Pointing%02d-guiding-south.png'%(npointing)
+        mytitle = "Pointing %02d South Camera (3.3'x2.2'): NSAID %i"%((i+1),pointing_id[i])
+    else:
+        # offsets and dimensions of 
+        # North camera
+        delta_ra = 0
+        delta_dec = 2610./3600
+        width_ra = 3.3/60.
+        width_dec = 2.2/60.
+        outputfile=outfile_prefix+'Pointing%02d-guiding-north.png'%(npointing)
+        mytitle = "Pointing %02d North Camera (3.3'x2.2'): NSAID %i"%((i+1),pointing_id[i])
+    center_ra = pointing_ra[i]+offset_ra/3600. + delta_ra
+    center_dec = pointing_dec[i] + offset_dec/3600. + delta_dec
+
+    delta_image = width_ra
+    if plotsingle:
+        plt.figure(figsize=(6,6))
+    ax = plt.gca()
+    pos = coords.SkyCoord(center_ra,center_dec,frame='icrs',unit='degree')
+    xout = SkyView.get_images(pos,survey=['DSS'],height=2*delta_image*u.degree,width=2.*delta_image*u.degree)
+    b=xout[0][0]
+    ax.imshow(xout[0][0].data,interpolation='none',aspect='equal',cmap='gray_r',extent=[b.header['CRVAL1']-(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
+                                                           b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
+                                                           b.header['CRVAL2']+(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2'],
+                                                           b.header['CRVAL2']-(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2']])
+
+    rect= plt.Rectangle((center_ra - 0.5*width_ra,center_dec - 0.5*width_dec), width_ra, width_dec,fill=False, color='k')
+    plt.gca().add_artist(rect)
+    if plotsingle:
+        plt.title(mytitle)
+    else:
+        if south_camera:
+            plt.title("South Camera (3.3'x2.2')")
+        else:
+            plt.title("North Camera (3.3'x2.2')")
+    plt.xlabel('RA (deg)')
+    plt.ylabel('DEC (deg)')
+    plt.gca().invert_yaxis()
+    if plotsingle:
+        plt.savefig(outputfile)
+
+
+
+        
 def airmass_plots():
 
     kpno = Observer.at_site("Kitt Peak", timezone="US/Mountain")
