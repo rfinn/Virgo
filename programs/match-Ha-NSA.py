@@ -64,4 +64,4 @@ matchedarray1[index[matchflag]] = hdat[matchflag]
 
 withcoords  = np.lib.recfunctions.append_fields(matchedarray1,['RA','DEC'],[vdat.RA,vdat.DEC],dtypes=[vdat.RA.dtype,vdat.DEC.dtype],asrecarray=True)
 
-fits.writeto(outfile,withcoords,clobber=True)
+fits.writeto(outfile,withcoords,overwrite=True)

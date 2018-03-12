@@ -88,7 +88,7 @@ need_obs = (halpha.date_obs == '') & (co.CO != '') #((co.COdetected == '1') | (c
 # CO
 # no Halpha
 # stellar mass between 8.5 < log(M*/Msun) < 9.5
-obs_mass_flag = COsample & ~ha_obs & (jmass.MSTAR_50 > 8.5) & (jmass.MSTAR_50 < 10.) & (nsa.SERSIC_BA > 0.2)
+obs_mass_flag = COsample & ~ha_obs & (jmass.MSTAR_50 > 8.5) & (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
 
 
 HIflag = (co.HI == '1')
@@ -356,6 +356,7 @@ def fix_project(ra,dec,b):
         
 def finding_chart_all():
     for i in range(len(pointing_ra)):
+        plt.close('all')
         finding_chart(i)
 
 def finding_chart(npointing):
@@ -445,3 +446,7 @@ def airmass_plots():
     ##     plt.tight_layout()
 matchflag = find_CO_noNSA()
 CJnoNSA = ~matchflag
+for i in range(len(CJnoNSA)):
+    if CJnoNSA[i]:
+        print '%18s %18s %.8f %.8f'%(CJcat.source_name[i], CJcat.NEDname[i],CJcat.RA[i],CJcat.DEC[i])
+        

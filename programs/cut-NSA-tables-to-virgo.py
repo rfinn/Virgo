@@ -38,10 +38,16 @@ nsa=fits.getdata(nsafile)
 # read in WISE catalog
 
 
+
 # select galaxies near Virgo
-raflag = (nsa.RA > 120.) & (nsa.RA < 220.) 
-decflag= (nsa.DEC > -10.) & (nsa.DEC < 70.) 
-velflag = (nsa.Z*3.e5 > 1000.) & (nsa.Z*3.e5 < 3000.)
+# set min and max RA and DEC according to CO observations
+minra = 118.
+maxra = 266.1
+mindec = -10
+maxdec = 70.
+raflag = (nsa.RA > minra) & (nsa.RA < maxra) 
+decflag= (nsa.DEC > mindec) & (nsa.DEC < maxdec) 
+velflag = (nsa.Z*3.e5 > 1000.) & (nsa.Z*3.e5 < 3976.)
 vflag = raflag & decflag & velflag
 vra=187.69708
 vdec=12.33694
