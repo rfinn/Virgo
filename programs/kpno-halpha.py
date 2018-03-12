@@ -37,6 +37,9 @@ http://www.astropy.org/astropy-tutorials/Coordinates.html
 
 '''
 
+########################################
+###### IMPORT MODULES  ########
+########################################
 
 from astropy.io import fits
 from virgoCommon import *
@@ -55,6 +58,24 @@ from astropy.coordinates import AltAz
 from astroplan import Observer
 from astroplan.plots import plot_airmass
 
+########################################
+###### RUN-SPECIFIC PARAMETERS  ########
+########################################
+# output file prefix
+outfile_prefix = 'observing/2018March-'
+max_pointing = 57
+
+########################################
+###### OTHER PARAMETERS  ########
+########################################
+# mass cuts for plotting NSA galaxies
+minmass = 8.0
+maxmass = 11.2
+
+
+########################################
+######  READ IN DATA TABLES  #######
+########################################
 tablepath = gitpath+'Virgo/tables/'
 cofile = 'nsa_CO-Gianluca.virgo.fits'
 co = fits.getdata(tablepath+cofile)
@@ -64,9 +85,15 @@ jmass = fits.getdata(mass_file)
 wise = fits.getdata(wise_file)
 halpha = fits.getdata(halpha_file)
 
-# output file prefix
-outfile_prefix = 'observing/2018March-'
+CJcat = fits.getdata(tablepath+'All-virgo-20feb18_env_H070-FITS.fits')
+# find CO targets that are not in NSA?
 
+CJngcflag = CJcat.filament_name == '1' # == 'Filament1-Group5354'
+
+
+########################################
+######  DEFINE SAMPLES  #######
+########################################
 #ngcflag =  co.filament == 'Filament1-Group5354'
 ngcflag =  co.filament_name == '1'
 leoflag = co.filament_name == 'L2B'
@@ -81,14 +108,6 @@ noCOflag = (co.COdetected == '0')
 ha_obs = (halpha.date_obs != '')
 ha_detect = (halpha.date_obs != '') & (halpha.halpha == 1)
 need_obs = (halpha.date_obs == '') & (co.CO != '') #((co.COdetected == '1') | (co.COdetected == '0'))
-# Halpha selection 
-
-### March 2018
-# set RA and DEC as galaxies with
-# CO
-# no Halpha
-# stellar mass between 8.5 < log(M*/Msun) < 9.5
-obs_mass_flag = COsample & ~ha_obs & (jmass.MSTAR_50 > 8.5) & (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
 
 
 HIflag = (co.HI == '1')
@@ -102,13 +121,18 @@ mass_flag = (jmass.MSTAR_50 > 8.3) & (jmass.MSTAR_50 < 10.2)
 gas_flag = COflag | HIflag
 NGCfilament = filament
 
-minmass=8
-maxmass=11.5
+# Halpha selection
+# set RA and DEC as galaxies with
+# CO
+# no Halpha
+# stellar mass between 8.5 < log(M*/Msun) < 10.  according to NSF proposal
+obs_mass_flag = COsample & ~ha_obs & (jmass.MSTAR_50 > 8.5) & (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
 
-CJcat = fits.getdata(tablepath+'All-virgo-20feb18_env_H070-FITS.fits')
-# find CO targets that are not in NSA?
 
-CJngcflag = CJcat.filament_name == '1' # == 'Filament1-Group5354'
+
+########################################
+###### POINTING INFO FROM MAY 2017 #####
+########################################
 
 
 # I sorted the pointings by RA in ipython
@@ -182,6 +206,10 @@ pointing_ra = pointing_ra[sorted_indices]
 pointing_id = pointing_id[sorted_indices]
 nsadict = dict((a,b) for a,b in zip(pointing_id,np.arange(len(pointing_id))))
 
+########################################
+### OFFSETS TO GET MULTIPLE GALAXIES ###
+########################################
+
 ####  OFFSETS  #####
 # add offsets to try to get multiple galaxies in pointings
 pointing_offsets_ra = np.zeros(len(pointing_ra))
@@ -196,7 +224,6 @@ try:
     pointing_offsets_dec[nsadict[157256]] = 0.2
 except KeyError:
     print 'nsa id not found in list of pointings'
-
 
 try:
     pointing_offsets_ra[nsadict[85510]] = -0.1
@@ -221,6 +248,7 @@ except KeyError:
 
 pointing_ra += pointing_offsets_ra
 pointing_dec += pointing_offsets_dec
+
 
 
 def find_CO_noNSA():
@@ -303,6 +331,7 @@ def make_plot(plotsingle=True):
     if plotsingle:
         plt.xlabel('$RA \ (deg) $')
         plt.ylabel('$DEC \ (deg) $')
+
 # FOV of HDI is 0.5 x 0.5 deg
 # draw squares with size = FOV
 
@@ -323,7 +352,13 @@ def plotall(delta=1.5,nrow=3,ncol=3):
     sorted_index = np.argsort(pointing_ra)
     count = 0
     nfig = 0
-    for i in range(len(pointing_ra)):
+    
+    if max_pointing != None:
+        pointing_range = range(max_pointing)
+    else:
+        pointing_range = range(len(pointing_ra))
+        
+    for i in pointing_range:
         if count == 0:
             plt.figure(figsize=(10,8))
             plt.subplots_adjust(wspace=.2,hspace=.4)
@@ -355,25 +390,56 @@ def fix_project(ra,dec,b):
     return ran,decn
         
 def finding_chart_all():
-    for i in range(len(pointing_ra)):
+    if max_pointing != None:
+        pointing_range = range(1,max_pointing+1)
+    else:
+        pointing_range = range(1,len(pointing_ra)+1)
+                               
+    for i in pointing_range:
         plt.close('all')
         finding_chart(i)
 
-def finding_chart(npointing):
+def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsingle=True):
     i = npointing-1
     galsize=0.033
-    plt.figure(figsize=(6,6))
+    center_ra = pointing_ra[i]+offset_ra
+    center_dec = pointing_dec[i] + offset_dec
+    print 'center ra, dec = ',center_ra,center_dec
+    if delta_image > .3:
+        plt.subplots_adjust(right=.9,top=.9,bottom=.1,left=.1)
+        plt.figure(figsize=(10,9))
+    else:
+        plt.figure(figsize=(6,6))
     ax=plt.gca()
-    pos = coords.SkyCoord(pointing_ra[i],pointing_dec[i],frame='icrs',unit='degree')
-    xout = SkyView.get_images(pos,survey=['DSS'],height=0.5*u.degree,width=0.5*u.degree)
+    pos = coords.SkyCoord(center_ra,center_dec,frame='icrs',unit='degree')
+    xout = SkyView.get_images(pos,survey=['DSS'],height=2*delta_image*u.degree,width=2.*delta_image*u.degree)
     b=xout[0][0]
     ax.imshow(xout[0][0].data,interpolation='none',aspect='equal',cmap='gray_r',extent=[b.header['CRVAL1']-(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
                                                            b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
                                                            b.header['CRVAL2']+(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2'],
                                                            b.header['CRVAL2']-(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2']])
+
+    # add footprint of HDI
+    rect= plt.Rectangle((center_ra-.25,center_dec-.25), 0.5, 0.5,fill=False, color='k')
+    plt.gca().add_artist(rect)
+    # add guidestar cameras
+    # North camera
+    delta_ra = 0
+    delta_dec = 2610./3600
+    width_ra = 3.3/60.
+    width_dec = 2.2/60.
+    rect= plt.Rectangle((center_ra+delta_ra - 0.5*width_ra,center_dec+delta_dec - 0.5*width_dec), width_ra, width_dec,fill=False, color='k')
+    plt.gca().add_artist(rect)
+    # South camera
+    delta_ra = -25./3600
+    delta_dec = -2410./3600
+    width_ra = 3.3/60.
+    width_dec = 2.2/60.
+    rect= plt.Rectangle((center_ra+delta_ra - 0.5*width_ra,center_dec+delta_dec - 0.5*width_dec), width_ra, width_dec,fill=False, color='k')
+    plt.gca().add_artist(rect)
     # find galaxies on FOV
 
-    gals = (nsa.RA > (pointing_ra[i]-0.5)) & (nsa.RA < (pointing_ra[i]+0.5)) & (nsa.DEC > (pointing_dec[i]-0.5)) & (nsa.DEC < (pointing_dec[i]+0.5))
+    gals = (nsa.RA > (center_ra-delta_image)) & (nsa.RA < (center_ra+delta_image)) & (nsa.DEC > (center_dec-delta_image)) & (nsa.DEC < (center_dec+delta_image))
     print 'pointing ',i+1,' ngal = ',np.sum(gals)
     gindex=np.arange(len(nsa.RA))[gals]
     print 'Pointing %02d Galaxies'%(npointing),': ',nsa.NSAID[gals]
@@ -391,12 +457,22 @@ def finding_chart(npointing):
             size=galsize+.005
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='b')
             plt.gca().add_artist(rect)
+        if ha_obs[j]:
+            size=galsize+.005
+            rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='r')
+            plt.gca().add_artist(rect)
         #plt.legend(['filament','CO','Halpha'])
     plt.title('Pointing %02d: %s'%((i+1),pos.to_string('hmsdms')))
     plt.xlabel('RA (deg)')
     plt.ylabel('DEC (deg)')
     plt.gca().invert_yaxis()
-    plt.savefig('observing/2018May-Pointing%02d.png'%(i+1))
+    if plotsingle:
+        plt.savefig(outfile_prefix+'Pointing%02d.png'%(i+1))
+
+
+def guide_stars(npointing,offset_ra=0.,offset_dec=0.):
+    finding_chart(npointing, delta_image=.75,offset_ra=offset_ra, offset_dec=offset_dec,plotsingle=False)
+    plt.savefig(outfile_prefix+'Pointing%02d-guiding.png'%(npointing))
 
 def airmass_plots():
 
@@ -413,7 +489,7 @@ def airmass_plots():
     end_time = Time('2017-03-12 14:00:00')
     delta_t = end_time - start_time
     observing_time = start_time + delta_t*np.linspace(0, 1, 75)
-    for j in range(3):
+    for j in range(10):
         plt.figure()
         legend_list = []
         for i in range(8):
@@ -444,9 +520,14 @@ def airmass_plots():
     ##     plt.ylabel('Airmass [Sec(z)]')
     ##     plt.ylim(0.9,2.5)
     ##     plt.tight_layout()
-matchflag = find_CO_noNSA()
-CJnoNSA = ~matchflag
-for i in range(len(CJnoNSA)):
-    if CJnoNSA[i]:
-        print '%18s %18s %.8f %.8f'%(CJcat.source_name[i], CJcat.NEDname[i],CJcat.RA[i],CJcat.DEC[i])
+
+def check_CO():
+    '''
+    look for galaxies that are in Gianluca's CO file but not in the NSA catalog
+    '''
+    matchflag = find_CO_noNSA()
+    CJnoNSA = ~matchflag
+    for i in range(len(CJnoNSA)):
+        if CJnoNSA[i]:
+            print '%18s %18s %.8f %.8f'%(CJcat.source_name[i], CJcat.NEDname[i],CJcat.RA[i],CJcat.DEC[i])
         
