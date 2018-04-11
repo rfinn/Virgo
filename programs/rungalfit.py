@@ -10,7 +10,7 @@ pyds9
 '''
 
 import pyds9
-
+import os
 
 
 class galfit:
