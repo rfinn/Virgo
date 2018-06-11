@@ -6,14 +6,10 @@ import chary_elbaz_24um as chary
 import numpy as np
 import os
 
-mypath=os.getcwd()
-if mypath.find('rfinn') > -1:
-    catpath='/Users/rfinn/github/Virgo/tables'
-elif mypath.find('kelly') > -1:
-    print "Running on Kellys's computer"
-    catpath='/Users/kellywhalen/Github/Virgo/tables/'
 
-
+homedir = os.environ['HOME']
+catpath = homedir+'/github/Virgo/tables/'
+    
 wise = fits.getdata(catpath+'WISE_virgo.fits')
 nsa = fits.getdata(catpath+'VirgoCatalog.fits')
 
