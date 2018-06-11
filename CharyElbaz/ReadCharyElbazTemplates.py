@@ -46,7 +46,7 @@ NOTES:
 '''
 
 #import idlsave
-from scipy.io import readsave
+from scipy.io import readsav
 from pylab import *
 import os
 
