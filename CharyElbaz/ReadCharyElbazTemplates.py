@@ -39,9 +39,14 @@
       idlsave
       pylab
       os
+      scipy
+NOTES:
+2018-06-11 - updated to use scipy.io.readsav instead of idlsave
+
 '''
 
-import idlsave
+#import idlsave
+from scipy.io import readsave
 from pylab import *
 import os
 
@@ -55,7 +60,7 @@ class charyelbaz:
             print "Running on Kelly's Laptop"
             homedir='/Users/kellywhalen/Github/Virgo/'
 
-        cefile=idlsave.read(infile)
+        cefile=readsav(infile)
         self.nulnu_iras25=cefile['nulnu_iras25']
         self.nulnu_iras100=cefile['nulnu_iras100']
         self.nulnu_iras12=cefile['nulnu_iras12']
