@@ -78,15 +78,11 @@ import numpy as np
 import os
 
 
-mypath=os.getcwd()
-if mypath.find('Users/rfinn') > -1:
-    print "Running on Rose's mac pro or laptop"
-    homedir='/Users/rfinn/'
-elif mypath.find('Users/kellywhalen') > -1:
-    print "Running on Kelly's laptop"
-    homedir='/Users/kellywhalen/Github/Virgo/'
 
-chary_path=homedir+'CharyElbaz/CharyElbaz01/chary_elbaz_codes/'
+# python magic to get environment variable
+homedir = os.environ['HOME']
+
+chary_path=homedir+'github/Virgo/CharyElbaz/CharyElbaz01/chary_elbaz_codes/'
 
 savefile=chary_path+'chary_elbaz.save'
 ce=ReadCharyElbazTemplates.charyelbaz(savefile)
