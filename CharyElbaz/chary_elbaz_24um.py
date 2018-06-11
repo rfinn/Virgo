@@ -9,6 +9,8 @@
       
     CALLING SEQUENCE
 
+      This program assumes that github/Virgo is off the home directory.
+      
       ceLir,ceSFR=chary.chary_elbaz_24um(redshift[flag],self.mipsflux[flag])
 
     INPUT PARAMETERS
@@ -82,7 +84,7 @@ import os
 # python magic to get environment variable
 homedir = os.environ['HOME']
 
-chary_path=homedir+'github/Virgo/CharyElbaz/CharyElbaz01/chary_elbaz_codes/'
+chary_path=homedir+'/github/Virgo/CharyElbaz/CharyElbaz01/chary_elbaz_codes/'
 
 savefile=chary_path+'chary_elbaz.save'
 ce=ReadCharyElbazTemplates.charyelbaz(savefile)
