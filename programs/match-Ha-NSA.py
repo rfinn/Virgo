@@ -31,14 +31,14 @@ args = parser.parse_args()
 
 if args.writefits:
     ### Read in csv and write out fits
-    infile = args.tablepath+'Observing-Summary-Halpha.csv'
+    infile = args.tablepath+'Observing-Summary-Halpha-good-2019Jan21.csv'
     outfile = infile.replace('csv','fits')
     hadat = np.recfromcsv(infile)
     fits.writeto(outfile,hadat,overwrite=True)
 
 
 vdat = fits.getdata(args.tablepath +'nsa.virgo.fits')
-hdat = fits.getdata(args.tablepath + 'Observing-Summary-Halpha.fits')
+hdat = fits.getdata(args.tablepath + 'Observing-Summary-Halpha-good-2019Jan21.fits')
 
 nsadict=dict((a,b) for a,b in zip(vdat.NSAID,np.arange(len(vdat.NSAID))))
 # match by NSAID
