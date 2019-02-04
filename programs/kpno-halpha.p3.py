@@ -569,14 +569,14 @@ def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING_flag=False):
     show_guide_camera(npointing,south_camera=True,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
     north_camera = fig.add_subplot(grid[0,2])
     show_guide_camera(npointing,south_camera=False,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
-    plt.savefig(outfile_prefix+'Pointing%02d-platinum.png'%(npointing))
+    plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
 
 def platinum_finding_chart_ING(npointing,offset_ra=0.,offset_dec=0.):
     fig = plt.figure(figsize = (8,8.))
     #grid = plt.GridSpec(2,3,hspace=.4,wspace=.2,left=.05)
     #hdi = fig.add_subplot(grid[:,:-1])
     finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING_flag = True)
-    plt.savefig(outfile_prefix+'Pointing%02d-platinum.png'%(npointing))
+    plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
 
 def guide_cameras(npointing,offset_ra=0,offset_dec=0):
     i = npointing - 1
