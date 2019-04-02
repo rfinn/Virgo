@@ -47,6 +47,8 @@ AIRMASS PLOTS
 http://www.astropy.org/astropy-tutorials/Coordinates.html
 
 
+910,910 is where object is placed in CCD4
+
 '''
 
 ########################################
@@ -70,6 +72,9 @@ from astropy.coordinates import AltAz
 from astroplan import Observer
 from astroplan.plots import plot_airmass
 
+
+
+
 ########################################
 ###### RUN-SPECIFIC PARAMETERS  ########
 ########################################
@@ -81,12 +86,22 @@ max_pointing = 57
 outfile_prefix = 'observing/2019Feb-INT-'
 max_pointing = None
 
+# Mt Laguna Instrument
+dra = 13. #arcmin
+ddec = 13. # arcmin
+
+
 ########################################
 ###### OTHER PARAMETERS  ########
 ########################################
 # mass cuts for plotting NSA galaxies
 minmass = 8.0
 maxmass = 11.2
+###############################################
+##### Set moretargets to be true to
+##### look for lower mass sources at early RA
+###############################################
+moretargets = True
 
 
 ########################################
@@ -99,8 +114,10 @@ co = fits.getdata(tablepath+cofile)
 nsa = fits.getdata(nsa_file)
 jmass = fits.getdata(mass_file)
 wise = fits.getdata(wise_file)
-halpha = fits.getdata(halpha_file)
-
+if moretargets:
+    halpha = fits.getdata(halpha_file)
+else:
+    halpha = fits.getdata('/Users/rfinn/github/Virgo/tables/nsa_Halpha.virgo.2019Feb04.fits')
 CJcat = fits.getdata(tablepath+'All-virgo-20feb18_env_H070-FITS.fits')
 # find CO targets that are not in NSA?
 
@@ -143,11 +160,33 @@ NGCfilament = filament
 # CO
 # no Halpha
 # stellar mass between 8.5 < log(M*/Msun) < 10.  according to NSF proposal
-obs_mass_flag = COsample & ~ha_obs & (jmass.MSTAR_50 > 8.5) & (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
+obs_mass_flag = COsample & ~ha_obs #& (jmass.MSTAR_50 > 8.5) #& (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
 
 # resetting to COsample for 2019 observing season
-filter_flag = (nsa.ZDIST*3.e5 > 2490.) & (nsa.ZDIST*3.e5 < 6000.)
+filter_flag = (nsa.Z*3.e5 > 2490.) & (nsa.Z*3.e5 < 6000.)
 obs_mass_flag = COsample & ~ha_obs #& filter_flag
+
+more_targets_flag = (nsa.Z*3.e5 < 2300.) & (nsa.RA > 115.) & (nsa.RA < 140.) & ~COsample & ~ha_obs & (nsa.DEC > 20.) & (nsa.DEC < 40.) & (jmass.MSTAR_50 > 8.5)
+
+if moretargets == True:
+    print('setting sample to more_targets_flag')
+    obs_mass_flag = more_targets_flag
+
+########################################
+###### COLOR CODE FOR SCATTER PLOTS
+########################################
+
+
+mycolor=jmass.MSTAR_50
+v1=minmass
+v2=maxmass
+mylabel='$ \log_{10}(M_*/M_\odot) $'
+
+
+mycolor=nsa.Z*3.e5
+v1=1000
+v2=3000
+mylabel='$ v_r \ (km/s) $'
 
 
 ########################################
@@ -235,6 +274,8 @@ nsadict = dict((a,b) for a,b in zip(pointing_id,np.arange(len(pointing_id))))
 pointing_offsets_ra = np.zeros(len(pointing_ra))
 pointing_offsets_dec = np.zeros(len(pointing_ra))
 
+#### KPNO OFFSETS
+'''
 try:
     pointing_offsets_dec[nsadict[50209]] = -0.15
 except KeyError:
@@ -265,6 +306,588 @@ try:
     pointing_offsets_dec[nsadict[164223]] = 0.15
 except KeyError:
     print('nsa id not found in list of pointings')
+'''
+##################################################
+############ INT WFC OFFSETS
+##################################################
+try:
+    pointing_offsets_ra[nsadict[50207]] = -8./60
+    pointing_offsets_dec[nsadict[50207]] = 12./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 01
+    pointing_offsets_ra[nsadict[64280]] = -8.5/60
+    pointing_offsets_dec[nsadict[64280]] = -3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+try: # pointing 02
+    pointing_offsets_ra[nsadict[64353]] = 14.5/60
+    pointing_offsets_dec[nsadict[64353]] = 12./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+try: # pointing 04
+    pointing_offsets_ra[nsadict[135051]] = 90./3600
+    pointing_offsets_dec[nsadict[135051]] = 90./3600
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 09
+    pointing_offsets_ra[nsadict[15877]] = 4./60
+    pointing_offsets_dec[nsadict[15877]] = -7./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 10
+    pointing_offsets_ra[nsadict[156774]] = -4./60
+    pointing_offsets_dec[nsadict[156774]] = -2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try:
+    pointing_offsets_ra[nsadict[135296]] = -3./60
+    pointing_offsets_dec[nsadict[135296]] = 3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 14
+    pointing_offsets_ra[nsadict[135465]] = 0./60
+    pointing_offsets_dec[nsadict[135465]] = 2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 16
+    pointing_offsets_ra[nsadict[50379]] = 0./60
+    pointing_offsets_dec[nsadict[50379]] = 3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 18
+    pointing_offsets_ra[nsadict[135527]] = 0./60
+    pointing_offsets_dec[nsadict[135527]] = -2.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 20
+    pointing_offsets_ra[nsadict[135602]] = 0./60
+    pointing_offsets_dec[nsadict[135602]] = -2.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 21
+    pointing_offsets_ra[nsadict[135606]] = 4./60
+    pointing_offsets_dec[nsadict[135606]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 22
+    pointing_offsets_ra[nsadict[50569]] = -.5/60
+    pointing_offsets_dec[nsadict[50569]] = 3/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 23
+    pointing_offsets_ra[nsadict[135797]] = -6./60
+    pointing_offsets_dec[nsadict[135797]] = 4./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 26
+    pointing_offsets_ra[nsadict[47220]] = -7.5/60
+    pointing_offsets_dec[nsadict[47220]] = -2/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 27
+    pointing_offsets_ra[nsadict[135852]] = -9./60
+    pointing_offsets_dec[nsadict[135852]] = -2/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 28
+    pointing_offsets_ra[nsadict[135862]] = 5/60
+    pointing_offsets_dec[nsadict[135862]] = 3/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 31
+    pointing_offsets_ra[nsadict[157256]] = 0./60
+    pointing_offsets_dec[nsadict[157256]] = 13/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 32
+    pointing_offsets_ra[nsadict[64909]] = -2/60
+    pointing_offsets_dec[nsadict[64909]] = 2.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 35
+    pointing_offsets_ra[nsadict[136042]] = 0./60
+    pointing_offsets_dec[nsadict[136042]] = 1/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+try: # pointing 36
+    pointing_offsets_ra[nsadict[85513]] = 0./60
+    pointing_offsets_dec[nsadict[85513]] = 13/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 38
+    pointing_offsets_ra[nsadict[85367]] = 0./60
+    pointing_offsets_dec[nsadict[85367]] = 3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 41
+    pointing_offsets_ra[nsadict[157480]] = 1.5/60
+    pointing_offsets_dec[nsadict[157480]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 43
+    pointing_offsets_ra[nsadict[157495]] = 3.5/60
+    pointing_offsets_dec[nsadict[157495]] = 3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 47
+    pointing_offsets_ra[nsadict[107148]] = -5/60
+    pointing_offsets_dec[nsadict[107148]] = -2.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 48
+    pointing_offsets_ra[nsadict[85977]] = 0./60
+    pointing_offsets_dec[nsadict[85977]] = -2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 49
+    pointing_offsets_ra[nsadict[48222]] = -4./60
+    pointing_offsets_dec[nsadict[48222]] = 3.3/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 50
+    pointing_offsets_ra[nsadict[137045]] = -5./60
+    pointing_offsets_dec[nsadict[137045]] = -3/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 53
+    pointing_offsets_ra[nsadict[107715]] = 0./60
+    pointing_offsets_dec[nsadict[107715]] = 2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 55
+    pointing_offsets_ra[nsadict[137391]] = 10.5/60
+    pointing_offsets_dec[nsadict[137391]] = -2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 56
+    pointing_offsets_ra[nsadict[137460]] = -8/60
+    pointing_offsets_dec[nsadict[137460]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 57
+    pointing_offsets_ra[nsadict[107764]] = 19./60
+    pointing_offsets_dec[nsadict[107764]] = -3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 59
+    pointing_offsets_ra[nsadict[88142]] = 5./60
+    pointing_offsets_dec[nsadict[88142]] = -10./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 62
+    pointing_offsets_ra[nsadict[137993]] = -7./60
+    pointing_offsets_dec[nsadict[137993]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 64
+    pointing_offsets_ra[nsadict[90176]] = 0./60
+    pointing_offsets_dec[nsadict[90176]] = 3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 65
+    pointing_offsets_ra[nsadict[138221]] = -3.6/60
+    pointing_offsets_dec[nsadict[138221]] = 2.2/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 68
+    pointing_offsets_ra[nsadict[87097]] = -3./60
+    pointing_offsets_dec[nsadict[87097]] = -3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 69
+    pointing_offsets_ra[nsadict[87086]] = 3./60
+    pointing_offsets_dec[nsadict[87086]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 70
+    pointing_offsets_ra[nsadict[138642]] = 4./60
+    pointing_offsets_dec[nsadict[138642]] = 2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 71
+    pointing_offsets_ra[nsadict[159520]] = 0./60
+    pointing_offsets_dec[nsadict[159520]] = -4.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 75
+    pointing_offsets_ra[nsadict[159779]] = 0.75/60
+    pointing_offsets_dec[nsadict[159779]] = -2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 77
+    pointing_offsets_ra[nsadict[101649]] = 8./60
+    pointing_offsets_dec[nsadict[101649]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 81
+    pointing_offsets_ra[nsadict[93963]] = 11.5/60
+    pointing_offsets_dec[nsadict[93963]] = -2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 82
+    pointing_offsets_ra[nsadict[90957]] = 8./60
+    pointing_offsets_dec[nsadict[90957]] = 9./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 85
+    pointing_offsets_ra[nsadict[92459]] = 5./60
+    pointing_offsets_dec[nsadict[92459]] = -3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 91
+    pointing_offsets_ra[nsadict[140301]] = 0./60
+    pointing_offsets_dec[nsadict[140301]] = -3.3/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 93
+    pointing_offsets_ra[nsadict[160627]] = 4./60
+    pointing_offsets_dec[nsadict[160627]] = -14/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 96
+    pointing_offsets_ra[nsadict[117685]] = 0./60
+    pointing_offsets_dec[nsadict[117685]] = -1.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 97
+    pointing_offsets_ra[nsadict[118414]] = -4./60
+    pointing_offsets_dec[nsadict[118414]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 107
+    pointing_offsets_ra[nsadict[143701]] = 0./60
+    pointing_offsets_dec[nsadict[143701]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 109
+    pointing_offsets_ra[nsadict[163875]] = 0./60
+    pointing_offsets_dec[nsadict[163875]] = 2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+try: # pointing 110
+    pointing_offsets_ra[nsadict[143841]] = -2./60
+    pointing_offsets_dec[nsadict[143841]] = 12./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+try: # pointing 120
+    pointing_offsets_ra[nsadict[144056]] = 21.5/60
+    pointing_offsets_dec[nsadict[144056]] = -2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 128
+    pointing_offsets_ra[nsadict[67567]] = 10/60
+    pointing_offsets_dec[nsadict[67567]] = -2.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+try: # pointing 131
+    pointing_offsets_ra[nsadict[17878]] = 3.5/60
+    pointing_offsets_dec[nsadict[17878]] = 2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 135
+    pointing_offsets_ra[nsadict[164911]] = -6/60
+    pointing_offsets_dec[nsadict[164911]] = 3.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 137
+    pointing_offsets_ra[nsadict[165082]] = -1./60
+    pointing_offsets_dec[nsadict[165082]] = -1./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 138
+    pointing_offsets_ra[nsadict[18052]] = 3./60
+    pointing_offsets_dec[nsadict[18052]] = 3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: # pointing 139
+    pointing_offsets_ra[nsadict[165115]] = -6.5/60
+    pointing_offsets_dec[nsadict[165115]] = -3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #140
+    id=145218
+    pointing_offsets_ra[nsadict[id]] = 10./60
+    pointing_offsets_dec[nsadict[id]] = 10.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+try: #143
+    id=165200
+    pointing_offsets_ra[nsadict[id]] = 9.5/60
+    #pointing_offsets_dec[nsadict[id]] = 10.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #144
+    id=18153
+    pointing_offsets_ra[nsadict[id]] = 4.3/60
+    pointing_offsets_dec[nsadict[id]] = -12/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+try: #145
+    id=145398
+    pointing_offsets_ra[nsadict[id]] = 15./60
+    pointing_offsets_dec[nsadict[id]] = 2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+try: #147
+    id=18301
+    pointing_offsets_ra[nsadict[id]] = 7./60
+    pointing_offsets_dec[nsadict[id]] = -10./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #147
+    id=145554
+    pointing_offsets_ra[nsadict[id]] = -2./60
+    pointing_offsets_dec[nsadict[id]] = -10./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #152
+    id=18363
+    pointing_offsets_ra[nsadict[id]] = 6./60
+    pointing_offsets_dec[nsadict[id]] = 14./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+try: #154
+    id=145672
+    pointing_offsets_ra[nsadict[id]] = 4./60
+    pointing_offsets_dec[nsadict[id]] = -10./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #158
+    id=165875
+    pointing_offsets_ra[nsadict[id]] = 10./60
+    pointing_offsets_dec[nsadict[id]] = 2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+try: #164
+    id=145846
+    pointing_offsets_ra[nsadict[id]] = 4./60
+    pointing_offsets_dec[nsadict[id]] = 11./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #166
+    id=165956
+    pointing_offsets_ra[nsadict[id]] = -3./60
+    pointing_offsets_dec[nsadict[id]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #167
+    id=145879
+    pointing_offsets_ra[nsadict[id]] = -4./60
+    pointing_offsets_dec[nsadict[id]] = 12./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+try: #173
+    id=166280
+    pointing_offsets_ra[nsadict[id]] = -6./60
+    pointing_offsets_dec[nsadict[id]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #175
+    id=121129
+    pointing_offsets_ra[nsadict[id]] = 4./60
+    pointing_offsets_dec[nsadict[id]] = 9./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #178
+    id=166330
+    #pointing_offsets_ra[nsadict[id]] = 4./60
+    pointing_offsets_dec[nsadict[id]] = -3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #189
+    id=68462
+    pointing_offsets_ra[nsadict[id]] = -7./60
+    #pointing_offsets_dec[nsadict[id]] = -3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #192
+    id=69842
+    pointing_offsets_ra[nsadict[id]] = 16./60
+    pointing_offsets_dec[nsadict[id]] = 1./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try: #195
+    id=147731
+    pointing_offsets_ra[nsadict[id]] = 0./60
+    pointing_offsets_dec[nsadict[id]] = 3./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+
+##################################################
+############ low mass extension of leo filaments
+##################################################
+
+try:
+    id=156595
+    pointing_offsets_ra[nsadict[id]] = 8.5/60
+    pointing_offsets_dec[nsadict[id]] = 12./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+try:
+    id=64369
+    pointing_offsets_ra[nsadict[id]] = 20./60
+    pointing_offsets_dec[nsadict[id]] = -10./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try:
+    id=64410
+    pointing_offsets_ra[nsadict[id]] = -3./60
+    pointing_offsets_dec[nsadict[id]] = 1./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try:
+    id=64403
+    pointing_offsets_ra[nsadict[id]] = -7./60
+    pointing_offsets_dec[nsadict[id]] = -2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try:
+    id=50476
+    pointing_offsets_ra[nsadict[id]] = 2./60
+    pointing_offsets_dec[nsadict[id]] = 4./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try:
+    id=84130
+    pointing_offsets_ra[nsadict[id]] = 9./60
+    pointing_offsets_dec[nsadict[id]] = -1./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+try:
+    id=64305
+    pointing_offsets_ra[nsadict[id]] = 3./60
+    pointing_offsets_dec[nsadict[id]] = 14./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try:
+    id=84294
+    pointing_offsets_ra[nsadict[id]] = 0./60
+    pointing_offsets_dec[nsadict[id]] = 14.5/60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+try:
+    id=64408
+    pointing_offsets_ra[nsadict[id]] = 2./60
+    pointing_offsets_dec[nsadict[id]] = -2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+try:
+    id=157073
+    pointing_offsets_ra[nsadict[id]] = 4./60
+    pointing_offsets_dec[nsadict[id]] = 0./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try:
+    id=84889
+    pointing_offsets_ra[nsadict[id]] = 3./60
+    pointing_offsets_dec[nsadict[id]] = 2./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+try:
+    id=135046
+    pointing_offsets_ra[nsadict[id]] = 5./60
+    pointing_offsets_dec[nsadict[id]] = 4./60
+except KeyError:
+    print('nsa id not found in list of pointings')
+
+
+
+    
+##################################################
+############ END OF INT WFC OFFSETS
+##################################################
 
 pointing_ra += pointing_offsets_ra
 pointing_dec += pointing_offsets_dec
@@ -302,7 +925,7 @@ def add_pointings():
     for i in range(len(pointing_ra)):
         rect= plt.Rectangle((pointing_ra[i]-.25,pointing_dec[i]-.25), .5, .5,fill=False, color='g',lw=2)
         plt.gca().add_artist(rect)
-        plt.text(pointing_ra[i]-.26,pointing_dec[i],i+1,fontsize=16,clip_on=True)
+        plt.text(pointing_ra[i]-.26,pointing_dec[i],'  '+str(i+1),fontsize=8,clip_on=True)
  
 
 # match with stellar mass, NSA, WISE
@@ -311,18 +934,20 @@ def plot_positions(plotsingle=True, flag = need_obs,plotha=True):
     #if plotsingle:
     #    plt.figure()
     #flag = need_obs
-    plt.scatter(nsa.RA[flag],nsa.DEC[flag],s=30,c=jmass.MSTAR_50[flag],vmin=minmass,vmax=maxmass,cmap='jet',marker='o',label='CO')
-    plt.scatter(nsa.RA[noCOflag],nsa.DEC[noCOflag],s=80,c=jmass.MSTAR_50[noCOflag],vmin=minmass,vmax=maxmass,cmap='jet',marker='x',label='no CO')
-    plt.scatter(nsa.RA[HIflag],nsa.DEC[HIflag],s=100,c=jmass.MSTAR_50[HIflag],vmin=minmass,vmax=maxmass,cmap='jet',marker='+',label='HI')
+    
+    plt.scatter(nsa.RA[flag],nsa.DEC[flag],s=30,c=mycolor[flag],vmin=v1,vmax=v2,cmap='jet',marker='o',label='CO')
+    plt.scatter(nsa.RA[noCOflag],nsa.DEC[noCOflag],s=80,c=mycolor[noCOflag],vmin=v1,vmax=v2,cmap='jet',marker='x',label='no CO')
+    plt.scatter(nsa.RA[HIflag],nsa.DEC[HIflag],s=100,c=mycolor[HIflag],vmin=v1,vmax=v2,cmap='jet',marker='+',label='HI')
     #plt.scatter(nsa.RA[gas_flag],nsa.DEC[gas_flag],s=50,c=jmass.MSTAR_50[gas_flag],vmin=8,vmax=11)
     if plotha:
         plt.plot(nsa.RA[ha_obs],nsa.DEC[ha_obs],'cs',mfc='None',markersize=8)
     if plotsingle:
-        plt.colorbar(label='$ \log_{10}(M_*/M_\odot) $',fraction=0.08)
+        plt.colorbar(label=mylabel,fraction=0.08)
         plt.legend()
         #plt.gca().invert_xaxis()
 def add_nsa():
-    plt.scatter(nsa.RA[nsa_flag],nsa.DEC[nsa_flag],s=10,c=jmass.MSTAR_50[nsa_flag],vmin=minmass,vmax=maxmass,alpha=.5,cmap='jet',marker='v',label='NSA')
+    #plt.scatter(nsa.RA[nsa_flag],nsa.DEC[nsa_flag],s=10,c=jmass.MSTAR_50[nsa_flag],vmin=minmass,vmax=maxmass,alpha=.5,cmap='jet',marker='v',label='NSA')
+    plt.scatter(nsa.RA[nsa_flag],nsa.DEC[nsa_flag],s=10,c=nsa.Z[nsa_flag]*3.e5,vmin=1500,vmax=3500,alpha=.5,cmap='jet',marker='v',label='NSA')
 
 def make_plot_2018(plotsingle=True):
     if plotsingle:
@@ -337,7 +962,12 @@ def make_plot_2018(plotsingle=True):
     if plotsingle:
         plt.xlabel('$RA \ (deg) $')
         plt.ylabel('$DEC \ (deg) $')
-    
+
+def show_INT_feb():
+    make_plot_2018()
+    plt.axis([115,200,15,52])
+    plt.gca().invert_xaxis()
+    plt.savefig('plots/INT_feb_locations.png')
 def make_plot(plotsingle=True):
     if plotsingle:
         plt.figure()
@@ -419,9 +1049,10 @@ def finding_chart_all():
         plt.close('all')
         finding_chart(i)
 
-def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsingle=True,ING_flag=False):
-    i = npointing-1
+def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsingle=True,ING_flag=False,mtlaguna=False):
     galsize=0.033
+    i = npointing-1
+
     center_ra = pointing_ra[i]+offset_ra
     center_dec = pointing_dec[i] + offset_dec
     print('center ra, dec = ',center_ra,center_dec)
@@ -436,13 +1067,13 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     delta_imagex=2.*delta_image
     delta_imagey=2.*delta_image
     if ING_flag:
-        pos = coords.SkyCoord(center_ra,center_dec,frame='icrs',unit='degree')
         delta_imagex=.8 #image width in deg
         delta_imagey=.8 # image width in deg
-        
         xout = SkyView.get_images(pos,survey=['DSS'],height=delta_imagex*u.degree,width=delta_imagey*u.degree)
-    else:
-        xout = SkyView.get_images(pos,survey=['DSS'],height=2*delta_image*u.degree,width=2.*delta_image*u.degree)
+    elif mtlaguna:
+        delta_imagex = 13./60. # image width in deg
+        delta_imagey = 13./60 # image width in deg
+    xout = SkyView.get_images(pos,survey=['DSS'],height=2*delta_image*u.degree,width=2.*delta_image*u.degree)
     b=xout[0][0]
     ax.imshow(xout[0][0].data,interpolation='none',aspect='equal',cmap='gray_r',extent=[b.header['CRVAL1']-(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
                                                            b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
@@ -452,6 +1083,11 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     if ING_flag:
         # add footprint of WFC chips
         plot_INT_footprint(center_ra,center_dec)
+    elif mtlaguna:
+        delta_arcmin = 13.
+        rect= plt.Rectangle((center_ra-delta_image,center_dec-delta_image), delta_arcmin/60., delta_arcmin/60.,fill=False, color='k')
+        plt.gca().add_artist(rect)
+         
     else:
         rect= plt.Rectangle((center_ra-delta_image,center_dec-delta_image), 0.5, 0.5,fill=False, color='k')
         plt.gca().add_artist(rect)
@@ -462,11 +1098,12 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     print('pointing ',i+1,' ngal = ',np.sum(gals))
     gindex=np.arange(len(nsa.RA))[gals]
     print('Pointing %02d Galaxies'%(npointing),': ',nsa.NSAID[gals])
+    print('Pointing %02d Galaxies'%(npointing),': ',nsa.Z[gals]*3.e5)
     for j in gindex:
         ran,decn=fix_project(nsa.RA[j],nsa.DEC[j],b)
         rect= plt.Rectangle((ran-galsize/2.,decn-galsize/2.), galsize, galsize,fill=False, color='c')
         plt.gca().add_artist(rect)
-        s='%i\n vr=%i'%(nsa.NSAID[j],nsa.ZDIST[j]*3.e5)
+        s='%i\n vr=%i'%(nsa.NSAID[j],nsa.Z[j]*3.e5)
         plt.text(ran,decn+galsize/2.,s,fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='bottom')
         plt.text(ran,decn-galsize/2.,co.NEDname[j].decode("utf-8"),fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='top')
         if COflag[j]:
@@ -482,7 +1119,10 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='r')
             plt.gca().add_artist(rect)
         #plt.legend(['filament','CO','Halpha'])
-    plt.title('Pointing %02d: %s'%((i+1),pos.to_string('hmsdms')))
+    if moretargets:
+        plt.title('LM-Pointing %02d: %s'%((i+1),pos.to_string('hmsdms')))
+    else:
+        plt.title('Pointing %02d: %s'%((i+1),pos.to_string('hmsdms')))
     plt.xlabel('RA (deg)')
     plt.ylabel('DEC (deg)')
     plt.gca().invert_yaxis()
@@ -491,36 +1131,36 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
 
 def plot_INT_footprint(center_ra,center_dec):
     #using full detector sizes for now because 
-    detector_dra = 2048.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
-    detector_ddec = 4100.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+    detector_dra = 4100.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+    detector_ddec = 2048.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
     # draw footprint of chip 4
     rect= plt.Rectangle((center_ra-detector_dra/2.,center_dec-detector_ddec/2.), detector_dra, detector_ddec,fill=False, color='k')
     plt.gca().add_artist(rect)
-    # draw footpring of chip 3
-    # assuming chip 3 is WEST of chip 4
-    offset_ra = -1.*detector_dra-17./3600. # 17 arcsec gap in RA between 
-    offset_dec = 9.5/3600. # 9.5 arcsec offset toward N
+    # draw footprint of chip 3
+    # assuming chip 3 is NORTH and a smidge WEST of chip 4
+    offset_dec = detector_ddec+17./3600. # 17 arcsec gap in RA between 
+    offset_ra = -9.5/3600. # 9.5 arcsec offset toward N
     rect= plt.Rectangle((center_ra+offset_ra-detector_dra/2.,center_dec+offset_dec-detector_ddec/2.), detector_dra, detector_ddec,fill=False, color='k')
     plt.gca().add_artist(rect)
 
-    # draw footpring of chip 1
-    # assuming chip 1 is EAST of chip 4
-    offset_ra = detector_dra+22.7/3600. # 17 arcsec gap in RA between 
-    offset_dec = -3.18/3600. # 9.5 arcsec offset toward N
+    # draw footprint of chip 1
+    # assuming chip 1 is SOUTH and a smidge EAST of chip 4
+    offset_dec = -1*detector_ddec-22.7/3600. # 17 arcsec gap in RA between 
+    offset_ra = +3.18/3600. # 9.5 arcsec offset toward N
     rect= plt.Rectangle((center_ra+offset_ra-detector_dra/2.,center_dec+offset_dec-detector_ddec/2.), detector_dra, detector_ddec,fill=False, color='k')
     plt.gca().add_artist(rect)
 
-    # draw footpring of chip 2
-    # assuming chip 2 is NORTH of chip 4
-    offset_ra = detector_dra/2.-19.2/3600. # hard to explain
-    offset_dec =  detector_ddec/2.+23.8/3600.# hard to explain
+    # draw footprint of chip 2
+    # assuming chip 2 is WEST of chip 4
+    offset_dec = detector_ddec/2.-detector_dra-19.2/3600. # hard to explain
+    offset_ra =  -.5*detector_dra-23.8/3600.# hard to explain
     # this chip is rotated 90 deg, so detecter_dra and detector_ddec are interchanged
     rect= plt.Rectangle((center_ra+offset_ra,center_dec+offset_dec), -1.*detector_ddec, detector_dra,fill=False, color='k')
     plt.gca().add_artist(rect)
 
     # adding guide camera
-    offset_ra = -1.5*detector_dra-(22.7+98.1)/3600. # hard to explain
-    offset_dec =  (3.18+649.9)/3600.# hard to explain
+    offset_dec = -2*detector_ddec-(22.7+98.1)/3600. # hard to explain
+    offset_ra =  detector_dra/2-(3.18+649.9)/3600.# hard to explain
     # this chip is rotated 90 deg, so detecter_dra and detector_ddec are interchanged
     rect= plt.Rectangle((center_ra+offset_ra,center_dec+offset_dec), -7./60., 7./60,fill=False, color='k')
     plt.gca().add_artist(rect)
@@ -548,7 +1188,8 @@ def finding_chart_with_guide_stars(npointing,offset_ra=0.,offset_dec=0.):
     finding_chart(npointing, delta_image=.75,offset_ra=offset_ra, offset_dec=offset_dec,plotsingle=False)
     plt.savefig(outfile_prefix+'Pointing%02d-guiding.png'%(npointing))
 
-def make_all_platinum(ING_flag=False):
+def make_all_platinum(ING_flag=False,mtlaguna=False,startnumber=None):
+    
     if max_pointing != None:
         pointing_range = range(max_pointing)
     else:
@@ -576,7 +1217,20 @@ def platinum_finding_chart_ING(npointing,offset_ra=0.,offset_dec=0.):
     #grid = plt.GridSpec(2,3,hspace=.4,wspace=.2,left=.05)
     #hdi = fig.add_subplot(grid[:,:-1])
     finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING_flag = True)
-    plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
+    if moretargets:
+        plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
+    else:
+        plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
+
+def platinum_finding_chart_mtlaguna(npointing,offset_ra=0.,offset_dec=0.):
+    fig = plt.figure(figsize = (8,8.))
+    #grid = plt.GridSpec(2,3,hspace=.4,wspace=.2,left=.05)
+    #hdi = fig.add_subplot(grid[:,:-1])
+    finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING_flag = True)
+    if moretargets:
+        plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
+    else:
+        plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
 
 def guide_cameras(npointing,offset_ra=0,offset_dec=0):
     i = npointing - 1
@@ -658,10 +1312,14 @@ def airmass_plots(kittpeak=True,ING=False):
         print('plotting airmass curves for Kitt Peak')
         observing_location = EarthLocation.of_site('Kitt Peak')
         observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
-    elif ING:
-        print('plotting airmass curves for INT')
+    elif mtlaguna:
+        print('plotting airmass curves for Mt Laguna')
         observing_location = EarthLocation.of_site(u'Roque de los Muchachos')
         observer_site = Observer.at_site("Roque de los Muchachos", timezone="GMT")
+    elif ING:
+        print('plotting airmass curves for INT')
+        observing_location = EarthLocation.of_site(u'Palomar')
+        observer_site = Observer.at_site("Palomar", timezone="US/Pacific")
         
     #observing_time = Time('2017-05-19 07:00')  # 1am UTC=6pm AZ mountain time
     #observing_time = Time('2018-03-12 07:00')  # 1am UTC=6pm AZ mountain time
@@ -729,3 +1387,26 @@ def check_CO():
     number with NSA matches =  226
            UGC8656          UGC 08656 205.12995833 42.99388889
     '''
+
+def make_INT_catalog():
+    pos=coords.SkyCoord(pointing_ra*u.degree,pointing_dec*u.degree,frame='icrs')
+    outfile = open('observing/finn_virgo.cat','w')
+    for i in range(len(pointing_ra)):
+        ra = pos[i].ra.hms
+        dec = pos[i].dec.dms
+        s = 'pointing-%03d %02d %02i %02.2f %02d %02i %02.2d J2000 ! NSAID %6s \n'%(i+1,ra[0],ra[1],ra[2],dec[0],dec[1],dec[2],str(pointing_id[i]))
+        outfile.write(s)
+    outfile.close()
+
+def get_more_targets():
+    # selecting targets in early part of night for Feb 2019 INT run
+    # need to supplement CO sample b/c we are so efficient!
+    # 
+
+    plt.figure()
+    plt.scatter(nsa.RA[more_targets_flag],nsa.DEC[more_targets_flag],c=mycolor[more_targets_flag],s=10,vmin=v1,vmax=v2,cmap='jet',marker='o')
+    plt.colorbar(fraction=0.08, label=mylabel)
+    #plt.axis([120,240,-10,50])
+    plt.gca().invert_xaxis()
+    #plt.ylim(0,50)
+
