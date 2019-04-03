@@ -551,79 +551,40 @@ except KeyError:
 try: # pointing 96
     pointing_offsets_ra[nsadict[117685]] = 0./60
     pointing_offsets_dec[nsadict[117685]] = -1.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 97
     pointing_offsets_ra[nsadict[118414]] = -4./60
     pointing_offsets_dec[nsadict[118414]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 107
     pointing_offsets_ra[nsadict[143701]] = 0./60
     pointing_offsets_dec[nsadict[143701]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 109
     pointing_offsets_ra[nsadict[163875]] = 0./60
     pointing_offsets_dec[nsadict[163875]] = 2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-
-try: # pointing 110
     pointing_offsets_ra[nsadict[143841]] = -2./60
     pointing_offsets_dec[nsadict[143841]] = 12./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-
-try: # pointing 120
     pointing_offsets_ra[nsadict[144056]] = 21.5/60
     pointing_offsets_dec[nsadict[144056]] = -2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 128
     pointing_offsets_ra[nsadict[67567]] = 10/60
     pointing_offsets_dec[nsadict[67567]] = -2.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-
-try: # pointing 131
     pointing_offsets_ra[nsadict[17878]] = 3.5/60
     pointing_offsets_dec[nsadict[17878]] = 2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 135
     pointing_offsets_ra[nsadict[164911]] = -6/60
     pointing_offsets_dec[nsadict[164911]] = 3.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 137
     pointing_offsets_ra[nsadict[165082]] = -1./60
     pointing_offsets_dec[nsadict[165082]] = -1./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 138
     pointing_offsets_ra[nsadict[18052]] = 3./60
     pointing_offsets_dec[nsadict[18052]] = 3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 139
     pointing_offsets_ra[nsadict[165115]] = -6.5/60
     pointing_offsets_dec[nsadict[165115]] = -3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: #140
     id=145218
     pointing_offsets_ra[nsadict[id]] = 10./60
     pointing_offsets_dec[nsadict[id]] = 10.5/60
@@ -807,44 +768,39 @@ try:
 except KeyError:
     print('nsa id not found in list of pointings')
 
-
-try:
-    id=64408
-    pointing_offsets_ra[nsadict[id]] = 2./60
-    pointing_offsets_dec[nsadict[id]] = -2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-
-try:
-    id=157073
-    pointing_offsets_ra[nsadict[id]] = 4./60
-    pointing_offsets_dec[nsadict[id]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try:
-    id=84889
-    pointing_offsets_ra[nsadict[id]] = 3./60
-    pointing_offsets_dec[nsadict[id]] = 2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try:
-    id=135046
-    pointing_offsets_ra[nsadict[id]] = 5./60
-    pointing_offsets_dec[nsadict[id]] = 4./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-
-
-    
 ##################################################
 ############ END OF INT WFC OFFSETS
 ##################################################
 '''
 
+# make a dictionary to store the offsets according to NSA ID
+# format is offsets = {nsaid:[dra,ddec]}
+# offsets = {135046:[5.,4.],
+#            84889:[3.,2.],
+#            157073:[4.,0],
+#            64408:[2.,-1]
+#            }
+
+# The following are INT vallues, which I deleted from the long list above
+offsets_INT = {135046:[5.,4.],
+           84889:[3.,2.],
+           157073:[4.,0],
+           64408:[2.,-1]
+           }
+
+
+offsets_MLO = {135046:[5.,4.],
+           84889:[3.,2.]
+           }
+
+# change this to use the offsets for the desired telescope
+offsets = offsets_MLO
+
+for key in offsets:
+    pointing_offsets_ra[nsadict[key]] = offsets[key][0]/60.
+    pointing_offsets_dec[nsadict[key]] = offsets[key][1]/60.
+
+# update pointing centers to account for offsets
 pointing_ra += pointing_offsets_ra
 pointing_dec += pointing_offsets_dec
 
