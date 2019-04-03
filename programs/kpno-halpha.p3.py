@@ -19,14 +19,23 @@ start ipython in github/Virgo/
 %run programs/kpno-halpha.p3.py
 
 
-INT Feb 2019:
+To make airmass plots:
 
-airmass_plots(kittpeak=False,ING=True)
+   airmass_plots(kittpeak=False,ING=True)  # INT Feb 2019:
+
+   or
+
+   airmass_plots(kittpeak=False,MLO=True)  # MLO April 2019
 
 
+To make finding charts:
 
+   platinum_finding_chart(1,MLO=True,ING=False) # makes 1
 
+   make_all_platinum(MLO=True, KPNO=False,ING=False)
 
+   make_all_platinum(KPNO=True,ING=False,MLO=False,startnumber=None) # makes all, starting at number XX
+   
 To plot NE filament
 make_plot()
 
@@ -72,14 +81,13 @@ from astropy.coordinates import AltAz
 from astroplan import Observer
 from astroplan.plots import plot_airmass
 
-
-
-
 ########################################
 ###### RUN-SPECIFIC PARAMETERS  ########
 ########################################
+telescope_run = 'MLO-2019Apr-'
+
 # output file prefix
-outfile_prefix = 'observing/2018March-'
+outfile_prefix = 'observing/'+telescope_run
 max_pointing = 57
 
 #2019
@@ -87,8 +95,7 @@ outfile_prefix = 'observing/2019Feb-INT-'
 max_pointing = None
 
 # Mt Laguna Instrument
-dra = 13. #arcmin
-ddec = 13. # arcmin
+outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'+telescope_run
 
 
 ########################################
@@ -97,12 +104,12 @@ ddec = 13. # arcmin
 # mass cuts for plotting NSA galaxies
 minmass = 8.0
 maxmass = 11.2
+
 ###############################################
 ##### Set moretargets to be true to
 ##### look for lower mass sources at early RA
 ###############################################
-moretargets = True
-
+moretargets = False
 
 ########################################
 ######  READ IN DATA TABLES  #######
@@ -139,12 +146,17 @@ noCOflag = (co.COdetected == b'0')
 # the following are galaxies that we still need to observe
 # detected in CO but not yet observed in Halpha
 ha_obs = (halpha.date_obs != b'')
+# galaxies that we have observed AND detected in Halpha
 ha_detect = (halpha.date_obs != b'') & (halpha.halpha == 1)
+
+# galaxies that have NOT been observed in Halpha, but have been observed in CO
 need_obs = (halpha.date_obs == b'') & (co.CO != b'') #((co.COdetected == '1') | (co.COdetected == '0'))
 
-
-
 HIflag = (co.HI == b'1')
+
+########################################
+######  DEFINE FILAMENTS  #######
+########################################
 # NGC5353/4 Filament
 radec = (nsa.RA > 192.) & (nsa.RA < 209) & (nsa.DEC > 0.) & (nsa.DEC < 50.) 
 radec_flag = radec & (nsa.DEC >(2*(nsa.RA - 205.) + 20) ) & (nsa.DEC < (2*(nsa.RA - 205.) + 55))
@@ -166,6 +178,8 @@ obs_mass_flag = COsample & ~ha_obs #& (jmass.MSTAR_50 > 8.5) #& (jmass.MSTAR_50 
 filter_flag = (nsa.Z*3.e5 > 2490.) & (nsa.Z*3.e5 < 6000.)
 obs_mass_flag = COsample & ~ha_obs #& filter_flag
 
+
+# SELECTING LOWER MASS TARGETS FOR INT RUN IN FEB 2019
 more_targets_flag = (nsa.Z*3.e5 < 2300.) & (nsa.RA > 115.) & (nsa.RA < 140.) & ~COsample & ~ha_obs & (nsa.DEC > 20.) & (nsa.DEC < 40.) & (jmass.MSTAR_50 > 8.5)
 
 if moretargets == True:
@@ -175,8 +189,6 @@ if moretargets == True:
 ########################################
 ###### COLOR CODE FOR SCATTER PLOTS
 ########################################
-
-
 mycolor=jmass.MSTAR_50
 v1=minmass
 v2=maxmass
@@ -194,71 +206,12 @@ mylabel='$ v_r \ (km/s) $'
 ########################################
 
 
-# I sorted the pointings by RA in ipython
-# sindex = argsort(pointing_dec)
-# pointing_ra[sindex]
-## pointing_ra = np.array([ 196.95 ,#1
-##                          198.1  ,
-##                          198.075,
-##                          200.63 ,
-##                          203.395,#5
-##                          204.25 ,
-##                          206.13 ,
-##                          207.   ,
-##                          210.348,
-##                          210.048   ,#10
-##                          207.183,
-##                          207.89,
-##                          208.3  ,
-##                          207.452,
-##                          207.886,#15
-##                          208.48 ,
-##                          208.861,
-##                          208.64 ,
-##                          207.39 ,
-##                          206.3  ,#20
-##                          207.94 ,
-##                          207.1  ,
-##                          202.25  ,
-##                          202.34,
-##                          205.124 ,#25
-##                          209.272,
-##                          200.752,
-##                          200.73,
-##                          204.434])
-## pointing_dec = np.array([ 21.14  ,#1
-##                           21.59  ,
-##                           22.95  ,
-##                           28.48  ,
-##                           31.826 ,#5
-##                           31.95  ,
-##                           35.19  ,
-##                           36.16  ,
-##                           36.7909,
-##                           38.352  ,#10
-##                           39.387 ,
-##                           39.575 ,
-##                           39.6   ,
-##                           39.887 ,
-##                           40.2799,#15
-##                           40.34  ,
-##                           40.37  ,
-##                           41.308 ,
-##                           41.55  ,
-##                           41.59  ,#20
-##                           43.345 ,
-##                           43.56  ,
-##                           46.47  ,
-##                           46.78 ,
-##                           42.998,#25
-##                           41.8254,
-##                           23.2995,
-##                           26.977,
-##                           33.0055 ])
-
+# keep only objects that have been observed in CO but NOT observed in Halpha
 pointing_ra = nsa.RA[obs_mass_flag]
 pointing_dec = nsa.DEC[obs_mass_flag]
 pointing_id = nsa.NSAID[obs_mass_flag]
+
+# sort by RA
 sorted_indices = np.argsort(pointing_ra)
 pointing_dec = pointing_dec[sorted_indices]
 pointing_ra = pointing_ra[sorted_indices]
@@ -306,6 +259,8 @@ try:
     pointing_offsets_dec[nsadict[164223]] = 0.15
 except KeyError:
     print('nsa id not found in list of pointings')
+'''
+
 '''
 ##################################################
 ############ INT WFC OFFSETS
@@ -888,6 +843,7 @@ except KeyError:
 ##################################################
 ############ END OF INT WFC OFFSETS
 ##################################################
+'''
 
 pointing_ra += pointing_offsets_ra
 pointing_dec += pointing_offsets_dec
@@ -968,6 +924,7 @@ def show_INT_feb():
     plt.axis([115,200,15,52])
     plt.gca().invert_xaxis()
     plt.savefig('plots/INT_feb_locations.png')
+    
 def make_plot(plotsingle=True):
     if plotsingle:
         plt.figure()
@@ -1049,7 +1006,7 @@ def finding_chart_all():
         plt.close('all')
         finding_chart(i)
 
-def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsingle=True,ING_flag=False,mtlaguna=False):
+def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsingle=True,ING=False,MLO=False,KPNO=False):
     galsize=0.033
     i = npointing-1
 
@@ -1066,11 +1023,11 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     pos = coords.SkyCoord(center_ra,center_dec,frame='icrs',unit='degree')
     delta_imagex=2.*delta_image
     delta_imagey=2.*delta_image
-    if ING_flag:
+    if ING:
         delta_imagex=.8 #image width in deg
         delta_imagey=.8 # image width in deg
         xout = SkyView.get_images(pos,survey=['DSS'],height=delta_imagex*u.degree,width=delta_imagey*u.degree)
-    elif mtlaguna:
+    elif MLO:
         delta_imagex = 13./60. # image width in deg
         delta_imagey = 13./60 # image width in deg
     xout = SkyView.get_images(pos,survey=['DSS'],height=2*delta_image*u.degree,width=2.*delta_image*u.degree)
@@ -1080,15 +1037,15 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
                                                            b.header['CRVAL2']+(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2'],
                                                            b.header['CRVAL2']-(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2']])
 
-    if ING_flag:
+    if ING:
         # add footprint of WFC chips
         plot_INT_footprint(center_ra,center_dec)
-    elif mtlaguna:
+    elif MLO:
         delta_arcmin = 13.
-        rect= plt.Rectangle((center_ra-delta_image,center_dec-delta_image), delta_arcmin/60., delta_arcmin/60.,fill=False, color='k')
+        rect= plt.Rectangle((center_ra-0.5*delta_imagex,center_dec-0.5*delta_imagey), delta_arcmin/60., delta_arcmin/60.,fill=False, color='k')
         plt.gca().add_artist(rect)
          
-    else:
+    elif KPNO:
         rect= plt.Rectangle((center_ra-delta_image,center_dec-delta_image), 0.5, 0.5,fill=False, color='k')
         plt.gca().add_artist(rect)
 
@@ -1167,7 +1124,7 @@ def plot_INT_footprint(center_ra,center_dec):
     
         
 def add_cameras():
-    # add guidestar cameras
+    # add guidestar cameras for HDI
     # North camera
     delta_ra = 0
     delta_dec = 2610./3600
@@ -1188,45 +1145,28 @@ def finding_chart_with_guide_stars(npointing,offset_ra=0.,offset_dec=0.):
     finding_chart(npointing, delta_image=.75,offset_ra=offset_ra, offset_dec=offset_dec,plotsingle=False)
     plt.savefig(outfile_prefix+'Pointing%02d-guiding.png'%(npointing))
 
-def make_all_platinum(ING_flag=False,mtlaguna=False,startnumber=None):
-    
+def make_all_platinum(KPNO=True,ING=False,MLO=False,startnumber=None):    
     if max_pointing != None:
         pointing_range = range(max_pointing)
     else:
         pointing_range = range(len(pointing_ra))
     for i in pointing_range:
         plt.close('all')
-        if ING_flag:
-            platinum_finding_chart_ING(i+1)
-        else:
-            platinum_finding_chart(i+1,ING_flag=ING_flag)
+        platinum_finding_chart(i+1,KPNO=KPNO,ING=ING,MLO=MLO)
 
-def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING_flag=False):
-    fig = plt.figure(figsize = (10,6))
-    grid = plt.GridSpec(2,3,hspace=.4,wspace=.2,left=.05)
-    hdi = fig.add_subplot(grid[:,:-1])
-    finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING_flag = ING_flag)
-    south_camera = fig.add_subplot(grid[1,2])
-    show_guide_camera(npointing,south_camera=True,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
-    north_camera = fig.add_subplot(grid[0,2])
-    show_guide_camera(npointing,south_camera=False,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
-    plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
-
-def platinum_finding_chart_ING(npointing,offset_ra=0.,offset_dec=0.):
-    fig = plt.figure(figsize = (8,8.))
-    #grid = plt.GridSpec(2,3,hspace=.4,wspace=.2,left=.05)
-    #hdi = fig.add_subplot(grid[:,:-1])
-    finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING_flag = True)
-    if moretargets:
-        plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
+def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=False,MLO=False):
+    if KPNO:
+        fig = plt.figure(figsize = (10,6))
+        grid = plt.GridSpec(2,3,hspace=.4,wspace=.2,left=.05)
+        hdi = fig.add_subplot(grid[:,:-1])
+        finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING=ING,MLO=MLO,KPNO=KPNO)
+        south_camera = fig.add_subplot(grid[1,2])
+        show_guide_camera(npointing,south_camera=True,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
+        north_camera = fig.add_subplot(grid[0,2])
+        show_guide_camera(npointing,south_camera=False,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
     else:
-        plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
-
-def platinum_finding_chart_mtlaguna(npointing,offset_ra=0.,offset_dec=0.):
-    fig = plt.figure(figsize = (8,8.))
-    #grid = plt.GridSpec(2,3,hspace=.4,wspace=.2,left=.05)
-    #hdi = fig.add_subplot(grid[:,:-1])
-    finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING_flag = True)
+        fig = plt.figure(figsize = (8,8.))
+        finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING=ING,MLO=MLO,KPNO=KPNO)
     if moretargets:
         plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
     else:
@@ -1305,22 +1245,32 @@ def show_guide_camera(npointing,south_camera=True,offset_ra=0,offset_dec=0,plots
 
 
         
-def airmass_plots(kittpeak=True,ING=False):
+def airmass_plots(kittpeak=True,ING=False,MLO=False):
 
     observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
     if kittpeak:
         print('plotting airmass curves for Kitt Peak')
         observing_location = EarthLocation.of_site('Kitt Peak')
         observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
-    elif mtlaguna:
-        print('plotting airmass curves for Mt Laguna')
-        observing_location = EarthLocation.of_site(u'Roque de los Muchachos')
-        observer_site = Observer.at_site("Roque de los Muchachos", timezone="GMT")
-    elif ING:
-        print('plotting airmass curves for INT')
+        start_time = Time('2017-03-12 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
+        end_time = Time('2017-03-12 14:00:00')
+
+    elif MLO:
+        print('plotting airmass curves for MLO')
         observing_location = EarthLocation.of_site(u'Palomar')
         observer_site = Observer.at_site("Palomar", timezone="US/Pacific")
+        # for run starting 2019-Apr-04 at MLO
+        start_time = Time('2019-04-03 01:00:00') # need to enter UTC time, MLO UTC+6?
+        end_time = Time('2019-04-03 14:00:00')
         
+    elif ING:
+        print('plotting airmass curves for INT')
+        observing_location = EarthLocation.of_site(u'Roque de los Muchachos')
+        observer_site = Observer.at_site("Roque de los Muchachos", timezone="GMT")
+        # for run starting 2019-Feb-04 at INT
+        start_time = Time('2019-02-04 19:00:00') # INT is on UTC
+        end_time = Time('2019-02-05 07:00:00')
+
     #observing_time = Time('2017-05-19 07:00')  # 1am UTC=6pm AZ mountain time
     #observing_time = Time('2018-03-12 07:00')  # 1am UTC=6pm AZ mountain time
     #aa = AltAz(location=observing_location, obstime=observing_time)
@@ -1328,12 +1278,7 @@ def airmass_plots(kittpeak=True,ING=False):
 
     #for i in range(len(pointing_ra)):
 
-    start_time = Time('2017-03-12 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
-    end_time = Time('2017-03-12 14:00:00')
 
-    # for run starting 2019-Feb-04 at INT
-    start_time = Time('2019-02-04 19:00:00') # INT is on UTC
-    end_time = Time('2019-02-05 07:00:00')
 
     delta_t = end_time - start_time
     observing_time = start_time + delta_t*np.linspace(0, 1, 75)
@@ -1402,7 +1347,6 @@ def get_more_targets():
     # selecting targets in early part of night for Feb 2019 INT run
     # need to supplement CO sample b/c we are so efficient!
     # 
-
     plt.figure()
     plt.scatter(nsa.RA[more_targets_flag],nsa.DEC[more_targets_flag],c=mycolor[more_targets_flag],s=10,vmin=v1,vmax=v2,cmap='jet',marker='o')
     plt.colorbar(fraction=0.08, label=mylabel)
