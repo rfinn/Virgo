@@ -3,18 +3,25 @@ import os
 #Get current path so program can tell if this is being run on Kelly's or Rose's computer
 mypath=os.getcwd()
 if mypath.find('rfinn') > -1:
-    print "Running on Rose's computer"
+    print("Running on Rose's computer")
     #agcfile='/Users/rfinn/idl/programs/idl_alfa/agctotal.sav'
     gitpath='/Users/rfinn/github/'
     nsapath = '/Users/rfinn/research/NSA/'
     gswlpath = '/Users/rfinn/Dropbox/Research/GSWLC/'
     agcpath = '/Users/rfinn/research/AGC/'
 elif mypath.find('kelly') > -1:
-    print "Running on Kellys's computer"
+    print("Running on Kellys's computer")
     gitpath='/Users/kellywhalen/Github/'
     nsapath = '/Users/kellywhalen/RESEARCH/NSA_table/'
     gswlpath = '/Users/kellywhalen/RESEARCH/GSWLC/'
     agcpath = '/Users/kellywhalen/RESEARCH/AGC/'
+elif mypath.find('grudnick') > -1:
+    print("Running on Greg's computer")
+    gitpath='/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/'
+    ###dummy variables as I don't have the full NSA, GSWL, or AGC catalogs
+    nsapath = '/Users/grudnick/Temp/'
+    gswlpath = '/Users/grudnick/Temp/'
+    agcpath = '/Users/grudnick/Temp/'
 
 tablepath = gitpath+'Virgo/tables/'
 galex_file = gitpath+'Virgo/tables/GALEX-WISE-allsky_virgo.fits'
