@@ -85,16 +85,14 @@ from astroplan.plots import plot_airmass
 ########################################
 ###### RUN-SPECIFIC PARAMETERS  ########
 ########################################
-
+telescope_run = 'MLO-2019Apr-'
+outfile_prefix = outfile_prefix+telescope_run
 
 max_pointing = 57
 
 #2019
 
 max_pointing = None
-
-## Change output file directory and prefix in virgoCommon.py
-
 
 ########################################
 ###### OTHER PARAMETERS  ########
@@ -119,11 +117,12 @@ co = fits.getdata(tablepath+cofile)
 nsa = fits.getdata(nsa_file)
 jmass = fits.getdata(mass_file)
 wise = fits.getdata(wise_file)
-if moretargets:
-    halpha = fits.getdata(halpha_file)
-else:
+halpha = fits.getdata(halpha_file)
+#if moretargets:
+#    halpha = fits.getdata(halpha_file)
+#else:
 #    halpha = fits.getdata('/Users/rfinn/github/Virgo/tables/nsa_Halpha.virgo.2019Feb04.fits')
-    halpha = fits.getdata(tablepath+'nsa_Halpha.virgo.2019Feb04.fits')
+#    halpha = fits.getdata(tablepath+'nsa_Halpha.virgo.2019Feb04.fits')
 CJcat = fits.getdata(tablepath+'All-virgo-20feb18_env_H070-FITS.fits')
 # find CO targets that are not in NSA?
 
