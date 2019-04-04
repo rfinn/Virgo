@@ -649,8 +649,8 @@ offsets_INT = {135046:[5.,4.],
            }
 
 
-offsets_MLO = {135046:[5.,4.],
-           84889:[3.,2.]
+offsets_MLO = {#135046:[5.,4.],
+#           84889:[3.,2.]
            }
 
 # change this to use the offsets for the desired telescope
