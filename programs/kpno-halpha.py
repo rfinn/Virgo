@@ -13,7 +13,7 @@ PURPOSE:
 USEAGE:
 start ipython in github/Virgo/
 
-%run programs/kpno2017A.py
+%run programs/kpno-halpha.py
 
 To plot NE filament
 make_plot()
@@ -65,6 +65,10 @@ from astroplan.plots import plot_airmass
 outfile_prefix = 'observing/2018March-'
 max_pointing = 57
 
+#2019
+outfile_prefix = 'observing/2019Feb-INT-'
+max_pointing = 10
+
 ########################################
 ###### OTHER PARAMETERS  ########
 ########################################
@@ -110,6 +114,7 @@ ha_detect = (halpha.date_obs != '') & (halpha.halpha == 1)
 need_obs = (halpha.date_obs == '') & (co.CO != '') #((co.COdetected == '1') | (co.COdetected == '0'))
 
 
+
 HIflag = (co.HI == '1')
 # NGC5353/4 Filament
 radec = (nsa.RA > 192.) & (nsa.RA < 209) & (nsa.DEC > 0.) & (nsa.DEC < 50.) 
@@ -128,6 +133,9 @@ NGCfilament = filament
 # stellar mass between 8.5 < log(M*/Msun) < 10.  according to NSF proposal
 obs_mass_flag = COsample & ~ha_obs & (jmass.MSTAR_50 > 8.5) & (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
 
+# resetting to COsample for 2019 observing season
+
+obs_mass_flag = COsample & ~ha_obs
 
 
 ########################################
@@ -218,33 +226,33 @@ pointing_offsets_dec = np.zeros(len(pointing_ra))
 try:
     pointing_offsets_dec[nsadict[50209]] = -0.15
 except KeyError:
-    print 'nsa id not found in list of pointings'
+    print('nsa id not found in list of pointings')
 
 try:
     pointing_offsets_dec[nsadict[157256]] = 0.2
 except KeyError:
-    print 'nsa id not found in list of pointings'
+    print('nsa id not found in list of pointings')
 
 try:
     pointing_offsets_ra[nsadict[85510]] = -0.1
     pointing_offsets_dec[nsadict[85510]] = -0.07
 except KeyError:
-    print 'nsa id not found in list of pointings'
+    print('nsa id not found in list of pointings')
 
 try:
     pointing_offsets_ra[nsadict[90957]] = 0.1
 except KeyError:
-    print 'nsa id not found in list of pointings'
+    print('nsa id not found in list of pointings')
 
 try:
     pointing_offsets_dec[nsadict[160613]] = -0.1
 except KeyError:
-    print 'nsa id not found in list of pointings'
+    print('nsa id not found in list of pointings')
     
 try:
     pointing_offsets_dec[nsadict[164223]] = 0.15
 except KeyError:
-    print 'nsa id not found in list of pointings'
+    print('nsa id not found in list of pointings')
 
 pointing_ra += pointing_offsets_ra
 pointing_dec += pointing_offsets_dec
@@ -260,8 +268,8 @@ def find_CO_noNSA():
     # only keep matches with matched RA and Dec w/in 1 arcsec
     matchflag = dist2d.degree < 5./3600
 
-    print 'number in CO catalog = ',len(CJcat.RA)
-    print 'number with NSA matches = ',sum(matchflag)
+    print('number in CO catalog = ',len(CJcat.RA))
+    print('number with NSA matches = ',sum(matchflag))
     return matchflag
 def add_detections():
     pointing_ra = nsa.RA[COflag]
@@ -298,7 +306,7 @@ def plot_positions(plotsingle=True, flag = need_obs,plotha=True):
     if plotha:
         plt.plot(nsa.RA[ha_obs],nsa.DEC[ha_obs],'cs',mfc='None',markersize=8)
     if plotsingle:
-        plt.colorbar(label='$ \log_{10}(M_*/M_\odot) $')
+        plt.colorbar(label='$ \log_{10}(M_*/M_\odot) $',fraction=0.08)
         plt.legend()
         #plt.gca().invert_xaxis()
 def add_nsa():
@@ -306,7 +314,7 @@ def add_nsa():
 
 def make_plot_2018(plotsingle=True):
     if plotsingle:
-        plt.figure()
+        plt.figure(figsize=(9,4))
     add_nsa()
     plot_positions(plotsingle=plotsingle,flag=obs_mass_flag)
     #add_detections()
@@ -354,9 +362,9 @@ def plotall(delta=1.5,nrow=3,ncol=3):
     nfig = 0
     
     if max_pointing != None:
-        pointing_range = range(max_pointing)
+        pointing_range = list(range(max_pointing))
     else:
-        pointing_range = range(len(pointing_ra))
+        pointing_range = list(range(len(pointing_ra)))
         
     for i in pointing_range:
         if count == 0:
@@ -399,12 +407,12 @@ def finding_chart_all():
         plt.close('all')
         finding_chart(i)
 
-def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsingle=True):
+def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsingle=True,ING_flag=False):
     i = npointing-1
     galsize=0.033
     center_ra = pointing_ra[i]+offset_ra
     center_dec = pointing_dec[i] + offset_dec
-    print 'center ra, dec = ',center_ra,center_dec
+    print('center ra, dec = ',center_ra,center_dec)
     if plotsingle:
         if delta_image > .3:
             plt.subplots_adjust(right=.9,top=.9,bottom=.1,left=.1)
@@ -413,27 +421,35 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
             plt.figure(figsize=(6,6))
     ax=plt.gca()
     pos = coords.SkyCoord(center_ra,center_dec,frame='icrs',unit='degree')
-    xout = SkyView.get_images(pos,survey=['DSS'],height=2*delta_image*u.degree,width=2.*delta_image*u.degree)
+    if ING_flag:
+        xout = SkyView.get_images(pos,survey=['DSS'],height=.7*u.degree,width=.6*u.degree)
+    else:
+        xout = SkyView.get_images(pos,survey=['DSS'],height=2*delta_image*u.degree,width=2.*delta_image*u.degree)
     b=xout[0][0]
     ax.imshow(xout[0][0].data,interpolation='none',aspect='equal',cmap='gray_r',extent=[b.header['CRVAL1']-(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
                                                            b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
                                                            b.header['CRVAL2']+(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2'],
                                                            b.header['CRVAL2']-(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2']])
 
-    # add footprint of HDI
-    rect= plt.Rectangle((center_ra-.25,center_dec-.25), 0.5, 0.5,fill=False, color='k')
-    plt.gca().add_artist(rect)
+    if ING_flag:
+        # add footprint of WFC chips
+        plot_INT_footprint(center_ra,center_dec)
+    else:
+        rect= plt.Rectangle((center_ra-delta_image,center_dec-delta_image), 0.5, 0.5,fill=False, color='k')
+        plt.gca().add_artist(rect)
+
     #add_cameras()
     # find galaxies on FOV
     gals = (nsa.RA > (center_ra-delta_image)) & (nsa.RA < (center_ra+delta_image)) & (nsa.DEC > (center_dec-delta_image)) & (nsa.DEC < (center_dec+delta_image))
-    print 'pointing ',i+1,' ngal = ',np.sum(gals)
+    print('pointing ',i+1,' ngal = ',np.sum(gals))
     gindex=np.arange(len(nsa.RA))[gals]
-    print 'Pointing %02d Galaxies'%(npointing),': ',nsa.NSAID[gals]
+    print('Pointing %02d Galaxies'%(npointing),': ',nsa.NSAID[gals])
     for j in gindex:
         ran,decn=fix_project(nsa.RA[j],nsa.DEC[j],b)
         rect= plt.Rectangle((ran-galsize/2.,decn-galsize/2.), galsize, galsize,fill=False, color='c')
         plt.gca().add_artist(rect)
-        plt.text(ran,decn+galsize/2.,nsa.NSAID[j],fontsize=10,clip_on=True,horizontalalignment='center')
+        s='%i, vr=%i'%(nsa.NSAID[j],nsa.ZDIST[j]*3.e5)
+        plt.text(ran,decn+galsize/2.,s,fontsize=10,clip_on=True,horizontalalignment='center')
         plt.text(ran,decn-galsize/2.,co.NEDname[j],fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='top')
         if COflag[j]:
             size=galsize-.005
@@ -455,6 +471,36 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     if plotsingle:
         plt.savefig(outfile_prefix+'Pointing%02d.png'%(i+1))
 
+def plot_INT_footprint(center_ra,center_dec):
+    #using full detector sizes for now because 
+    detector_dra = 2048.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+    detector_ddec = 4100.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+    # draw footprint of chip 4
+    rect= plt.Rectangle((center_ra-detector_dra/2.,center_dec-detector_ddec/2.), detector_dra, detector_ddec,fill=False, color='k')
+    plt.gca().add_artist(rect)
+    # draw footpring of chip 3
+    # assuming chip 3 is WEST of chip 4
+    offset_ra = -1.*detector_dra-17./3600. # 17 arcsec gap in RA between 
+    offset_dec = 9.5/3600. # 9.5 arcsec offset toward N
+    rect= plt.Rectangle((center_ra+offset_ra-detector_dra/2.,center_dec+offset_dec-detector_ddec/2.), detector_dra, detector_ddec,fill=False, color='k')
+    plt.gca().add_artist(rect)
+
+    # draw footpring of chip 1
+    # assuming chip 1 is EAST of chip 4
+    offset_ra = detector_dra+22.7/3600. # 17 arcsec gap in RA between 
+    offset_dec = -3.18/3600. # 9.5 arcsec offset toward N
+    rect= plt.Rectangle((center_ra+offset_ra-detector_dra/2.,center_dec+offset_dec-detector_ddec/2.), detector_dra, detector_ddec,fill=False, color='k')
+    plt.gca().add_artist(rect)
+
+    # draw footpring of chip 2
+    # assuming chip 2 is NORTH of chip 4
+    offset_ra = detector_dra/2.-19.2/3600. # hard to explain
+    offset_dec =  detector_ddec/2.+23.8/3600.# hard to explain
+    # this chip is rotated 90 deg, so detecter_dra and detector_ddec are interchanged
+    rect= plt.Rectangle((center_ra+offset_ra,center_dec+offset_dec), -1.*detector_ddec, detector_dra,fill=False, color='k')
+    plt.gca().add_artist(rect)
+
+        
 def add_cameras():
     # add guidestar cameras
     # North camera
@@ -477,20 +523,20 @@ def finding_chart_with_guide_stars(npointing,offset_ra=0.,offset_dec=0.):
     finding_chart(npointing, delta_image=.75,offset_ra=offset_ra, offset_dec=offset_dec,plotsingle=False)
     plt.savefig(outfile_prefix+'Pointing%02d-guiding.png'%(npointing))
 
-def make_all_platinum():
+def make_all_platinum(ING_flag=False):
     if max_pointing != None:
         pointing_range = range(max_pointing)
     else:
         pointing_range = range(len(pointing_ra))
     for i in pointing_range:
         plt.close('all')
-        platinum_finding_chart(i+1)
+        platinum_finding_chart(i+1,ING_flag=ING_flag)
 
-def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.):
+def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING_flag=False):
     fig = plt.figure(figsize = (10,6))
     grid = plt.GridSpec(2,3,hspace=.4,wspace=.2,left=.05)
     hdi = fig.add_subplot(grid[:,:-1])
-    finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
+    finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING_flag = ING_flag)
     south_camera = fig.add_subplot(grid[1,2])
     show_guide_camera(npointing,south_camera=True,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False)
     north_camera = fig.add_subplot(grid[0,2])
@@ -511,7 +557,6 @@ def guide_cameras(npointing,offset_ra=0,offset_dec=0):
     ax = plt.gca()
     plt.text(-.1,1.15,mytitle,transform=ax.transAxes,horizontalalignment='center',fontsize=18)
 
-        
 def show_guide_camera(npointing,south_camera=True,offset_ra=0,offset_dec=0,plotsingle=True):
     '''
     offset_ra in arcsec
@@ -571,19 +616,32 @@ def show_guide_camera(npointing,south_camera=True,offset_ra=0,offset_dec=0,plots
 
 
         
-def airmass_plots():
+def airmass_plots(kittpeak=True,ING=False):
 
-    kpno = Observer.at_site("Kitt Peak", timezone="US/Mountain")
-    observing_location = EarthLocation.of_site('Kitt Peak')
+    observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
+    if kittpeak:
+        print('plotting airmass curves for Kitt Peak')
+        observing_location = EarthLocation.of_site('Kitt Peak')
+        observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
+    elif ING:
+        print('plotting airmass curves for INT')
+        observing_location = EarthLocation.of_site(u'Roque de los Muchachos')
+        observer_site = Observer.at_site("Roque de los Muchachos", timezone="GMT")
+        
     #observing_time = Time('2017-05-19 07:00')  # 1am UTC=6pm AZ mountain time
-    observing_time = Time('2018-03-12 07:00')  # 1am UTC=6pm AZ mountain time
+    #observing_time = Time('2018-03-12 07:00')  # 1am UTC=6pm AZ mountain time
     #aa = AltAz(location=observing_location, obstime=observing_time)
 
 
     #for i in range(len(pointing_ra)):
 
-    start_time = Time('2017-03-12 01:00:00')
+    start_time = Time('2017-03-12 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
     end_time = Time('2017-03-12 14:00:00')
+
+    # for run starting 2019-Feb-04 at INT
+    start_time = Time('2019-02-04 19:00:00') # INT is on UTC
+    end_time = Time('2019-02-05 07:00:00')
+
     delta_t = end_time - start_time
     observing_time = start_time + delta_t*np.linspace(0, 1, 75)
     for j in range(10):
@@ -592,9 +650,9 @@ def airmass_plots():
         for i in range(8):
             pointing_center = coords.SkyCoord(pointing_ra[8*j+i]*u.deg, pointing_dec[8*j+i]*u.deg, frame='icrs')
             if i == 3:
-                plot_airmass(pointing_center,kpno,observing_time,brightness_shading=True)
+                plot_airmass(pointing_center,observer_site,observing_time,brightness_shading=True)
             else:
-                plot_airmass(pointing_center,kpno,observing_time)
+                plot_airmass(pointing_center,observer_site,observing_time)
             legend_list.append('Pointing %02d'%(8*j+i+1))
     
         plt.legend(legend_list)
@@ -626,5 +684,11 @@ def check_CO():
     CJnoNSA = ~matchflag
     for i in range(len(CJnoNSA)):
         if CJnoNSA[i]:
-            print '%18s %18s %.8f %.8f'%(CJcat.source_name[i], CJcat.NEDname[i],CJcat.RA[i],CJcat.DEC[i])
+            print('%18s %18s %.8f %.8f'%(CJcat.source_name[i], CJcat.NEDname[i],CJcat.RA[i],CJcat.DEC[i]))
         
+    '''
+    results in
+    number in CO catalog =  227
+    number with NSA matches =  226
+           UGC8656          UGC 08656 205.12995833 42.99388889
+    '''
