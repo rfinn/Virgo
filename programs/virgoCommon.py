@@ -1,5 +1,6 @@
 import os
 
+telescope_run = 'MLO-2019Apr-'
 #Get current path so program can tell if this is being run on Kelly's or Rose's computer
 mypath=os.getcwd()
 if mypath.find('rfinn') > -1:
