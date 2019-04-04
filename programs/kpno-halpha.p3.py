@@ -268,287 +268,145 @@ except KeyError:
 try:
     pointing_offsets_ra[nsadict[50207]] = -8./60
     pointing_offsets_dec[nsadict[50207]] = 12./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 01
     pointing_offsets_ra[nsadict[64280]] = -8.5/60
     pointing_offsets_dec[nsadict[64280]] = -3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-
-try: # pointing 02
     pointing_offsets_ra[nsadict[64353]] = 14.5/60
     pointing_offsets_dec[nsadict[64353]] = 12./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-
-try: # pointing 04
     pointing_offsets_ra[nsadict[135051]] = 90./3600
     pointing_offsets_dec[nsadict[135051]] = 90./3600
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 09
     pointing_offsets_ra[nsadict[15877]] = 4./60
     pointing_offsets_dec[nsadict[15877]] = -7./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 10
     pointing_offsets_ra[nsadict[156774]] = -4./60
     pointing_offsets_dec[nsadict[156774]] = -2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try:
     pointing_offsets_ra[nsadict[135296]] = -3./60
     pointing_offsets_dec[nsadict[135296]] = 3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 14
     pointing_offsets_ra[nsadict[135465]] = 0./60
     pointing_offsets_dec[nsadict[135465]] = 2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 16
     pointing_offsets_ra[nsadict[50379]] = 0./60
     pointing_offsets_dec[nsadict[50379]] = 3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 18
     pointing_offsets_ra[nsadict[135527]] = 0./60
     pointing_offsets_dec[nsadict[135527]] = -2.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 20
     pointing_offsets_ra[nsadict[135602]] = 0./60
     pointing_offsets_dec[nsadict[135602]] = -2.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 21
     pointing_offsets_ra[nsadict[135606]] = 4./60
     pointing_offsets_dec[nsadict[135606]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 22
     pointing_offsets_ra[nsadict[50569]] = -.5/60
     pointing_offsets_dec[nsadict[50569]] = 3/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 23
     pointing_offsets_ra[nsadict[135797]] = -6./60
     pointing_offsets_dec[nsadict[135797]] = 4./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 26
     pointing_offsets_ra[nsadict[47220]] = -7.5/60
     pointing_offsets_dec[nsadict[47220]] = -2/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 27
     pointing_offsets_ra[nsadict[135852]] = -9./60
     pointing_offsets_dec[nsadict[135852]] = -2/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 28
     pointing_offsets_ra[nsadict[135862]] = 5/60
     pointing_offsets_dec[nsadict[135862]] = 3/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 31
     pointing_offsets_ra[nsadict[157256]] = 0./60
     pointing_offsets_dec[nsadict[157256]] = 13/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 32
     pointing_offsets_ra[nsadict[64909]] = -2/60
     pointing_offsets_dec[nsadict[64909]] = 2.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 35
     pointing_offsets_ra[nsadict[136042]] = 0./60
     pointing_offsets_dec[nsadict[136042]] = 1/60
-except KeyError:
-    print('nsa id not found in list of pointings')
-try: # pointing 36
+
     pointing_offsets_ra[nsadict[85513]] = 0./60
     pointing_offsets_dec[nsadict[85513]] = 13/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 38
     pointing_offsets_ra[nsadict[85367]] = 0./60
     pointing_offsets_dec[nsadict[85367]] = 3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 41
     pointing_offsets_ra[nsadict[157480]] = 1.5/60
     pointing_offsets_dec[nsadict[157480]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 43
     pointing_offsets_ra[nsadict[157495]] = 3.5/60
     pointing_offsets_dec[nsadict[157495]] = 3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 47
     pointing_offsets_ra[nsadict[107148]] = -5/60
     pointing_offsets_dec[nsadict[107148]] = -2.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 48
     pointing_offsets_ra[nsadict[85977]] = 0./60
     pointing_offsets_dec[nsadict[85977]] = -2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 49
     pointing_offsets_ra[nsadict[48222]] = -4./60
     pointing_offsets_dec[nsadict[48222]] = 3.3/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 50
     pointing_offsets_ra[nsadict[137045]] = -5./60
     pointing_offsets_dec[nsadict[137045]] = -3/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 53
     pointing_offsets_ra[nsadict[107715]] = 0./60
     pointing_offsets_dec[nsadict[107715]] = 2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 55
     pointing_offsets_ra[nsadict[137391]] = 10.5/60
     pointing_offsets_dec[nsadict[137391]] = -2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 56
     pointing_offsets_ra[nsadict[137460]] = -8/60
     pointing_offsets_dec[nsadict[137460]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 57
     pointing_offsets_ra[nsadict[107764]] = 19./60
     pointing_offsets_dec[nsadict[107764]] = -3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 59
     pointing_offsets_ra[nsadict[88142]] = 5./60
     pointing_offsets_dec[nsadict[88142]] = -10./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 62
     pointing_offsets_ra[nsadict[137993]] = -7./60
     pointing_offsets_dec[nsadict[137993]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 64
     pointing_offsets_ra[nsadict[90176]] = 0./60
     pointing_offsets_dec[nsadict[90176]] = 3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 65
     pointing_offsets_ra[nsadict[138221]] = -3.6/60
     pointing_offsets_dec[nsadict[138221]] = 2.2/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 68
     pointing_offsets_ra[nsadict[87097]] = -3./60
     pointing_offsets_dec[nsadict[87097]] = -3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 69
     pointing_offsets_ra[nsadict[87086]] = 3./60
     pointing_offsets_dec[nsadict[87086]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 70
     pointing_offsets_ra[nsadict[138642]] = 4./60
     pointing_offsets_dec[nsadict[138642]] = 2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 71
     pointing_offsets_ra[nsadict[159520]] = 0./60
     pointing_offsets_dec[nsadict[159520]] = -4.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 75
     pointing_offsets_ra[nsadict[159779]] = 0.75/60
     pointing_offsets_dec[nsadict[159779]] = -2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 77
     pointing_offsets_ra[nsadict[101649]] = 8./60
     pointing_offsets_dec[nsadict[101649]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 81
     pointing_offsets_ra[nsadict[93963]] = 11.5/60
     pointing_offsets_dec[nsadict[93963]] = -2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 82
     pointing_offsets_ra[nsadict[90957]] = 8./60
     pointing_offsets_dec[nsadict[90957]] = 9./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 85
     pointing_offsets_ra[nsadict[92459]] = 5./60
     pointing_offsets_dec[nsadict[92459]] = -3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 91
     pointing_offsets_ra[nsadict[140301]] = 0./60
     pointing_offsets_dec[nsadict[140301]] = -3.3/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 93
     pointing_offsets_ra[nsadict[160627]] = 4./60
     pointing_offsets_dec[nsadict[160627]] = -14/60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
-try: # pointing 96
     pointing_offsets_ra[nsadict[117685]] = 0./60
     pointing_offsets_dec[nsadict[117685]] = -1.5/60
 
