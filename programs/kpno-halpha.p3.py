@@ -21,11 +21,11 @@ start ipython in github/Virgo/
 
 To make airmass plots:
 
-   airmass_plots(kittpeak=False,ING=True)  # INT Feb 2019:
+   airmass_plots(KPNO=False,ING=True)  # INT Feb 2019:
 
    or
 
-   airmass_plots(kittpeak=False,MLO=True)  # MLO April 2019
+   airmass_plots(KPNO=False,MLO=True)  # MLO April 2019
 
 
 To make finding charts:
@@ -95,13 +95,6 @@ max_pointing = 57
 outfile_prefix = 'observing/2019Feb-INT-'
 max_pointing = None
 
-# Mt Laguna Instrument
-if os.getenv("HOME").find('rfinn') > -1:
-    outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'+telescope_run
-    tabledir = '/Users/rfinn/github/Virgo/tables/'
-elif os.getenv("HOME").find('grudnick') > -1:
-    outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts/'+telescope_run
-    tabledir = '/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/Virgo/tables/'
 
 ########################################
 ###### OTHER PARAMETERS  ########
@@ -119,7 +112,7 @@ moretargets = False
 ########################################
 ######  READ IN DATA TABLES  #######
 ########################################
-tablepath = gitpath+'Virgo/tables/'
+
 cofile = 'nsa_CO-Gianluca.virgo.fits'
 co = fits.getdata(tablepath+cofile)
 
@@ -130,7 +123,7 @@ if moretargets:
     halpha = fits.getdata(halpha_file)
 else:
 #    halpha = fits.getdata('/Users/rfinn/github/Virgo/tables/nsa_Halpha.virgo.2019Feb04.fits')
-    halpha = fits.getdata(/nsa_Halpha.virgo.2019Feb04.fits')
+    halpha = fits.getdata(tablepath+'nsa_Halpha.virgo.2019Feb04.fits')
 CJcat = fits.getdata(tablepath+'All-virgo-20feb18_env_H070-FITS.fits')
 # find CO targets that are not in NSA?
 
@@ -1065,10 +1058,10 @@ def show_guide_camera(npointing,south_camera=True,offset_ra=0,offset_dec=0,plots
 
 
         
-def airmass_plots(kittpeak=True,ING=False,MLO=False):
+def airmass_plots(KPNO=False,ING=False,MLO=False):
 
     observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
-    if kittpeak:
+    if KPNO:
         print('plotting airmass curves for Kitt Peak')
         observing_location = EarthLocation.of_site('Kitt Peak')
         observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
