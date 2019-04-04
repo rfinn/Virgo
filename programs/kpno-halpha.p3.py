@@ -95,6 +95,22 @@ max_pointing = 57
 outfile_prefix = 'observing/2019Feb-INT-'
 max_pointing = None
 
+<<<<<<< HEAD
+=======
+# Mt Laguna Instrument
+<<<<<<< HEAD
+#outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'+telescope_run
+outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts/'+telescope_run
+
+=======
+if os.getenv("HOME").find('rfinn') > -1:
+    outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'+telescope_run
+    tabledir = '/Users/rfinn/github/Virgo/tables/'
+elif os.getenv("HOME").find('grudnick') > -1:
+    outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts/'+telescope_run
+    tabledir = '/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/Virgo/tables/'
+>>>>>>> 3d3542fb5101df8afeac98ed2c6f2fc1bce175f2
+>>>>>>> 6f016b2c109d66ff0ceee3ad01d64cea26c8f7ae
 
 ########################################
 ###### OTHER PARAMETERS  ########
@@ -1061,8 +1077,13 @@ def show_guide_camera(npointing,south_camera=True,offset_ra=0,offset_dec=0,plots
 def airmass_plots(KPNO=False,ING=False,MLO=False):
 
     observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
+<<<<<<< HEAD
     if KPNO:
         print('plotting airmass curves for Kitt Peak')
+=======
+    if kittpeak:
+
+>>>>>>> 6f016b2c109d66ff0ceee3ad01d64cea26c8f7ae
         observing_location = EarthLocation.of_site('Kitt Peak')
         observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
         start_time = Time('2017-03-12 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time

@@ -9,12 +9,16 @@ if mypath.find('rfinn') > -1:
     nsapath = '/Users/rfinn/research/NSA/'
     gswlpath = '/Users/rfinn/Dropbox/Research/GSWLC/'
     agcpath = '/Users/rfinn/research/AGC/'
+    outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'+telescope_run
+    tablepath = '/Users/rfinn/github/Virgo/tables/'
+
 elif mypath.find('kelly') > -1:
     print("Running on Kellys's computer")
     gitpath='/Users/kellywhalen/Github/'
     nsapath = '/Users/kellywhalen/RESEARCH/NSA_table/'
     gswlpath = '/Users/kellywhalen/RESEARCH/GSWLC/'
     agcpath = '/Users/kellywhalen/RESEARCH/AGC/'
+
 elif mypath.find('grudnick') > -1:
     print("Running on Greg's computer")
     gitpath='/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/'
@@ -22,7 +26,10 @@ elif mypath.find('grudnick') > -1:
     nsapath = '/Users/grudnick/Temp/'
     gswlpath = '/Users/grudnick/Temp/'
     agcpath = '/Users/grudnick/Temp/'
+    outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts/'+telescope_run
+    tablepath = '/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/Virgo/tables/'
 
+    
 tablepath = gitpath+'Virgo/tables/'
 galex_file = gitpath+'Virgo/tables/GALEX-WISE-allsky_virgo.fits'
 nsa_file = gitpath+'Virgo/tables/VirgoCatalog.fits'
