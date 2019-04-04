@@ -95,7 +95,8 @@ outfile_prefix = 'observing/2019Feb-INT-'
 max_pointing = None
 
 # Mt Laguna Instrument
-outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'+telescope_run
+#outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'+telescope_run
+outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts'+telescope_run
 
 
 ########################################
@@ -124,7 +125,8 @@ wise = fits.getdata(wise_file)
 if moretargets:
     halpha = fits.getdata(halpha_file)
 else:
-    halpha = fits.getdata('/Users/rfinn/github/Virgo/tables/nsa_Halpha.virgo.2019Feb04.fits')
+#    halpha = fits.getdata('/Users/rfinn/github/Virgo/tables/nsa_Halpha.virgo.2019Feb04.fits')
+    halpha = fits.getdata('/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/Virgo/tables/nsa_Halpha.virgo.2019Feb04.fits')
 CJcat = fits.getdata(tablepath+'All-virgo-20feb18_env_H070-FITS.fits')
 # find CO targets that are not in NSA?
 

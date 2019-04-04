@@ -15,6 +15,13 @@ elif mypath.find('kelly') > -1:
     nsapath = '/Users/kellywhalen/RESEARCH/NSA_table/'
     gswlpath = '/Users/kellywhalen/RESEARCH/GSWLC/'
     agcpath = '/Users/kellywhalen/RESEARCH/AGC/'
+elif mypath.find('grudnick') > -1:
+    print("Running on Greg's computer")
+    gitpath='/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/'
+    ###dummy variables as I don't have the full NSA, GSWL, or AGC catalogs
+    nsapath = '/Users/grudnick/Temp/'
+    gswlpath = '/Users/grudnick/Temp/'
+    agcpath = '/Users/grudnick/Temp/'
 
 tablepath = gitpath+'Virgo/tables/'
 galex_file = gitpath+'Virgo/tables/GALEX-WISE-allsky_virgo.fits'
