@@ -96,7 +96,7 @@ max_pointing = None
 
 # Mt Laguna Instrument
 #outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'+telescope_run
-outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts'+telescope_run
+outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts/'+telescope_run
 
 
 ########################################
@@ -1065,7 +1065,7 @@ def airmass_plots(kittpeak=True,ING=False,MLO=False):
 
     observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
     if kittpeak:
-        print('plotting airmass curves for Kitt Peak')
+
         observing_location = EarthLocation.of_site('Kitt Peak')
         observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
         start_time = Time('2017-03-12 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
