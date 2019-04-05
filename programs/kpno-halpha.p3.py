@@ -88,7 +88,7 @@ from astroplan.plots import plot_airmass
 telescope_run = 'MLO-2019Apr-'
 outfile_prefix = outfile_prefix+telescope_run
 
-max_pointing = 57
+max_pointing = None
 
 #2019
 
@@ -957,7 +957,7 @@ def finding_chart_with_guide_stars(npointing,offset_ra=0.,offset_dec=0.):
     finding_chart(npointing, delta_image=.75,offset_ra=offset_ra, offset_dec=offset_dec,plotsingle=False)
     plt.savefig(outfile_prefix+'Pointing%02d-guiding.png'%(npointing))
 
-def make_all_platinum(KPNO=True,ING=False,MLO=False,startnumber=None):    
+def make_all_platinum(KPNO=False,ING=False,MLO=False,startnumber=None):    
     if max_pointing != None:
         pointing_range = range(max_pointing)
     else:
