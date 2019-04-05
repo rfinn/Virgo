@@ -1,6 +1,6 @@
 import os
 
-telescope_run = 'MLO-2019Apr-'
+
 #Get current path so program can tell if this is being run on Kelly's or Rose's computer
 mypath=os.getcwd()
 if mypath.find('rfinn') > -1:
@@ -10,7 +10,7 @@ if mypath.find('rfinn') > -1:
     nsapath = '/Users/rfinn/research/NSA/'
     gswlpath = '/Users/rfinn/Dropbox/Research/GSWLC/'
     agcpath = '/Users/rfinn/research/AGC/'
-    outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'+telescope_run
+    outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'
     tablepath = '/Users/rfinn/github/Virgo/tables/'
 
 elif mypath.find('kelly') > -1:
@@ -27,7 +27,7 @@ elif mypath.find('grudnick') > -1:
     nsapath = '/Users/grudnick/Temp/'
     gswlpath = '/Users/grudnick/Temp/'
     agcpath = '/Users/grudnick/Temp/'
-    outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts/'+telescope_run
+    outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts/'
     tablepath = '/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/Virgo/tables/'
 
     
