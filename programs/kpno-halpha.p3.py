@@ -208,12 +208,14 @@ mylabel='$ v_r \ (km/s) $'
 pointing_ra = nsa.RA[obs_mass_flag]
 pointing_dec = nsa.DEC[obs_mass_flag]
 pointing_id = nsa.NSAID[obs_mass_flag]
+pointing_mag = 22.5 - 2.5 * np.log10(nsa.NMGY[obs_mass_flag])
 
 # sort by RA
 sorted_indices = np.argsort(pointing_ra)
 pointing_dec = pointing_dec[sorted_indices]
 pointing_ra = pointing_ra[sorted_indices]
 pointing_id = pointing_id[sorted_indices]
+pointing_mag = pointing_mag[sorted_indices]
 nsadict = dict((a,b) for a,b in zip(pointing_id,np.arange(len(pointing_id))))
 
 ########################################
@@ -630,7 +632,7 @@ except KeyError:
 '''
 
 # make a dictionary to store the offsets according to NSA ID
-# format is offsets = {nsaid:[dra,ddec]}
+# format is offsets = {nsaid:[dra,ddec]} in arcmin
 # offsets = {135046:[5.,4.],
 #            84889:[3.,2.],
 #            157073:[4.,0],
@@ -645,7 +647,7 @@ offsets_INT = {135046:[5.,4.],
            }
 
 
-offsets_MLO = {#135046:[5.,4.],
+offsets_MLO = {147100:[0.,0.],
 #           84889:[3.,2.]
            }
 
@@ -863,7 +865,13 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
 
     #add_cameras()
     # find galaxies on FOV
-    gals = (nsa.RA > (pos.ra.value-delta_imagex/2.)) & (nsa.RA < (pos.ra.value+delta_imagex/2)) & (nsa.DEC > (pos.dec.value-delta_imagey/2.)) & (nsa.DEC < (pos.dec.value+delta_imagey/2.))
+    #for MLO plot galaxies outside the field of view to help with tweaking the pointing
+    if MLO:
+        source_pad = 4/60.
+        gals = (nsa.RA > (pos.ra.value-(delta_imagex/2.+source_pad))) & (nsa.RA < (pos.ra.value+delta_imagex/2 + source_pad)) & (nsa.DEC > (pos.dec.value-(delta_imagey/2. + source_pad))) & (nsa.DEC < (pos.dec.value+delta_imagey/2. + source_pad))
+    else:
+        gals = (nsa.RA > (pos.ra.value-delta_imagex/2.)) & (nsa.RA < (pos.ra.value+delta_imagex/2)) & (nsa.DEC > (pos.dec.value-delta_imagey/2.)) & (nsa.DEC < (pos.dec.value+delta_imagey/2.))
+
     print('pointing ',i+1,' ngal = ',np.sum(gals))
     gindex=np.arange(len(nsa.RA))[gals]
     print('Pointing %02d Galaxies'%(npointing),': ',nsa.NSAID[gals])
@@ -1155,6 +1163,25 @@ def make_INT_catalog():
         s = 'pointing-%03d %02d %02i %02.2f %02d %02i %02.2d J2000 ! NSAID %6s \n'%(i+1,ra[0],ra[1],ra[2],dec[0],dec[1],dec[2],str(pointing_id[i]))
         outfile.write(s)
     outfile.close()
+
+def make_MLO_catalog():
+    #make two catalogs for an MLO run, one suitable for loading into
+    #ACE and one to put in a google doc
+    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.cat','w')
+    #pointing_ra is a list of all sources that need to be observed, ordered by RA
+    pos=coords.SkyCoord(pointing_ra*u.degree,pointing_dec*u.degree,frame='icrs')
+    s = '# Pointing\tNSAID\tRA\tDEC\trmag\n'
+    coord_cat.write(s)
+
+    for i in range(len(pointing_ra)):
+        ra = pos[i].ra.hms
+        dec = pos[i].dec.dms
+        rastr = '%02d:%02d:%02.2f'%(ra[0],ra[1],ra[2])
+        decstr = '%02d:%02d:%02.2f'%(dec[0],dec[1],dec[2])
+        #s = 'pointing-%03d %6s %02d %02i %02.2f %02d %02i %02.2d %02.2f\n'%(i+1,pointing_id[i],ra[0],ra[1],ra[2],dec[0],dec[1],dec[2], pointing_mag[i][4])
+        s = '%03d\t%7i\t%11s\t%11s\t%02.2f\n'%(i+1,pointing_id[i], rastr, decstr, pointing_mag[i][4])
+        coord_cat.write(s)
+    coord_cat.close()
 
 def get_more_targets():
     # selecting targets in early part of night for Feb 2019 INT run
