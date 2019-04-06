@@ -127,7 +127,7 @@ CJcat = fits.getdata(tablepath+'All-virgo-20feb18_env_H070-FITS.fits')
 # find CO targets that are not in NSA?
 
 CJngcflag = CJcat.filament_name == b'1' # == 'Filament1-Group5354'
-cd 
+ 
 
 ########################################
 ######  DEFINE SAMPLES  #######
