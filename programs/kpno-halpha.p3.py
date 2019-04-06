@@ -647,8 +647,29 @@ offsets_INT = {135046:[5.,4.],
            }
 
 
-offsets_MLO = {147100:[0.,0.],
-#           84889:[3.,2.]
+offsets_MLO = {87097:[3.,3.],
+               90957:[-4.,3.5],
+               139741:[-3.,0],
+               143305:[0,3.0],
+               61693:[0,-4.0],
+               56478:[-4.5,0],
+               54619:[0.,-3.],
+               94217:[3.5,-1.5],
+               165115:[0.,-3.0],
+               165147:[0.,2.0],
+               145398:[3.5,0.],
+               18301:[0.,-3.0],
+               165862:[-2.5,0.],
+               165875:[0.,-2.5],
+               165896:[1.0,-2.],
+               145804:[3.0,0.],
+               145814:[4.0,0.],
+               15345:[-2.5,0],
+               146289:[2.5,0.],
+               166330:[-2.5,0.],
+               166335:[-3.0,0.],
+               114557:[3.0,0.],
+               69842:[-2.5,0],
            }
 
 # change this to use the offsets for the desired telescope
@@ -867,7 +888,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     # find galaxies on FOV
     #for MLO plot galaxies outside the field of view to help with tweaking the pointing
     if MLO:
-        source_pad = 4/60.
+        source_pad = 8./60.
         gals = (nsa.RA > (pos.ra.value-(delta_imagex/2.+source_pad))) & (nsa.RA < (pos.ra.value+delta_imagex/2 + source_pad)) & (nsa.DEC > (pos.dec.value-(delta_imagey/2. + source_pad))) & (nsa.DEC < (pos.dec.value+delta_imagey/2. + source_pad))
     else:
         gals = (nsa.RA > (pos.ra.value-delta_imagex/2.)) & (nsa.RA < (pos.ra.value+delta_imagex/2)) & (nsa.DEC > (pos.dec.value-delta_imagey/2.)) & (nsa.DEC < (pos.dec.value+delta_imagey/2.))
