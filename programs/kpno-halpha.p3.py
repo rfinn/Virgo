@@ -1207,6 +1207,41 @@ def make_MLO_catalog():
         coord_cat.write(s)
     coord_cat.close()
 
+    #make list of dither positions for each pointing
+    dither_cat = open(gitpath+'Virgo/observing/dither_cat_MLO_virgo.csv','w')
+    #pointing_ra is a list of all sources that need to be observed, ordered by RA
+    pos=coords.SkyCoord(pointing_ra*u.degree,pointing_dec*u.degree,frame='icrs')
+    s = '# Pointing, Dither, RA, DEC\n'
+    dither_cat.write(s)
+
+    #dither positions in asec relative to original position
+    raoff = np.array([0, 0, 120., 120., -120., -120.])
+    decoff = np.array([0, -120., 0, 120., 120., 0])
+    # #convert to degress
+    # raoff = raoff / 3600.
+    # decoff = decoff / 3600.
+    # #put in degree units
+    # posoff = coords.SkyCoord(raoff * u.degree, decoff * u.degree, frame='icrs')
+  
+    #now write dither positions
+    for i in range(len(pointing_ra)):
+
+        #dither positions
+        for jdith in range(len(raoff)):
+            #apply offsets
+            posdithra = pos[i].ra + raoff[jdith] / 3600. * u.degree
+            posdithdec = pos[i].dec + decoff[jdith] / 3600 * u.degree
+            #convert to HMS and DMS
+            radith = posdithra.hms 
+            decdith = posdithdec.dms
+            #print out coordinates
+            rastr = '%02d:%02d:%02.2f'%(radith[0],radith[1],radith[2])
+            decstr = '%02d:%02d:%02.2f'%(decdith[0],decdith[1],decdith[2])
+            s = '%03d, %1i, %11s, %11s\n'%(i+1,jdith, rastr, decstr)
+            dither_cat.write(s)
+        
+    dither_cat.close()
+
 def get_more_targets():
     # selecting targets in early part of night for Feb 2019 INT run
     # need to supplement CO sample b/c we are so efficient!
