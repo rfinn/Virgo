@@ -646,30 +646,30 @@ offsets_INT = {135046:[5.,4.],
            64408:[2.,-1]
            }
 
-
-offsets_MLO = {87097:[3.,3.],
-               90957:[-4.,3.5],
-               139741:[-3.,0],
-               143305:[0,3.0],
-               61693:[0,-4.0],
-               56478:[-4.5,0],
-               54619:[0.,-3.],
-               94217:[3.5,-1.5],
-               165115:[0.,-3.0],
-               165147:[0.,2.0],
-               145398:[3.5,0.],
-               18301:[0.,-3.0],
-               165862:[-2.5,0.],
-               165875:[0.,-2.5],
-               165896:[1.0,-2.],
-               145804:[3.0,0.],
-               145814:[4.0,0.],
-               15345:[-2.5,0],
-               146289:[2.5,0.],
-               166330:[-2.5,0.],
-               166335:[-3.0,0.],
-               114557:[3.0,0.],
-               69842:[-2.5,0],
+#I am commenting these out as the offsets aren't working well and I want to keep it simple by having one source per pointing.
+offsets_MLO = {#87097:[3.,3.],
+               # 90957:[-4.,3.5],
+               # 139741:[-3.,0],
+               # 143305:[0,3.0],
+               # 61693:[0,-4.0],
+               # 56478:[-4.5,0],
+               # 54619:[0.,-3.],
+               # 94217:[3.5,-1.5],
+               # 165115:[0.,-3.0],
+               # 165147:[0.,2.0],
+               # 145398:[3.5,0.],
+               # 18301:[0.,-3.0],
+               # 165862:[-2.5,0.],
+               # 165875:[0.,-2.5],
+               # 165896:[1.0,-2.],
+               # 145804:[3.0,0.],
+               # 145814:[4.0,0.],
+               # 15345:[-2.5,0],
+               # 146289:[2.5,0.],
+               # 166330:[-2.5,0.],
+               # 166335:[-3.0,0.],
+               # 114557:[3.0,0.],
+               # 69842:[-2.5,0],
            }
 
 # change this to use the offsets for the desired telescope
@@ -1188,10 +1188,12 @@ def make_INT_catalog():
 def make_MLO_catalog():
     #make two catalogs for an MLO run, one suitable for loading into
     #ACE and one to put in a google doc
-    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.cat','w')
+    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.csv','w')
+#    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.cat','w')
     #pointing_ra is a list of all sources that need to be observed, ordered by RA
     pos=coords.SkyCoord(pointing_ra*u.degree,pointing_dec*u.degree,frame='icrs')
-    s = '# Pointing\tNSAID\tRA\tDEC\trmag\n'
+    #s = '# Pointing\tNSAID\tRA\tDEC\trmag\n'
+    s = '# Pointing,NSAID,RA,DEC,rmag\n'
     coord_cat.write(s)
 
     for i in range(len(pointing_ra)):
@@ -1200,7 +1202,8 @@ def make_MLO_catalog():
         rastr = '%02d:%02d:%02.2f'%(ra[0],ra[1],ra[2])
         decstr = '%02d:%02d:%02.2f'%(dec[0],dec[1],dec[2])
         #s = 'pointing-%03d %6s %02d %02i %02.2f %02d %02i %02.2d %02.2f\n'%(i+1,pointing_id[i],ra[0],ra[1],ra[2],dec[0],dec[1],dec[2], pointing_mag[i][4])
-        s = '%03d\t%7i\t%11s\t%11s\t%02.2f\n'%(i+1,pointing_id[i], rastr, decstr, pointing_mag[i][4])
+        s = '%03d, %7i, %11s, %11s, %02.2f\n'%(i+1,pointing_id[i], rastr, decstr, pointing_mag[i][4])
+        #s = '%03d\t%7i\t%11s\t%11s\t%02.2f\n'%(i+1,pointing_id[i], rastr, decstr, pointing_mag[i][4])
         coord_cat.write(s)
     coord_cat.close()
 
