@@ -646,9 +646,30 @@ offsets_INT = {135046:[5.,4.],
            64408:[2.,-1]
            }
 
-
-offsets_MLO = {147100:[0.,0.],
-#           84889:[3.,2.]
+#I am commenting these out as the offsets aren't working well and I want to keep it simple by having one source per pointing.
+offsets_MLO = {#87097:[3.,3.],
+               # 90957:[-4.,3.5],
+               # 139741:[-3.,0],
+               # 143305:[0,3.0],
+               # 61693:[0,-4.0],
+               # 56478:[-4.5,0],
+               # 54619:[0.,-3.],
+               # 94217:[3.5,-1.5],
+               # 165115:[0.,-3.0],
+               # 165147:[0.,2.0],
+               # 145398:[3.5,0.],
+               # 18301:[0.,-3.0],
+               # 165862:[-2.5,0.],
+               # 165875:[0.,-2.5],
+               # 165896:[1.0,-2.],
+               # 145804:[3.0,0.],
+               # 145814:[4.0,0.],
+               # 15345:[-2.5,0],
+               # 146289:[2.5,0.],
+               # 166330:[-2.5,0.],
+               # 166335:[-3.0,0.],
+               # 114557:[3.0,0.],
+               # 69842:[-2.5,0],
            }
 
 # change this to use the offsets for the desired telescope
@@ -867,7 +888,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     # find galaxies on FOV
     #for MLO plot galaxies outside the field of view to help with tweaking the pointing
     if MLO:
-        source_pad = 4/60.
+        source_pad = 8./60.
         gals = (nsa.RA > (pos.ra.value-(delta_imagex/2.+source_pad))) & (nsa.RA < (pos.ra.value+delta_imagex/2 + source_pad)) & (nsa.DEC > (pos.dec.value-(delta_imagey/2. + source_pad))) & (nsa.DEC < (pos.dec.value+delta_imagey/2. + source_pad))
     else:
         gals = (nsa.RA > (pos.ra.value-delta_imagex/2.)) & (nsa.RA < (pos.ra.value+delta_imagex/2)) & (nsa.DEC > (pos.dec.value-delta_imagey/2.)) & (nsa.DEC < (pos.dec.value+delta_imagey/2.))
@@ -1167,10 +1188,12 @@ def make_INT_catalog():
 def make_MLO_catalog():
     #make two catalogs for an MLO run, one suitable for loading into
     #ACE and one to put in a google doc
-    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.cat','w')
+    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.csv','w')
+#    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.cat','w')
     #pointing_ra is a list of all sources that need to be observed, ordered by RA
     pos=coords.SkyCoord(pointing_ra*u.degree,pointing_dec*u.degree,frame='icrs')
-    s = '# Pointing\tNSAID\tRA\tDEC\trmag\n'
+    #s = '# Pointing\tNSAID\tRA\tDEC\trmag\n'
+    s = '# Pointing,NSAID,RA,DEC,rmag\n'
     coord_cat.write(s)
 
     for i in range(len(pointing_ra)):
@@ -1179,9 +1202,45 @@ def make_MLO_catalog():
         rastr = '%02d:%02d:%02.2f'%(ra[0],ra[1],ra[2])
         decstr = '%02d:%02d:%02.2f'%(dec[0],dec[1],dec[2])
         #s = 'pointing-%03d %6s %02d %02i %02.2f %02d %02i %02.2d %02.2f\n'%(i+1,pointing_id[i],ra[0],ra[1],ra[2],dec[0],dec[1],dec[2], pointing_mag[i][4])
-        s = '%03d\t%7i\t%11s\t%11s\t%02.2f\n'%(i+1,pointing_id[i], rastr, decstr, pointing_mag[i][4])
+        s = '%03d, %7i, %11s, %11s, %02.2f\n'%(i+1,pointing_id[i], rastr, decstr, pointing_mag[i][4])
+        #s = '%03d\t%7i\t%11s\t%11s\t%02.2f\n'%(i+1,pointing_id[i], rastr, decstr, pointing_mag[i][4])
         coord_cat.write(s)
     coord_cat.close()
+
+    #make list of dither positions for each pointing
+    dither_cat = open(gitpath+'Virgo/observing/dither_cat_MLO_virgo.csv','w')
+    #pointing_ra is a list of all sources that need to be observed, ordered by RA
+    pos=coords.SkyCoord(pointing_ra*u.degree,pointing_dec*u.degree,frame='icrs')
+    s = '# Pointing, Dither, RA, DEC\n'
+    dither_cat.write(s)
+
+    #dither positions in asec relative to original position
+    raoff = np.array([0, 0, 120., 120., -120., -120.])
+    decoff = np.array([0, -120., 0, 120., 120., 0])
+    # #convert to degress
+    # raoff = raoff / 3600.
+    # decoff = decoff / 3600.
+    # #put in degree units
+    # posoff = coords.SkyCoord(raoff * u.degree, decoff * u.degree, frame='icrs')
+  
+    #now write dither positions
+    for i in range(len(pointing_ra)):
+
+        #dither positions
+        for jdith in range(len(raoff)):
+            #apply offsets
+            posdithra = pos[i].ra + raoff[jdith] / 3600. * u.degree
+            posdithdec = pos[i].dec + decoff[jdith] / 3600 * u.degree
+            #convert to HMS and DMS
+            radith = posdithra.hms 
+            decdith = posdithdec.dms
+            #print out coordinates
+            rastr = '%02d:%02d:%02.2f'%(radith[0],radith[1],radith[2])
+            decstr = '%02d:%02d:%02.2f'%(decdith[0],decdith[1],decdith[2])
+            s = '%03d, %1i, %11s, %11s\n'%(i+1,jdith, rastr, decstr)
+            dither_cat.write(s)
+        
+    dither_cat.close()
 
 def get_more_targets():
     # selecting targets in early part of night for Feb 2019 INT run
