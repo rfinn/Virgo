@@ -1,0 +1,18 @@
+offset arc 0 0
+sleep 3
+multrun 2 180 "pointing-012"
+offset arc 30 30
+sleep 3
+multrun 2 180 "pointing-012"
+offset arc 30 -30
+sleep 3
+multrun 2 180 "pointing-012"
+offset arc -30 -30
+sleep 3
+multrun 2 180 "pointing-012"
+offset arc -30 30
+sleep 3
+multrun 2 180 "pointing-012"
+offset arc 0  0
+
+
