@@ -85,7 +85,7 @@ from astroplan.plots import plot_airmass
 ########################################
 ###### RUN-SPECIFIC PARAMETERS  ########
 ########################################
-telescope_run = 'MLO-2019Apr-'
+telescope_run = '2019May/MLO-2019May-'
 outfile_prefix = outfile_prefix+telescope_run
 
 max_pointing = None
@@ -166,15 +166,19 @@ gas_flag = COflag | HIflag
 NGCfilament = filament
 
 # Halpha selection
+#add in targets that need to be reobserved
+extra_targ_flag = (nsa.NSAID == 135136) | (nsa.NSAID == 135129)
+
 # set RA and DEC as galaxies with
 # CO
 # no Halpha
 # stellar mass between 8.5 < log(M*/Msun) < 10.  according to NSF proposal
-obs_mass_flag = COsample & ~ha_obs #& (jmass.MSTAR_50 > 8.5) #& (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
+#obs_mass_flag = COsample & ~ha_obs #& (jmass.MSTAR_50 > 8.5) #& (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
+obs_mass_flag = (COsample & ~ha_obs) | extra_targ_flag
 
-# resetting to COsample for 2019 observing season
-filter_flag = (nsa.Z*3.e5 > 2490.) & (nsa.Z*3.e5 < 6000.)
-obs_mass_flag = COsample & ~ha_obs #& filter_flag
+# resetting to COsample for 2019 INT observing season
+#filter_flag = (nsa.Z*3.e5 > 2490.) & (nsa.Z*3.e5 < 6000.)
+#obs_mass_flag = COsample & ~ha_obs #& filter_flag
 
 
 # SELECTING LOWER MASS TARGETS FOR INT RUN IN FEB 2019
@@ -1102,8 +1106,10 @@ def airmass_plots(KPNO=False,ING=False,MLO=False):
         observing_location = EarthLocation.of_site(u'Palomar')
         observer_site = Observer.at_site("Palomar", timezone="US/Pacific")
         # for run starting 2019-Apr-04 at MLO
-        start_time = Time('2019-04-03 01:00:00') # need to enter UTC time, MLO UTC+6?
-        end_time = Time('2019-04-03 14:00:00')
+        #start_time = Time('2019-04-03 01:00:00') # need to enter UTC time, MLO UTC+6?
+        #end_time = Time('2019-04-03 14:00:00')
+        start_time = Time('2019-05-04 01:00:00') # need to enter UTC time, MLO UTC+6?
+        end_time = Time('2019-05-04 14:00:00')
         
     elif ING:
         print('plotting airmass curves for INT')
@@ -1188,7 +1194,7 @@ def make_INT_catalog():
 def make_MLO_catalog():
     #make two catalogs for an MLO run, one suitable for loading into
     #ACE and one to put in a google doc
-    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.csv','w')
+    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.may2019.csv','w')
 #    coord_cat = open(gitpath+'Virgo/observing/mlo_virgo.cat','w')
     #pointing_ra is a list of all sources that need to be observed, ordered by RA
     pos=coords.SkyCoord(pointing_ra*u.degree,pointing_dec*u.degree,frame='icrs')
