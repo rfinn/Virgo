@@ -5,7 +5,7 @@ GOAL:
 - sort INT WFC data according to target and filter
 -
 
-HEADER KEYWORDS:
+RELEVANT HEADER KEYWORDS:
 
     OBSTYPE: TARGET, SKY (skyflat), BIAS, FOCUS
 
@@ -30,9 +30,10 @@ for bias, create BIAS, and move files there
 
 for focus, create FOCUS directory, move files there
 
-for objects, make directory for each unique set of OBJECT-WFFBAND.  move files to appropriate directory.
+for science frames, sort them by filter into, e.g. SCIENCE-r or SCIENCE-Halpha
+- these will get sorted by object once bias subtraction and flatfielding is done.
 
-
+After basic calibration, we can sort science objects, make directory for each unique set of OBJECT-WFFBAND.  move files to appropriate directory.
 
 '''
 #import ccdproc
