@@ -85,8 +85,9 @@ from astroplan.plots import plot_airmass
 ########################################
 ###### RUN-SPECIFIC PARAMETERS  ########
 ########################################
-telescope_run = '2019May/MLO-2019May-'
-telescope_run = '2019May/INT-junk-2019May-'
+telescope_run = '2019June/MLO-2019June-'
+#telescope_run = '2019May/MLO-2019May-'
+#telescope_run = '2019May/INT-junk-2019May-'
 outfile_prefix = outfile_prefix+telescope_run
 
 max_pointing = None
@@ -1110,8 +1111,10 @@ def airmass_plots(KPNO=False,ING=False,MLO=False):
         # for run starting 2019-Apr-04 at MLO
         #start_time = Time('2019-04-03 01:00:00') # need to enter UTC time, MLO UTC+6?
         #end_time = Time('2019-04-03 14:00:00')
-        start_time = Time('2019-05-04 01:00:00') # need to enter UTC time, MLO UTC+6?
-        end_time = Time('2019-05-04 14:00:00')
+        #start_time = Time('2019-05-04 01:00:00') # need to enter UTC time, MLO UTC+6?
+        #end_time = Time('2019-05-04 14:00:00')
+        start_time = Time('2019-06-04 01:00:00') # need to enter UTC time, MLO UTC+6?
+        end_time = Time('2019-06-04 14:00:00')
         
     elif ING:
         print('plotting airmass curves for INT')
