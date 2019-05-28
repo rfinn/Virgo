@@ -86,6 +86,7 @@ from astroplan.plots import plot_airmass
 ###### RUN-SPECIFIC PARAMETERS  ########
 ########################################
 telescope_run = '2019May/MLO-2019May-'
+telescope_run = '2019May/INT-junk-2019May-'
 outfile_prefix = outfile_prefix+telescope_run
 
 max_pointing = None
@@ -213,6 +214,7 @@ pointing_ra = nsa.RA[obs_mass_flag]
 pointing_dec = nsa.DEC[obs_mass_flag]
 pointing_id = nsa.NSAID[obs_mass_flag]
 pointing_mag = 22.5 - 2.5 * np.log10(nsa.NMGY[obs_mass_flag])
+
 
 # sort by RA
 sorted_indices = np.argsort(pointing_ra)
