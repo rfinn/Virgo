@@ -4,9 +4,12 @@ NOTES
 * The name below indicates the filter-pointing, so corresponding finding chart is INT-2019May-XXXfilter-PointingYYY-platinum.png
 * The RA and DEC are listed at the top of each finding chart.
 * The airmass figures have 8 pointings in each figure, so pointings 001-008 are in the first airmass plot.
-* The dither scripts we used in February are included in this directory, so these can just be updated for the upcoming run (just updated the pointing number each time)
-* we did not guide (as you will see in the dither scripts, we did 2-3min exposures at each dither position)
-* we also took a short 15-sec exposure before the start of the r-band sequence so that we can bootstrap from SDSS photometry
+* The dither scripts we used in February are included in this directory: 
+  - rband-dither.txt
+  - halpha-dither.txt
+* The dither scripts can just be updated with the new pointing number.
+* We did not guide (as you will see in the dither scripts, we did 2-3min exposures in Halpha at each dither position)
+* We also took a short 15-sec exposure before the start of the r-band sequence so that we can bootstrap from SDSS photometry.  This is not included in the dither script, but you could certainly add it at the (0,0) offset position (I'm hesitant to edit it without the ability to check it!).
 
 TARGET LIST IN PRIORITY ORDER
 -----------------------------
