@@ -1,0 +1,18 @@
+offset arc 0 0
+sleep 5
+run 60 "pointing-012"
+offset arc 30 30
+sleep 5
+run 60 "pointing-012"
+offset arc 30 -30
+sleep 5
+run 60 "pointing-012"
+offset arc -30 -30
+sleep 5
+run 60 "pointing-012"
+offset arc -30 30
+sleep 5
+run 60 "pointing-012"
+offset arc 0  0
+
+
