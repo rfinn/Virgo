@@ -82,12 +82,26 @@ from astropy.coordinates import AltAz
 from astroplan import Observer
 from astroplan.plots import plot_airmass
 
+
+########################################
+###### FOR INT RUN              
+###### set INGrun to True
+###### otherwise, set to False
+########################################
+
+INGrun=True
+
 ########################################
 ###### RUN-SPECIFIC PARAMETERS  ########
 ########################################
-telescope_run = '2019June/MLO-2019June-'
-#telescope_run = '2019May/MLO-2019May-'
-telescope_run = '2019May/INT-2019May-'
+
+if INGrun:
+    telescope_run = '2019May/INT-2019May-227filter-'
+    telescope_run = '2019May/INT-2019May-197filter-'
+else:
+    telescope_run = '2019June/MLO-2019June-'
+    #telescope_run = '2019May/MLO-2019May-'
+
 outfile_prefix = outfile_prefix+telescope_run
 
 max_pointing = None
@@ -164,12 +178,17 @@ filament = (co.filament_name !='') & (nsa.Z*3.e5 >2000.) & (nsa.Z*3.e5 < 3238.)
 nsa_flag = (nsa.Z*3.e5 >1234.) & (nsa.Z*3.e5 < 3976.)
 mass_flag = (jmass.MSTAR_50 > 8.3) & (jmass.MSTAR_50 < 10.2)
 
+# used ~(max vel of INT 197 - 250) for low-z end of filter gap
+# used ~(min vel of INT 227 + 250) for high-z end of filter gap 
+INTvflag =   (nsa.Z*3.e5 < 2100.) #| (nsa.Z*3.e5 > 2700.) #
+
+
 gas_flag = COflag | HIflag
 NGCfilament = filament
 
 # Halpha selection
 #add in targets that need to be reobserved
-extra_targ_flag = (nsa.NSAID == 135136) | (nsa.NSAID == 135129)
+extra_targ_flag = (nsa.NSAID == 135136) #| (nsa.NSAID == 135129) ### Greg - why is this here? 135129 was observed on 2019-02-09 at INT
 
 # set RA and DEC as galaxies with
 # CO
@@ -177,6 +196,9 @@ extra_targ_flag = (nsa.NSAID == 135136) | (nsa.NSAID == 135129)
 # stellar mass between 8.5 < log(M*/Msun) < 10.  according to NSF proposal
 #obs_mass_flag = COsample & ~ha_obs #& (jmass.MSTAR_50 > 8.5) #& (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
 obs_mass_flag = (COsample & ~ha_obs) | extra_targ_flag
+    
+if INGrun:
+    obs_mass_flag = obs_mass_flag & INTvflag
 
 # resetting to COsample for 2019 INT observing season
 #filter_flag = (nsa.Z*3.e5 > 2490.) & (nsa.Z*3.e5 < 6000.)
@@ -339,173 +361,7 @@ except KeyError:
 ### REGULAR SAMPLE
 #######################
 
-try:
 
-
-
-    pointing_offsets_ra[nsadict[92459]] = 5./60
-    pointing_offsets_dec[nsadict[92459]] = -3./60
-
-    pointing_offsets_ra[nsadict[140301]] = 0./60
-    pointing_offsets_dec[nsadict[140301]] = -3.3/60
-
-    pointing_offsets_ra[nsadict[160627]] = 4./60
-    pointing_offsets_dec[nsadict[160627]] = -14/60
-
-    pointing_offsets_ra[nsadict[117685]] = 0./60
-    pointing_offsets_dec[nsadict[117685]] = -1.5/60
-
-    pointing_offsets_ra[nsadict[118414]] = -4./60
-    pointing_offsets_dec[nsadict[118414]] = 0./60
-
-    pointing_offsets_ra[nsadict[143701]] = 0./60
-    pointing_offsets_dec[nsadict[143701]] = 0./60
-
-    pointing_offsets_ra[nsadict[163875]] = 0./60
-    pointing_offsets_dec[nsadict[163875]] = 2./60
-
-    pointing_offsets_ra[nsadict[143841]] = -2./60
-    pointing_offsets_dec[nsadict[143841]] = 12./60
-
-    pointing_offsets_ra[nsadict[144056]] = 21.5/60
-    pointing_offsets_dec[nsadict[144056]] = -2./60
-
-    pointing_offsets_ra[nsadict[67567]] = 10/60
-    pointing_offsets_dec[nsadict[67567]] = -2.5/60
-
-    pointing_offsets_ra[nsadict[17878]] = 3.5/60
-    pointing_offsets_dec[nsadict[17878]] = 2./60
-
-    pointing_offsets_ra[nsadict[164911]] = -6/60
-    pointing_offsets_dec[nsadict[164911]] = 3.5/60
-
-    pointing_offsets_ra[nsadict[165082]] = -1./60
-    pointing_offsets_dec[nsadict[165082]] = -1./60
-
-    pointing_offsets_ra[nsadict[18052]] = 3./60
-    pointing_offsets_dec[nsadict[18052]] = 3./60
-
-    pointing_offsets_ra[nsadict[165115]] = -6.5/60
-    pointing_offsets_dec[nsadict[165115]] = -3./60
-
-    id=145218
-    pointing_offsets_ra[nsadict[id]] = 10./60
-    pointing_offsets_dec[nsadict[id]] = 10.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
-try: #143
-    id=165200
-    pointing_offsets_ra[nsadict[id]] = 9.5/60
-    #pointing_offsets_dec[nsadict[id]] = 10.5/60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #144
-    id=18153
-    pointing_offsets_ra[nsadict[id]] = 4.3/60
-    pointing_offsets_dec[nsadict[id]] = -12/60
-except KeyError:
-    print('nsa id not found in list of pointings')
-try: #145
-    id=145398
-    pointing_offsets_ra[nsadict[id]] = 15./60
-    pointing_offsets_dec[nsadict[id]] = 2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-try: #147
-    id=18301
-    pointing_offsets_ra[nsadict[id]] = 7./60
-    pointing_offsets_dec[nsadict[id]] = -10./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #147
-    id=145554
-    pointing_offsets_ra[nsadict[id]] = -2./60
-    pointing_offsets_dec[nsadict[id]] = -10./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #152
-    id=18363
-    pointing_offsets_ra[nsadict[id]] = 6./60
-    pointing_offsets_dec[nsadict[id]] = 14./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-try: #154
-    id=145672
-    pointing_offsets_ra[nsadict[id]] = 4./60
-    pointing_offsets_dec[nsadict[id]] = -10./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #158
-    id=165875
-    pointing_offsets_ra[nsadict[id]] = 10./60
-    pointing_offsets_dec[nsadict[id]] = 2./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-try: #164
-    id=145846
-    pointing_offsets_ra[nsadict[id]] = 4./60
-    pointing_offsets_dec[nsadict[id]] = 11./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #166
-    id=165956
-    pointing_offsets_ra[nsadict[id]] = -3./60
-    pointing_offsets_dec[nsadict[id]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #167
-    id=145879
-    pointing_offsets_ra[nsadict[id]] = -4./60
-    pointing_offsets_dec[nsadict[id]] = 12./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-try: #173
-    id=166280
-    pointing_offsets_ra[nsadict[id]] = -6./60
-    pointing_offsets_dec[nsadict[id]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #175
-    id=121129
-    pointing_offsets_ra[nsadict[id]] = 4./60
-    pointing_offsets_dec[nsadict[id]] = 9./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #178
-    id=166330
-    #pointing_offsets_ra[nsadict[id]] = 4./60
-    pointing_offsets_dec[nsadict[id]] = -3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #189
-    id=68462
-    pointing_offsets_ra[nsadict[id]] = -7./60
-    #pointing_offsets_dec[nsadict[id]] = -3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #192
-    id=69842
-    pointing_offsets_ra[nsadict[id]] = 16./60
-    pointing_offsets_dec[nsadict[id]] = 1./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-try: #195
-    id=147731
-    pointing_offsets_ra[nsadict[id]] = 0./60
-    pointing_offsets_dec[nsadict[id]] = 3./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
 
 ##################################################
@@ -559,40 +415,40 @@ offsets_INT = {#135046:[5.,4.], # already observed
            #137045:[-5.,-3.],
            #107715:[0.,2.],
            137391:[10.5,-2.],
-           137460:[-8.,0.],
-           107764:[19.,-3.],
-           88142:[5.,-10.],
-           137993:[-7.,0.],
+           #137460:[-8.,0.],
+           #107764:[19.,-3.],
+           #88142:[5.,-10.],
+           #137993:[-7.,0.],
            90176:[0.,3.],
-           138221:[-3.6,2.2],
+           #138221:[-3.6,2.2],
            87097:[-3.,-3.],
-           87086:[3.,0.],
+           #87086:[3.,0.],
            138642:[4.,2.],
            159520:[0.,-4.5],
-           159779:[0.75,-2.],
+           #159779:[0.75,-2.],
            101649:[8.,0.],
-           93963:[11.5,-2.],
+           #93963:[11.5,-2.],
            92459:[5.,-3.],
-           140301:[0.,-3.3],
-           160627:[4.,-14.],
-           117685:[0.,-1.5],
+           #140301:[0.,-3.3],
+           160627:[4.,-14.5],
+           #117685:[0.,-1.5],
            118414:[-4.,0.],
-           143701:[0.,0.],
-           163875:[0.,2.],
-           143841:[-2.,12.],
-           144056:[21.5,-2.],
-           67567:[10.,-2.5],
-           17878:[3.5,2.],
+           #143701:[0.,0.],
+           #163875:[0.,2.],
+           #143841:[-2.,12.],
+           #144056:[21.5,-2.],
+           #67567:[10.,-2.5],
+           #17878:[3.5,2.],
            164911:[-6.,3.5],
-           165082:[-1.,-1.],
+           #165082:[-1.,-1.],
            18052:[3.,3.],
-           166155:[-6.5,-3.],
-           145218:[10.,10.5],
-           165200:[9.5,10.5],
+           165115:[-6.5,-3.],
+           #145218:[10.,10.5],
+           165200:[9.5,0],
            18153:[4.3,-12.],
            145398:[15.,2.],
            18301:[7.,-10.],
-           145554:[-2.,-10.],
+           #145554:[-2.,-10.],
            18363:[6.,14.],
            145672:[4.,-10.],
            165875:[10.,2.],
@@ -600,12 +456,18 @@ offsets_INT = {#135046:[5.,4.], # already observed
            165956:[-3.,0.],
            145879:[-4.,12.],
            166280:[-6.,0.],
-           121129:[4.,9.],
+           #121129:[4.,9.],
            166330:[4.,-3.],
            68462:[-7.,-3.],
            69842:[16.,1.],
            147731:[0.,3.],
-           135129:[0.,-3.]
+           135129:[0.,-3.],
+           87100:[-8.,0],
+           61693:[5.,0], # shift to get M51 on the chip :)
+           165896:[6.7,2.5],
+           15333:[7.,0],
+           166297:[-5.,-2.5],
+           146289:[9.,-2.5]
            }
 
 #I am commenting these out as the offsets aren't working well and I want to keep it simple by having one source per pointing.
@@ -635,14 +497,17 @@ offsets_MLO = {#87097:[3.,3.],
            }
 
 # change this to use the offsets for the desired telescope
-offsets = offsets_INT
-
+if INGrun:
+    offsets = offsets_INT
+else:
+    offsets = {}
+    
 for key in offsets:
     try:
         pointing_offsets_ra[nsadict[key]] = offsets[key][0]/60.
         pointing_offsets_dec[nsadict[key]] = offsets[key][1]/60.
     except:
-        print('problem setting offset for {} - already observed?'.format(key))
+        print('problem setting offset for {} - already observed, or in INT filter gap?'.format(key))
 # update pointing centers to account for offsets
 pointing_ra += pointing_offsets_ra
 pointing_dec += pointing_offsets_dec
@@ -820,16 +685,18 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
             plt.figure(figsize=(6,6))
     ax=plt.gca()
     pos = coords.SkyCoord(center_ra,center_dec,frame='icrs',unit='degree')
+    # delta_image is the half width of the image
+    # delta_imagex and delta_imagey are the full width of the image in x and y directions, respectively
     delta_imagex=2.*delta_image
     delta_imagey=2.*delta_image
     if ING:
-        delta_imagex=.4 #image width in deg
-        delta_imagey=.4 # image width in deg
+        delta_imagex=.8 #image width in deg
+        delta_imagey=.8 # image width in deg
         #xout = SkyView.get_images(pos,survey=['DSS'],height=delta_imagex*u.degree,width=delta_imagey*u.degree)
     elif MLO:
         delta_imagex = 13./60. # image width in deg
         delta_imagey = 13./60 # image width in deg
-    xout = SkyView.get_images(pos,survey=['DSS'],height=2*delta_imagex*u.degree,width=2.*delta_imagey*u.degree)
+    xout = SkyView.get_images(pos,survey=['DSS'],height=delta_imagex*u.degree,width=delta_imagey*u.degree)
     b=xout[0][0]
     ax.imshow(xout[0][0].data,interpolation='none',aspect='equal',cmap='gray_r',extent=[b.header['CRVAL1']-(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
                                                            b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
@@ -871,6 +738,11 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
         if COflag[j]:
             size=galsize-.005
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='g')
+            plt.gca().add_artist(rect)
+        if noCOflag[j]:
+            size=galsize-.005
+            #rect= plt.Circle((ran-size/2.,decn-size/2.), size,fill=False, color='g')
+            rect= plt.Circle((ran,decn), size,fill=False, color='g')
             plt.gca().add_artist(rect)
         if HIflag[j]:
             size=galsize+.005
@@ -1078,8 +950,11 @@ def airmass_plots(KPNO=False,ING=False,MLO=False):
         observing_location = EarthLocation.of_site(u'Roque de los Muchachos')
         observer_site = Observer.at_site("Roque de los Muchachos", timezone="GMT")
         # for run starting 2019-Feb-04 at INT
-        start_time = Time('2019-02-04 19:00:00') # INT is on UTC
-        end_time = Time('2019-02-05 07:00:00')
+        #start_time = Time('2019-02-04 19:00:00') # INT is on UTC
+        #end_time = Time('2019-02-05 07:00:00')
+        # for run starting 2019-May-29 at INT
+        start_time = Time('2019-05-29 19:00:00') # INT is on UTC
+        end_time = Time('2019-05-30 07:00:00')
 
     #observing_time = Time('2017-05-19 07:00')  # 1am UTC=6pm AZ mountain time
     #observing_time = Time('2018-03-12 07:00')  # 1am UTC=6pm AZ mountain time
@@ -1093,11 +968,20 @@ def airmass_plots(KPNO=False,ING=False,MLO=False):
     delta_t = end_time - start_time
     observing_time = start_time + delta_t*np.linspace(0, 1, 75)
     nplots = int(sum(obs_mass_flag)/8.)
+    if (sum(obs_mass_flag)/8.) > nplots:
+        remainder = sum(obs_mass_flag) - 8*nplots
+        nplots += 1
+        partial = True
+
     print(nplots)
     for j in range(nplots):
         plt.figure()
         legend_list = []
-        for i in range(8):
+        if j == (nplots - 1):
+            lastplot = remainder
+        else:
+            lastplot = 8
+        for i in range(lastplot):
             pointing_center = coords.SkyCoord(pointing_ra[8*j+i]*u.deg, pointing_dec[8*j+i]*u.deg, frame='icrs')
             if i == 3:
                 plot_airmass(pointing_center,observer_site,observing_time,brightness_shading=True)
