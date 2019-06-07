@@ -64,6 +64,10 @@ from astroquery.vizier import Vizier
 def panstarrs_query(ra_deg, dec_deg, rad_deg, maxmag=20,
                     maxsources=10000):
     """
+    FOUND THIS ON THE WEB 
+    https://michaelmommert.wordpress.com/2017/02/13/accessing-the-gaia-and-pan-starrs-catalogs-using-python/
+
+    
     Query PanSTARRS @ VizieR using astroquery.vizier
     :param ra_deg: RA in degrees
     :param dec_deg: Declination in degrees
@@ -100,41 +104,40 @@ parser.add_argument('--nsigma', dest = 'nsigma', default = 2.0, help = 'number o
 parser.add_argument('--d',dest = 'd', default ='~/github/HalphaImaging/astromatic', help = 'Locates path of default config files.  Default is ~/github/HalphaImaging/astromatic')
 args = parser.parse_args()
 
-os.system('cp ' +args.d + '/default.* .')
 
-
-
-
-# Example query
-# print(panstarrs_query(12.345, 67.89, 0.1))
 
 
 #####
 # Run Source Extractor on image to measure magnitudes
 ####
+
+os.system('cp ' +args.d + '/default.* .')
 t = args.image.split('.fits')
 froot = t[0]
 if args.instrument == 'h':
-    os.system('sex ' + args.image + ' -c default.sex.HDI -CATALOG_NAME ' + froot + '.cat')
+    os.system('sex ' + args.image + ' -c default.sex.HDI -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
 
 elif args.instrument == 'i':
-    os.system('sex ' + args.image + ' -c default.sex.INT -CATALOG_NAME ' + froot + '.cat')
+    os.system('sex ' + args.image + ' -c default.sex.INT -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
 
 elif args.instrument == 'm':
-    os.system('sex ' + args.image + ' -c default.sex.HDI -CATALOG_NAME ' + froot + '.cat')
+    os.system('sex ' + args.image + ' -c default.sex.HDI -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
+
+# clean up SE files
+# skipping for now in case the following command accidentally deletes user files
+# os.system('rm default.* .')
 
 
-
-#####
+###################################
 # Read in Source Extractor catalog
-####
+###################################
 
 secat_filename = froot+'.cat'
 secat = fits.getdata(secat_filename,2)
 
-#####
+###################################
 # get max/min RA and DEC for the image
-####
+###################################
 
 minRA = min(secat['ALPHA_J2000'])
 maxRA = max(secat['ALPHA_J2000'])
@@ -142,22 +145,24 @@ minDEC = min(secat['DELTA_J2000'])
 maxDEC = max(secat['DELTA_J2000'])
 centerRA = 0.5*(minRA + maxRA)
 centerDEC = 0.5*(minDEC + maxDEC)
-radius = np.sqrt((maxRA- centerRA)**2 + (maxDEC - centerDEC)**2)
-print(radius)
+#radius = np.sqrt((maxRA- centerRA)**2 + (maxDEC - centerDEC)**2)
+#print(radius)
 
+# NOTE - radius is with width of the rectangular
+# search area.  This is not a circular search, as I orginally thought.
 radius = max((maxRA - minRA), (maxDEC - minDEC))
 
 
-#####
+###################################
 # get Pan-STARRS catalog over the same region
-####
+###################################
 
 pan = panstarrs_query(centerRA, centerDEC, radius)
 
-#####
+###################################
 # match Pan-STARRS1 data to Source Extractor sources
 # remove any objects that are saturated or non-linear in our r-band image
-####
+###################################
 
 pancoords = SkyCoord(pan['RAJ2000'],pan['DEJ2000'],frame='icrs')
 secoords = SkyCoord(secat['ALPHA_J2000']*u.degree,secat['DELTA_J2000']*u.degree,frame='icrs')
@@ -171,23 +176,28 @@ matchflag = dist2d.degree < 5./3600
 matchedarray1=np.zeros(len(pancoords),dtype=secat.dtype)
 matchedarray1[matchflag] = secat[index[matchflag]]
 
+###################################
+# remove any objects that are saturated, have FLAGS set, galaxies, must have 14 < r < 17 according to Pan-STARRS
+###################################
+
+
 fitflag = matchflag & (matchedarray1['FLAGS'] == 0)  & (pan['rmag'] > 14.) & (pan['rmag'] < 17.) & (matchedarray1['CLASS_STAR'] > 0.95)
 
-#####
+###################################
 # Calculate Johnson R
-####
+###################################
 R = pan['rmag'] + (-0.153)*(pan['rmag']-pan['imag']) - 0.117
 
 
-#####
+###################################
 # Show location of residuals
-#####
+###################################
 
 
 
-#####
+###################################
 # Solve for the zeropoint
-####
+###################################
 
 # plot Pan-STARRS r mag on x axis, observed R-mag on y axis
 
