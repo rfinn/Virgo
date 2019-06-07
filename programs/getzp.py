@@ -279,6 +279,8 @@ def fitzp(plotall=False):
         x = x[flag]
         y = y[flag]
     # plot best-fit results
+    yfit = np.polyval(bestc,x)
+    residual = (yfit - y)/yfit 
     plt.figure(figsize=(8,8))
     plt.subplot(2,1,1)
     plt.plot(x,y,'bo',label='MAG_AUTO')
