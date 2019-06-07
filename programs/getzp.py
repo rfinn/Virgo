@@ -214,7 +214,7 @@ R = pan['rmag'] + (-0.153)*(pan['rmag']-pan['imag']) - 0.117
 # plot Pan-STARRS r mag on x axis, observed R-mag on y axis
 
 
-def fitzp():
+def fitzp(plotall=False):
     plt.figure(figsize=(8,6))
     flag = fitflag
     plt.plot(pan['rmag'][flag],matchedarray1['MAG_AUTO'][flag],'bo')
@@ -244,31 +244,32 @@ def fitzp():
     x = R[fitflag]
     y = matchedarray1['MAG_AUTO'][fitflag]
     while delta > 1.e-3:
-    
-        plt.figure(figsize=(8,8))
-        plt.subplot(2,1,1)
-    
-        print('number of points retained = ',sum(flag))
-        plt.plot(x,y,'bo',label='MAG_AUTO')
-        plt.xlabel('Pan-STARRS r',fontsize=16)
-        plt.ylabel('SE R-band MAG',fontsize=16)
         c = np.polyfit(x,y,1)
-        xl = np.linspace(14,17,10)
-        yl = np.polyval(c,xl)
-        s = 'fit: y = %.2f PAN + %.2f'%(c[0],c[1])
-        plt.plot(xl,yl,'k--',label=s)
-        plt.legend()
-
-
+        print('number of points retained = ',sum(flag))
         yfit = np.polyval(c,x)
         residual = (yfit - y)/yfit 
-        plt.subplot(2,1,2)
-        s = 'std = %.4f'%(np.std(residual))
-        plt.plot(x,residual, 'ko',label=s)
-        plt.xlabel('Pan-STARRS r',fontsize=16)
-        plt.ylabel('YFIT - SE R-band MAG_AUTO',fontsize=16)
-        plt.legend()
-        plt.axhline(y=0,color='r')
+
+        if plotall:
+            plt.figure(figsize=(8,8))
+            plt.subplot(2,1,1)
+            plt.plot(x,y,'bo',label='MAG_AUTO')
+            plt.xlabel('Pan-STARRS r',fontsize=16)
+            plt.ylabel('SE R-band MAG',fontsize=16)
+
+            xl = np.linspace(14,17,10)
+            yl = np.polyval(c,xl)
+            s = 'fit: y = %.2f PAN + %.2f'%(c[0],c[1])
+            plt.plot(xl,yl,'k--',label=s)
+            plt.legend()
+
+
+            plt.subplot(2,1,2)
+            s = 'std = %.4f'%(np.std(residual))
+            plt.plot(x,residual, 'ko',label=s)
+            plt.xlabel('Pan-STARRS r',fontsize=16)
+            plt.ylabel('YFIT - SE R-band MAG_AUTO',fontsize=16)
+            plt.legend()
+            plt.axhline(y=0,color='r')
     
         # check for convergence
         print(bestc[1],c[1])
@@ -277,7 +278,28 @@ def fitzp():
         flag =  (abs(residual) < 2.0*np.std(residual))
         x = x[flag]
         y = y[flag]
-    print('ZP = {:.2f}'.format(c[1]))
+    # plot best-fit results
+    plt.figure(figsize=(8,8))
+    plt.subplot(2,1,1)
+    plt.plot(x,y,'bo',label='MAG_AUTO')
+    plt.xlabel('Pan-STARRS r',fontsize=16)
+    plt.ylabel('SE R-band MAG',fontsize=16)
+
+    xl = np.linspace(14,17,10)
+    yl = np.polyval(c,xl)
+    s = 'fit: y = %.2f PAN + %.2f'%(c[0],c[1])
+    plt.plot(xl,yl,'k--',label=s)
+    plt.legend()
+
+
+    plt.subplot(2,1,2)
+    s = 'std = %.4f'%(np.std(residual))
+    plt.plot(x,residual, 'ko',label=s)
+    plt.xlabel('Pan-STARRS r',fontsize=16)
+    plt.ylabel('YFIT - SE R-band MAG_AUTO',fontsize=16)
+    plt.legend()
+    plt.axhline(y=0,color='r')
+
     return x,y
 
 
