@@ -258,7 +258,7 @@ def fitzp():
         s = 'fit: y = %.2f PAN + %.2f'%(c[0],c[1])
         plt.plot(xl,yl,'k--',label=s)
         plt.legend()
-        print('ZP = {:.2f}'.format(c[1]))
+
 
         yfit = np.polyval(c,x)
         residual = (yfit - y)/yfit 
@@ -277,6 +277,7 @@ def fitzp():
         flag =  (abs(residual) < 2.0*np.std(residual))
         x = x[flag]
         y = y[flag]
+    print('ZP = {:.2f}'.format(c[1]))
     return x,y
 
 
