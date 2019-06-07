@@ -109,7 +109,7 @@ def panstarrs_query(ra_deg, dec_deg, rad_deg, maxmag=20,
 
 
 
-parser = argparse.ArgumentParser(description ='Run sextractor, get Pan-STARRS catalog, and then computer photometric ZP\n \n from within ipython: \n %run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i \n\n then:\n fitzp() \n \n The y intercept is -1*ZP.', formatter_class=argparse.RawTextHelpFormatter)
+parser = argparse.ArgumentParser(description ='Run sextractor, get Pan-STARRS catalog, and then computer photometric ZP\n \n from within ipython: \n %run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i \n\n then:\n x,y = fitzp() \n \n The y intercept is -1*ZP. \n \n x and y data are returned in case you want to make additional plots.', formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('--image', dest = 'image', default = None, help = 'Image for ZP calibration')
 parser.add_argument('--instrument', dest = 'instrument', default = None, help = 'HDI = h, KPNO mosaic = m, INT = i')
 parser.add_argument('--nsigma', dest = 'nsigma', default = 2.0, help = 'number of std to use in iterative rejection of ZP fitting')
@@ -229,7 +229,7 @@ def fitzp():
     yl = np.polyval(c,xl)
     plt.plot(xl,yl,'k--')
     #plt.plot(xl,1.2*yl,'k:')
-    print(c)
+    #print(c)
     
     yfit = np.polyval(c,pan['rmag'])
     residual = np.zeros(len(fitflag))
@@ -258,7 +258,7 @@ def fitzp():
         s = 'fit: y = %.2f PAN + %.2f'%(c[0],c[1])
         plt.plot(xl,yl,'k--',label=s)
         plt.legend()
-        print(c)
+        print('ZP = {:.2f}'.format(c[1]))
 
         yfit = np.polyval(c,x)
         residual = (yfit - y)/yfit 
