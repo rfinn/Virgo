@@ -1,6 +1,18 @@
 #!/usr/bin/env python
 
 '''
+USAGE:
+
+from within ipython:
+
+%run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i
+
+then:
+fitzp()
+
+The y intercept is -1*ZP
+
+
 potentially useful references
 
 SDSS
@@ -97,7 +109,7 @@ def panstarrs_query(ra_deg, dec_deg, rad_deg, maxmag=20,
 
 
 
-parser = argparse.ArgumentParser(description ='Run sextractor, get Pan-STARRS catalog, and then computer photometric ZP')
+parser = argparse.ArgumentParser(description ='Run sextractor, get Pan-STARRS catalog, and then computer photometric ZP\n \n from within ipython: \n %run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i \n\n then:\n fitzp() \n \n The y intercept is -1*ZP.', formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('--image', dest = 'image', default = None, help = 'Image for ZP calibration')
 parser.add_argument('--instrument', dest = 'instrument', default = None, help = 'HDI = h, KPNO mosaic = m, INT = i')
 parser.add_argument('--nsigma', dest = 'nsigma', default = 2.0, help = 'number of std to use in iterative rejection of ZP fitting')
