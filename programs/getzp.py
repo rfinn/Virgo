@@ -295,9 +295,9 @@ class getzp():
     def update_header(self):
         print('working on this')
         # add best-fit ZP to image header
-        im,header = fits.getdata(self.image,header=True)
-        header.set('PHOTZP',float('{:.3f}'.format(zp.bestc[1])))
-        fits.write(self.image,im,header, overwrite=True)
+        hdu = fits.open(self.image)
+        hdu[0].header.set('PHOTZP',float('{:.3f}'.format(zp.bestc[1])))
+        hdu.write(self.image, overwrite=True)
 if __name__ == '__main__':
 
 
