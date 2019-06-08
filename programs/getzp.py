@@ -125,15 +125,15 @@ class getzp():
         ####
 
         os.system('cp ' +args.d + '/default.* .')
-        t = args.image.split('.fits')
+        t = self.image.split('.fits')
         froot = t[0]
-        if args.instrument == 'h':
+        if self.instrument == 'h':
             os.system('sex ' + args.image + ' -c default.sex.HDI -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
 
-        elif args.instrument == 'i':
+        elif self.instrument == 'i':
             os.system('sex ' + args.image + ' -c default.sex.INT -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
 
-        elif args.instrument == 'm':
+        elif self.instrument == 'm':
             os.system('sex ' + args.image + ' -c default.sex.HDI -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
 
         # clean up SE files
@@ -206,7 +206,7 @@ class getzp():
         ###################################
         # Show location of residuals
         ###################################
-    def plot_fitresults(self, polyfit_results = self.bestc):
+    def plot_fitresults(self):#, polyfit_results = self.bestc):
         # plot best-fit results
         yfit = np.polyval(polyfit_results,self.x)
         residual = (yfit - self.y)/yfit 
@@ -296,14 +296,14 @@ if __name__ == '__main__':
 
 
     parser = argparse.ArgumentParser(description ='Run sextractor, get Pan-STARRS catalog, and then computer photometric ZP\n \n from within ipython: \n %run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i \n\n then:\n x,y = fitzp() \n \n The y intercept is -1*ZP. \n \n x and y data are returned in case you want to make additional plots.', formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--image', dest = 'image', default = None, help = 'Image for ZP calibration')
+    parser.add_argument('--image', dest = 'image', default = 'test.coadd.fits', help = 'Image for ZP calibration')
     parser.add_argument('--instrument', dest = 'instrument', default = None, help = 'HDI = h, KPNO mosaic = m, INT = i')
     parser.add_argument('--filter', dest = 'filter', default = 'R', help = 'filter (R or r; use r for Halpha)')
     parser.add_argument('--nsigma', dest = 'nsigma', default = 2.0, help = 'number of std to use in iterative rejection of ZP fitting')
     parser.add_argument('--d',dest = 'd', default ='~/github/HalphaImaging/astromatic', help = 'Locates path of default config files.  Default is ~/github/HalphaImaging/astromatic')
     args = parser.parse_args()
 
-    zp = getzp(args.image, intrument=args.instrument, filter=args.filter, astromatric_dir = args.d)
+    zp = getzp(args.image, instrument=args.instrument, filter=args.filter, astromatic_dir = args.d)
     zp.getzp()
 
 
