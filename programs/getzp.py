@@ -280,7 +280,7 @@ class getzp():
                 self.plot_fitresults(x,y,polyfit_results = c)
     
             # check for convergence
-            print('{:.3f} {:.3f}'.format(self.bestc[1],c[1]))
+            print('new ZP = {:.3f}, previous ZP = {:.3f}'.format(self.bestc[1],c[1]))
             delta = abs(self.bestc[1] - c[1])
             self.bestc = c
             flag =  (abs(residual) < 2.0*np.std(residual))
