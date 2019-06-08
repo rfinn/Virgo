@@ -206,7 +206,7 @@ class getzp():
         ###################################
         # Show location of residuals
         ###################################
-    def plot_fitresults(x,y, polyfit_results = self.bestc):
+    def plot_fitresults(self,x,y, polyfit_results = self.bestc):
         # plot best-fit results
         yfit = np.polyval(polyfit_results,x)
         residual = (yfit - y)/yfit 
