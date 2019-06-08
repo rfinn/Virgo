@@ -206,10 +206,10 @@ class getzp():
         ###################################
         # Show location of residuals
         ###################################
-    def plot_fitresults(self):#, polyfit_results = self.bestc):
+    def plot_fitresults(x,y, polyfit_results = self.bestc):
         # plot best-fit results
-        yfit = np.polyval(polyfit_results,self.x)
-        residual = (yfit - self.y)/yfit 
+        yfit = np.polyval(polyfit_results,x)
+        residual = (yfit - y)/yfit 
         plt.figure(figsize=(8,8))
 
         plt.subplot(2,1,1)
@@ -224,7 +224,7 @@ class getzp():
         
         plt.subplot(2,1,2)
         s = 'std = %.4f'%(np.std(residual))
-        plt.plot(self.x,residual, 'ko',label=s)
+        plt.plot(x,residual, 'ko',label=s)
         plt.xlabel('Pan-STARRS r',fontsize=16)
         plt.ylabel('YFIT - SE R-band MAG_AUTO',fontsize=16)
         plt.legend()
@@ -266,24 +266,26 @@ class getzp():
         delta = 100.
         
         #self.x = pan['rmag'][fitflag]
-        self.x = self.R[flag]
-        self.y = self.matchedarray1['MAG_AUTO'][flag]
+        x = self.R[flag]
+        y = self.matchedarray1['MAG_AUTO'][flag]
         while delta > 1.e-3:
-            c = np.polyfit(self.x,self.y,1)
+            c = np.polyfit(x,y,1)
             print('number of points retained = ',sum(flag))
-            yfit = np.polyval(c,self.x)
-            self.residual = (yfit - self.y)/yfit 
+            yfit = np.polyval(c,x)
+            residual = (yfit - y)/yfit 
             if plotall:
-                self.plot_fitresults(polyfit_results = c)
+                self.plot_fitresults(x,y,polyfit_results = c)
     
             # check for convergence
             print(self.bestc[1],c[1])
             delta = abs(self.bestc[1] - c[1])
             self.bestc = c
             flag =  (abs(residual) < 2.0*np.std(residual))
-            self.x = self.x[flag]
-            self.y = self.y[flag]
-        self.plot_fitresults()
+            x = x[flag]
+            y = y[flag]
+        self.x = x
+        self.y = y
+        self.plot_fitresults(x,y)
         
         
     def update_header(self):
