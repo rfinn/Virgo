@@ -230,7 +230,7 @@ class getzp():
         plt.legend()
         plt.axhline(y=0,color='r')
 
-    def fitzp(plotall=False):
+    def fitzp(self,plotall=False):
         ###################################
         # Solve for the zeropoint
         ###################################
