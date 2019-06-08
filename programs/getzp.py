@@ -194,7 +194,8 @@ class getzp():
         self.matchedarray1[matchflag] = self.secat[index[matchflag]]
 
         ###################################
-        # remove any objects that are saturated, have FLAGS set, galaxies, must have 14 < r < 17 according to Pan-STARRS
+        # remove any objects that are saturated, have FLAGS set, galaxies,
+        # must have 14 < r < 17 according to Pan-STARRS
         ###################################
 
 
@@ -207,9 +208,6 @@ class getzp():
             self.R = self.pan['rmag'] + (-0.153)*(self.pan['rmag']-self.pan['imag']) - 0.117
         else:
             self.R = self.pan['rmag']
-        ###################################
-        # Show location of residuals
-        ###################################
     def plot_fitresults(self, x, y, polyfit_results = [0,0]):
         # plot best-fit results
         yfit = np.polyval(polyfit_results,x)
@@ -263,13 +261,13 @@ class getzp():
         residual = np.zeros(len(flag))
         residual[flag] = (yfit[flag] - self.matchedarray1['MAG_AUTO'][flag])/yfit[flag]
         self.bestc = np.array([0,0],'f')
-        
+        ###################################
+        # Show location of residuals
+        ###################################
         plt.figure()
-        plt.scatter(self.matchedarray1['X_IMAGE'][flag],self.matchedarray1['Y_IMAGE'][flag],c = abs(residual[flag]))
+        plt.scatter(self.matchedarray1['X_IMAGE'][flag],self.matchedarray1['Y_IMAGE'][flag],c = (residual[flag]))
         plt.colorbar()
-        delta = 100.
-        
-        #self.x = pan['rmag'][fitflag]
+        delta = 100.     
         x = self.R[flag]
         y = self.matchedarray1['MAG_AUTO'][flag]
         while delta > 1.e-3:
@@ -290,14 +288,26 @@ class getzp():
         self.x = x
         self.y = y
         self.plot_fitresults(x,y,polyfit_results = self.bestc)
-        
-        
+                
     def update_header(self):
         print('working on this')
         # add best-fit ZP to image header
-        hdu = fits.open(self.image)
-        hdu[0].header.set('PHOTZP',float('{:.3f}'.format(zp.bestc[1])))
-        hdu.write(self.image, overwrite=True)
+        im, header = fits.getdata(self.image,header=True)
+
+        # or convert vega zp to AB
+        if self.filter == 'R':
+            # conversion from Blanton+2007
+            # http://www.astronomy.ohio-state.edu/~martini/usefuldata.html
+            header.set('PHOTZP',float('{:.3f}'.format(zp.bestc[1]+.21)))
+            header.set('LAMBDA_EFF (um)',float(.6442))
+
+        else:
+            header.set('PHOTZP',float('{:.3f}'.format(zp.bestc[1])))
+            
+        header.set('PHOTSYS','AB')
+        header.set('FLUXZPJY',float(3631))
+
+        fits.writeto(self.image, im, header, overwrite=True)
 if __name__ == '__main__':
 
 
