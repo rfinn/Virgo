@@ -5,13 +5,16 @@ USAGE:
 
 from within ipython:
 
-%run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i --filter r
 
-then:
-fitzp()
+%run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits 
+    ...: --instrument i --filter r
+
 
 The y intercept is -1*ZP
 
+To print the value in ipython, type:
+
+-1*zp.bestc[1]
 
 potentially useful references
 
@@ -277,7 +280,7 @@ class getzp():
                 self.plot_fitresults(x,y,polyfit_results = c)
     
             # check for convergence
-            print(self.bestc[1],c[1])
+            print('{:.3f} {:.3f}'.format(self.bestc[1],c[1]))
             delta = abs(self.bestc[1] - c[1])
             self.bestc = c
             flag =  (abs(residual) < 2.0*np.std(residual))
