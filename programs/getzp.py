@@ -206,6 +206,29 @@ class getzp():
         ###################################
         # Show location of residuals
         ###################################
+    def plot_fitresults(self, polyfit_results = self.bestc):
+        # plot best-fit results
+        yfit = np.polyval(polyfit_results,self.x)
+        residual = (yfit - self.y)/yfit 
+        plt.figure(figsize=(8,8))
+
+        plt.subplot(2,1,1)
+        plt.plot(x,y,'bo',label='MAG_AUTO')
+        plt.xlabel('Pan-STARRS r',fontsize=16)
+        plt.ylabel('SE R-band MAG',fontsize=16)
+        xl = np.linspace(14,17,10)
+        yl = np.polyval(self.polyfit_results,xl)
+        s = 'fit: y = %.2f PAN + %.2f'%(polyfit_results[0],polyfit_results[1])
+        plt.plot(xl,yl,'k--',label=s)
+        plt.legend()
+        
+        plt.subplot(2,1,2)
+        s = 'std = %.4f'%(np.std(residual))
+        plt.plot(self.x,residual, 'ko',label=s)
+        plt.xlabel('Pan-STARRS r',fontsize=16)
+        plt.ylabel('YFIT - SE R-band MAG_AUTO',fontsize=16)
+        plt.legend()
+        plt.axhline(y=0,color='r')
 
     def fitzp(plotall=False):
         ###################################
@@ -261,29 +284,7 @@ class getzp():
             self.x = x[flag]
             self.y = y[flag]
         self.plot_fitresults()
-    def plot_fitresults(self, polyfit_results = self.bestc):
-        # plot best-fit results
-        yfit = np.polyval(polyfit_results,self.x)
-        residual = (yfit - self.y)/yfit 
-        plt.figure(figsize=(8,8))
-
-        plt.subplot(2,1,1)
-        plt.plot(x,y,'bo',label='MAG_AUTO')
-        plt.xlabel('Pan-STARRS r',fontsize=16)
-        plt.ylabel('SE R-band MAG',fontsize=16)
-        xl = np.linspace(14,17,10)
-        yl = np.polyval(self.polyfit_results,xl)
-        s = 'fit: y = %.2f PAN + %.2f'%(polyfit_results[0],polyfit_results[1])
-        plt.plot(xl,yl,'k--',label=s)
-        plt.legend()
         
-        plt.subplot(2,1,2)
-        s = 'std = %.4f'%(np.std(residual))
-        plt.plot(self.x,residual, 'ko',label=s)
-        plt.xlabel('Pan-STARRS r',fontsize=16)
-        plt.ylabel('YFIT - SE R-band MAG_AUTO',fontsize=16)
-        plt.legend()
-        plt.axhline(y=0,color='r')
         
     def update_header(self):
         print('working on this')
