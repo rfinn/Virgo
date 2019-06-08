@@ -291,7 +291,7 @@ class getzp():
 
 
 
-if __name__ = '__main__':
+if __name__ == '__main__':
 
 
     parser = argparse.ArgumentParser(description ='Run sextractor, get Pan-STARRS catalog, and then computer photometric ZP\n \n from within ipython: \n %run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i \n\n then:\n x,y = fitzp() \n \n The y intercept is -1*ZP. \n \n x and y data are returned in case you want to make additional plots.', formatter_class=argparse.RawTextHelpFormatter)
