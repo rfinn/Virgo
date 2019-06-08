@@ -271,18 +271,18 @@ class getzp():
         while delta > 1.e-3:
             c = np.polyfit(self.x,self.y,1)
             print('number of points retained = ',sum(flag))
-            yfit = np.polyval(c,x)
-            self.residual = (yfit - y)/yfit 
+            yfit = np.polyval(c,self.x)
+            self.residual = (yfit - self.y)/yfit 
             if plotall:
                 self.plot_fitresults(polyfit_results = c)
     
             # check for convergence
-            print(bestc[1],c[1])
-            delta = abs(bestc[1] - c[1])
+            print(self.bestc[1],c[1])
+            delta = abs(self.bestc[1] - c[1])
             self.bestc = c
             flag =  (abs(residual) < 2.0*np.std(residual))
-            self.x = x[flag]
-            self.y = y[flag]
+            self.x = self.x[flag]
+            self.y = self.y[flag]
         self.plot_fitresults()
         
         
