@@ -194,15 +194,15 @@ class getzp():
         ###################################
 
 
-        fitflag = matchflag & (self.matchedarray1['FLAGS'] == 0)  & (pan['rmag'] > 14.) & (pan['rmag'] < 17.) & (self.matchedarray1['CLASS_STAR'] > 0.95)
+        fitflag = matchflag & (self.matchedarray1['FLAGS'] == 0)  & (self.pan['rmag'] > 14.) & (self.pan['rmag'] < 17.) & (self.matchedarray1['CLASS_STAR'] > 0.95)
 
         if self.filter == 'R':
             ###################################
             # Calculate Johnson R
             ###################################
-            self.R = pan['rmag'] + (-0.153)*(pan['rmag']-pan['imag']) - 0.117
+            self.R = self.pan['rmag'] + (-0.153)*(self.pan['rmag']-self.pan['imag']) - 0.117
         else:
-            self.R = pan['rmag']
+            self.R = self.pan['rmag']
         ###################################
         # Show location of residuals
         ###################################
@@ -242,7 +242,7 @@ class getzp():
             plt.figure(figsize=(8,6))
 
             plt.plot(self.pan['rmag'][flag],self.matchedarray1['MAG_AUTO'][flag],'bo')
-            plt.errorbar(self.pan['rmag'][flag],self.matchedarray1['MAG_AUTO'][flag],xerr= pan['e_rmag'][flag],yerr=self.matchedarray1['MAGERR_AUTO'][flag],fmt='none')
+            plt.errorbar(self.pan['rmag'][flag],self.matchedarray1['MAG_AUTO'][flag],xerr= self.pan['e_rmag'][flag],yerr=self.matchedarray1['MAGERR_AUTO'][flag],fmt='none')
             plt.plot(self.pan['rmag'][flag],self.matchedarray1['MAG_BEST'][flag],'ro',label='MAG_BEST')
             plt.plot(self.pan['rmag'][flag],self.matchedarray1['MAG_PETRO'][flag],'go',label='MAG_PETRO')
             plt.plot(self.pan['rmag'][flag],self.matchedarray1['MAG_ISO'][flag],'ko',label='MAG_ISO')
@@ -255,7 +255,7 @@ class getzp():
             #plt.plot(xl,1.2*yl,'k:')
             #print(c)
     
-        yfit = np.polyval(c,pan['rmag'])
+        yfit = np.polyval(c,self.pan['rmag'])
         residual = np.zeros(len(flag))
         residual[flag] = (yfit[flag] - self.matchedarray1['MAG_AUTO'][flag])/yfit[flag]
         self.bestc = np.array([0,0],'f')
