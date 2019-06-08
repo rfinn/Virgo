@@ -194,7 +194,7 @@ class getzp():
         ###################################
 
 
-        fitflag = matchflag & (self.matchedarray1['FLAGS'] == 0)  & (self.pan['rmag'] > 14.) & (self.pan['rmag'] < 17.) & (self.matchedarray1['CLASS_STAR'] > 0.95)
+        self.fitflag = matchflag & (self.matchedarray1['FLAGS'] == 0)  & (self.pan['rmag'] > 14.) & (self.pan['rmag'] < 17.) & (self.matchedarray1['CLASS_STAR'] > 0.95)
 
         if self.filter == 'R':
             ###################################
