@@ -186,7 +186,7 @@ class getzp():
         matchflag = dist2d.degree < 5./3600
 
 
-        self.matchedarray1=np.zeros(len(pancoords),dtype=secat.dtype)
+        self.matchedarray1=np.zeros(len(pancoords),dtype=self.secat.dtype)
         self.matchedarray1[matchflag] = self.secat[index[matchflag]]
 
         ###################################
