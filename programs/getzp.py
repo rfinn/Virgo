@@ -108,7 +108,7 @@ def panstarrs_query(ra_deg, dec_deg, rad_deg, maxmag=20,
 
 
 class getzp():
-    def __init__(self, image, instrument='h', filter='r', astromatic_dir = '~/github/HalphaImaging/astromatic/')
+    def __init__(self, image, instrument='h', filter='r', astromatic_dir = '~/github/HalphaImaging/astromatic/'):
 
         self.image = image
         self.astrodir = astromatic_dir
