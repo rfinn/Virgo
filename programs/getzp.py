@@ -5,7 +5,7 @@ USAGE:
 
 from within ipython:
 
-%run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i
+%run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i --filter r
 
 then:
 fitzp()
@@ -152,10 +152,10 @@ class getzp():
         # get max/min RA and DEC for the image
         ###################################
 
-        minRA = min(secat['ALPHA_J2000'])
-        maxRA = max(secat['ALPHA_J2000'])
-        minDEC = min(secat['DELTA_J2000'])
-        maxDEC = max(secat['DELTA_J2000'])
+        minRA = min(self.secat['ALPHA_J2000'])
+        maxRA = max(self.secat['ALPHA_J2000'])
+        minDEC = min(self.secat['DELTA_J2000'])
+        maxDEC = max(self.secat['DELTA_J2000'])
         self.centerRA = 0.5*(minRA + maxRA)
         self.centerDEC = 0.5*(minDEC + maxDEC)
         #radius = np.sqrt((maxRA- centerRA)**2 + (maxDEC - centerDEC)**2)
