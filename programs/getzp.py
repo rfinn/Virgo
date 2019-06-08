@@ -122,6 +122,7 @@ class getzp():
         self.get_panstarrs()
         self.match_coords()
         self.fitzp()
+        self.update_header()
     def runse(self):
         #####
         # Run Source Extractor on image to measure magnitudes
@@ -294,9 +295,9 @@ class getzp():
     def update_header(self):
         print('working on this')
         # add best-fit ZP to image header
-
-
-
+        im,header = fits.getdata(self.image,header=True)
+        header.set('PHOTZP',float('{:.3f}'.format(zp.bestc[1])))
+        fits.write(self.image,im,header, overwrite=True)
 if __name__ == '__main__':
 
 
