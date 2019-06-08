@@ -217,7 +217,7 @@ class getzp():
         plt.xlabel('Pan-STARRS r',fontsize=16)
         plt.ylabel('SE R-band MAG',fontsize=16)
         xl = np.linspace(14,17,10)
-        yl = np.polyval(self.polyfit_results,xl)
+        yl = np.polyval(polyfit_results,xl)
         s = 'fit: y = %.2f PAN + %.2f'%(polyfit_results[0],polyfit_results[1])
         plt.plot(xl,yl,'k--',label=s)
         plt.legend()
