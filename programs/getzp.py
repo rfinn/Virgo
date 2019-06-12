@@ -5,18 +5,13 @@ USAGE:
 
 from within ipython:
 
-
-%run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits 
-    ...: --instrument i --filter r
-
+%run ~/github/Virgo/programs/getzp.py --image pointing031-r.coadd.fits --instrument i --filter r
 
 The y intercept is -1*ZP
 
 To print the value in ipython, type:
 
 -1*zp.bestc[1]
-
-potentially useful references
 
 
 UPDATES:
@@ -27,28 +22,19 @@ UPDATES:
 
 NOTES:
 
-HDI - seems like coadd is ADU/exptime*10?
-SDSS
-https://astroquery.readthedocs.io/en/latest/api/astroquery.sdss.SDSSClass.html#astroquery.sdss.SDSSClass.query_photoobj
+2019-06-12
+* making sure saturated stars are ignored
+- coadd produced by swarp is in ADU/exptime
+- added argument nexptime that allows user to toggle between images in ADU vs ADU/s.  If image is in ADU/s, then I grab the exptime from the image header and change SATUR_LEVEL to 40000./exptime
 
-http://skyserver.sdss.org/dr8/en/help/docs/realquery.asp#cleanStars
 
-SELECT TOP 10 u,g,r,i,z,ra,dec, flags_r 
-FROM Star 
-WHERE 
-ra BETWEEN 180 and 181 AND dec BETWEEN -0.5 and 0.5
-AND ((flags_r & 0x10000000) != 0)
--- detected in BINNED1
-AND ((flags_r & 0x8100000c00a4) = 0)
--- not EDGE, NOPROFILE, PEAKCENTER, NOTCHECKED, PSF_FLUX_INTERP,
--- SATURATED, or BAD_COUNTS_ERROR
-AND (((flags_r & 0x400000000000) = 0) or (psfmagerr_r <= 0.2))
--- not DEBLEND_NOPEAK or small PSF error
--- (substitute psfmagerr in other band as appropriate)
-AND (((flags_r & 0x100000000000) = 0) or (flags_r & 0x1000) = 0)
--- not INTERP_CENTER or not COSMIC_RAY
 
-https://www.sdss.org/dr12/algorithms/photo_flags_recommend/
+REFERENCES:
+
+Pan-STARRS
+https://michaelmommert.wordpress.com/2017/02/13/accessing-the-gaia-and-pan-starrs-catalogs-using-python/
+
+https://panstarrs.stsci.edu/
 
 
 GAIA
@@ -57,14 +43,7 @@ https://gea.esac.esa.int/archive/documentation/GDR1/Data_processing/chap_cu5phot
 https://www.cosmos.esa.int/web/gaia/dr2-known-issues
 
 
-Pan-STARRS
-https://michaelmommert.wordpress.com/2017/02/13/accessing-the-gaia-and-pan-starrs-catalogs-using-python/
-
-https://panstarrs.stsci.edu/
-
-
-
-
+OLD SDSS QUERY
 from astroquery.sdss import SDSS
 
 
@@ -148,13 +127,18 @@ class getzp():
         t = self.image.split('.fits')
         froot = t[0]
         if self.instrument == 'h':
-            os.system('sex ' + args.image + ' -c default.sex.HDI -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
-
+            defaultcat = 'default.sex.HDI'
         elif self.instrument == 'i':
-            os.system('sex ' + args.image + ' -c default.sex.INT -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
-
+            defaultcat = 'default.sex.HDI'
         elif self.instrument == 'm':
-            os.system('sex ' + args.image + ' -c default.sex.HDI -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
+            defaultcat = 'default.sex.HDI'
+        if args.nexptime: # image is in ADU/S
+            header = fits.getheader(self.image)
+            expt = header['EXPTIME']
+            ADUlimit = 40000./float(expt)
+            os.system('sex ' + args.image + ' -c '+defaultcat' -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0 SATUR_LEVEL '+str(ADUlimit)
+        else:
+            os.system('sex ' + args.image + ' -c '+defaultcat' -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0'
 
         # clean up SE files
         # skipping for now in case the following command accidentally deletes user files
@@ -340,6 +324,7 @@ if __name__ == '__main__':
     parser.add_argument('--image', dest = 'image', default = 'test.coadd.fits', help = 'Image for ZP calibration')
     parser.add_argument('--instrument', dest = 'instrument', default = None, help = 'HDI = h, KPNO mosaic = m, INT = i')
     parser.add_argument('--filter', dest = 'filter', default = 'R', help = 'filter (R or r; use r for Halpha)')
+    parser.add_argument('--nexptime', dest = 'nexptime', default = True, help = "set to zero if the image is in ADU rather than ADU/s")
     parser.add_argument('--nsigma', dest = 'nsigma', default = 2.0, help = 'number of std to use in iterative rejection of ZP fitting')
     parser.add_argument('--d',dest = 'd', default ='~/github/HalphaImaging/astromatic', help = 'Locates path of default config files.  Default is ~/github/HalphaImaging/astromatic')
     args = parser.parse_args()
