@@ -18,6 +18,16 @@ To print the value in ipython, type:
 
 potentially useful references
 
+
+UPDATES:
+* implemented scipy.optimize.curve_fit in getzp.py to 
+    * keep slope fixed at 1
+    * get an estimate of error in ZP (sqrt(covariance))
+* program now prints ZP and error at the end
+
+NOTES:
+
+HDI - seems like coadd is ADU/exptime*10?
 SDSS
 https://astroquery.readthedocs.io/en/latest/api/astroquery.sdss.SDSSClass.html#astroquery.sdss.SDSSClass.query_photoobj
 
@@ -72,9 +82,15 @@ import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
+from scipy.optimize import curve_fit
 
 from astroquery.vizier import Vizier
 
+# function for fitting ZP equation
+# this one forces slope = 1
+zpfunc = lambda x, zp: x + zp
+# this function allows the slope to vary
+zpfuncwithslope = lambda x, m, zp: m*x + zp
 
 def panstarrs_query(ra_deg, dec_deg, rad_deg, maxmag=20,
                     maxsources=10000):
@@ -270,8 +286,12 @@ class getzp():
         delta = 100.     
         x = self.R[flag]
         y = self.matchedarray1['MAG_AUTO'][flag]
+        yerr = self.matchedarray1['MAGERR_AUTO'][flag]
         while delta > 1.e-3:
-            c = np.polyfit(x,y,1)
+            #c = np.polyfit(x,y,1)
+            t = curve_fit(zpfunc,x,y,sigma = yerr)
+            # convert to format expected from polyfit
+            c = np.array([1.,t[0][0]])
             print('number of points retained = ',sum(flag))
             yfit = np.polyval(c,x)
             residual = (yfit - y)/yfit 
@@ -285,8 +305,13 @@ class getzp():
             flag =  (abs(residual) < 2.0*np.std(residual))
             x = x[flag]
             y = y[flag]
+            yerr = yerr[flag]
         self.x = x
         self.y = y
+        self.yerr = yerr
+        self.zpcovar = t[1]
+        self.zperr = np.sqrt(self.zpcovar[0][0])
+        self.zp = self.bestc[1]
         self.plot_fitresults(x,y,polyfit_results = self.bestc)
                 
     def update_header(self):
@@ -321,6 +346,7 @@ if __name__ == '__main__':
 
     zp = getzp(args.image, instrument=args.instrument, filter=args.filter, astromatic_dir = args.d)
     zp.getzp()
+    print('ZP = {:.3f} +/- {:.3f}'.format(-1*zp.zp,zp.zperr))
 
 
 
