@@ -136,9 +136,12 @@ class getzp():
             header = fits.getheader(self.image)
             expt = header['EXPTIME']
             ADUlimit = 40000./float(expt)
-            os.system('sex ' + args.image + ' -c '+defaultcat' -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0 SATUR_LEVEL '+str(ADUlimit)
+            print('saturation limit in ADU/s {:.1f}'.format(ADUlimit))
+            t = 'sex ' + args.image + ' -c '+defaultcat+' -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0 -SATUR_LEVEL '+str(ADUlimit)
+            print(t)
+            os.system(t)
         else:
-            os.system('sex ' + args.image + ' -c '+defaultcat' -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0'
+            os.system('sex ' + args.image + ' -c '+defaultcat+' -CATALOG_NAME ' + froot + '.cat -MAG_ZEROPOINT 0')
 
         # clean up SE files
         # skipping for now in case the following command accidentally deletes user files
@@ -199,7 +202,7 @@ class getzp():
         ###################################
 
 
-        self.fitflag = matchflag & (self.matchedarray1['FLAGS'] == 0)  & (self.pan['rmag'] > 14.) & (self.pan['rmag'] < 17.) & (self.matchedarray1['CLASS_STAR'] > 0.95)
+        self.fitflag = matchflag  & (self.pan['rmag'] > 6.)& (self.matchedarray1['FLAGS'] == 0)  & (self.matchedarray1['CLASS_STAR'] > 0.95) #& (self.pan['rmag'] < 17.) 
 
         if self.filter == 'R':
             ###################################
@@ -240,6 +243,7 @@ class getzp():
         # plot Pan-STARRS r mag on x axis, observed R-mag on y axis
         flag = self.fitflag
         c = np.polyfit(self.pan['rmag'][flag],self.matchedarray1['MAG_AUTO'][flag],1)
+
         if plotall:
             plt.figure(figsize=(8,6))
 
@@ -247,7 +251,7 @@ class getzp():
             plt.errorbar(self.pan['rmag'][flag],self.matchedarray1['MAG_AUTO'][flag],xerr= self.pan['e_rmag'][flag],yerr=self.matchedarray1['MAGERR_AUTO'][flag],fmt='none')
             plt.plot(self.pan['rmag'][flag],self.matchedarray1['MAG_BEST'][flag],'ro',label='MAG_BEST')
             plt.plot(self.pan['rmag'][flag],self.matchedarray1['MAG_PETRO'][flag],'go',label='MAG_PETRO')
-            plt.plot(self.pan['rmag'][flag],self.matchedarray1['MAG_ISO'][flag],'ko',label='MAG_ISO')
+            plt.plot(self.pan['rmag'][flag],self.matchedarray1['MAG_APER'][:,0][flag],'ko',label='MAG_APER')
             plt.xlabel('Pan-STARRS r',fontsize=16)
             plt.ylabel('SE R-band MAG_AUTO',fontsize=16)
 
@@ -269,8 +273,9 @@ class getzp():
         plt.colorbar()
         delta = 100.     
         x = self.R[flag]
-        y = self.matchedarray1['MAG_AUTO'][flag]
-        yerr = self.matchedarray1['MAGERR_AUTO'][flag]
+        # fixed radii apertures: [:,0] = 3 pix, [:,1] = 5 pix, [:,2] = 7 pixels
+        y = self.matchedarray1['MAG_APER'][:,args.naper][flag]
+        yerr = self.matchedarray1['MAGERR_APER'][:,args.naper][flag]
         while delta > 1.e-3:
             #c = np.polyfit(x,y,1)
             t = curve_fit(zpfunc,x,y,sigma = yerr)
@@ -324,11 +329,13 @@ if __name__ == '__main__':
     parser.add_argument('--image', dest = 'image', default = 'test.coadd.fits', help = 'Image for ZP calibration')
     parser.add_argument('--instrument', dest = 'instrument', default = None, help = 'HDI = h, KPNO mosaic = m, INT = i')
     parser.add_argument('--filter', dest = 'filter', default = 'R', help = 'filter (R or r; use r for Halpha)')
-    parser.add_argument('--nexptime', dest = 'nexptime', default = True, help = "set to zero if the image is in ADU rather than ADU/s")
-    parser.add_argument('--nsigma', dest = 'nsigma', default = 2.0, help = 'number of std to use in iterative rejection of ZP fitting')
+    parser.add_argument('--nexptime', dest = 'nexptime', default = True, action = 'store_false', help = "set this flag if the image is in ADU rather than ADU/s")
+    parser.add_argument('--naper', dest = 'naper', default = 4,help = "select fixed aperture magnitude.  0=3pix; 1=5pix; 2=7pix")
+    parser.add_argument('--nsigma', dest = 'nsigma', default = 2.5, help = 'number of std to use in iterative rejection of ZP fitting.  default is 2.5')
     parser.add_argument('--d',dest = 'd', default ='~/github/HalphaImaging/astromatic', help = 'Locates path of default config files.  Default is ~/github/HalphaImaging/astromatic')
     args = parser.parse_args()
-
+    args.nexptime = bool(args.nexptime)
+    args.naper = int(args.naper)
     zp = getzp(args.image, instrument=args.instrument, filter=args.filter, astromatic_dir = args.d)
     zp.getzp()
     print('ZP = {:.3f} +/- {:.3f}'.format(-1*zp.zp,zp.zperr))
