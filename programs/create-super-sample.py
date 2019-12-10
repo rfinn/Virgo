@@ -129,6 +129,10 @@ class sample:
     
         '''
         self.max_match_offset = max_match_offset
+
+        ################################################################
+        ## READ IN HYPERLEDA CATALO
+        ################################################################
         hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-09dec2019-full.csv'
         self.hl = ascii.read(hlfile)
         self.hl = Table(self.hl)
@@ -141,9 +145,41 @@ class sample:
 
         os.remove('temp.fits')
 
+        ################################################################
+        ## READ IN NED CATALOG
+        ################################################################        
+        #  downloaded in 10-dec-2019
+        '''
+        Search by by Parameters
+        decmin = -1.2
+        decmax = 75
+        ramax = 280.
+        ramin = 100.
+        vmax = 3300.
+        vmin = 500.
+        object = Galaxy
+        
+        RA has to be in hours
+        ramin = 6.6666666667
+        ramax = 18.666666667
 
-        self.hl
+        output = text, ascii, bar separated
+        velocity lower limit = -99
+
+        Dowloaded text file - there was garbage at top of file (unnecessary info) that I deleted.
+
+        Saved as
+
+        /Users/rfinn/github/Virgo/tables/ned-noprolog-10dec2019.txt
+        '''
+
+        nedfile = homedir+'/github/Virgo/tables/ned-noprolog-10dec2019.txt'
+        self.ned = ascii.read(nedfile,delimiter='|')
+
+        ################################################################
         ## read in NSA catalog
+        #  using newest version of NSA
+        ################################################################
         '''
         using new NSA catalog
         '''
@@ -151,7 +187,10 @@ class sample:
         self.nsa = fits.getdata(nfile)
         self.cull_nsa()
         #self.nsa = Table(self.nsa)
+
+        ################################################################        
         ## read in AGC catalog
+        ################################################################
         # got a new version from Martha on 11/19/19
         agcfile = '/Users/rfinn/research/AGC/agcm1.sh191118.fits'
         self.agc = fits.getdata(agcfile)
@@ -173,11 +212,14 @@ class sample:
         self.hcoord = SkyCoord(self.hl['al2000']*u.hr,self.hl['de2000']*u.deg,frame='icrs')
         self.ncoord = SkyCoord(self.nsa['RA']*u.deg,self.nsa['DEC']*u.deg,frame='icrs')
         self.acoord = SkyCoord(self.agc['radeg']*u.deg,self.agc['decdeg']*u.deg, frame='icrs')
+        self.nedcoord = SkyCoord(self.ned['RA']*u.deg,self.ned['DEC']*u.deg, frame='icrs')
 
         self.hvel = self.hl['v'] # mean of optical and radio velocities
         self.nvel = self.nsa['Z']*3.e5
         self.avel = self.agc_vbest
-    def run_it(self, maxoffset=7):
+        self.nedvel = self.ned['Velocity']
+        
+    def run_it(self, maxoffset=10):
         self.max_match_offset = maxoffset
         self.match_nsa_2_hl()
         self.match_agc_2_hl()
@@ -374,20 +416,17 @@ class sample:
         self.sample_table = Table([hlname,hlra,hldec,hvel,hflag,aname,ara,adec,avel,aflag,nname,nra,ndec,nvel,nflag],\
                                   names = out_column_names)
         self.sample_table.write('kitchen_sink.fits',format='fits',overwrite=True)
-        self.check_duplicates_t1()
-    def check_duplicates_t1(self):
+        self.check_duplicates_table1()
+        
+    def check_duplicates_table1(self):
         print('METHOD 1')
         fields = ['HL','AGC','NSA']
         for n in fields:
             print('checking HL ',n,' name')
             duplicates(self.sample_table,n+'_name',flag=self.sample_table[n+'flag'])
         
-    def add_remaining_AGC(self):
-        '''
-        add AGC galaxies with no counterpart in HL or NSA
-        '''
         
-    def get_smart(self,maxoffset=5.):
+    def get_smart(self,maxoffset=10.):
         self.max_match_offset = maxoffset
         # and use code I already wrote to match catalogs!!!
 
@@ -397,9 +436,6 @@ class sample:
         velocity2 = self.nvel
         voffset = 300.
         voffset = None
-        #cat1_index,cat1_flag, cat2_index, cat2_flag = join_cats(cat1[RAkey1],cat1[DECkey1],cat2[RAkey2],cat2[DECkey2],maxoffset=maxoffset, velocity1=velocity1, velocity2=velocity2,maxveloffset=maxveloffset)
-        #cat1_index,cat1_flag, cat2_index, cat2_flag = join_cats(self.hl['RAdeg'],self.hl['de2000'],self.agc['radeg'],self.agc['decdeg'],maxoffset=max_match_offset, velocity1=velocity1, velocity2=velocity2,maxveloffset=voffset)
-        #return cat1_index,cat1_flag, cat2_index, cat2_flag
         
         hl_2, hl_matchflag, agc_2, agc_matchflag = make_new_cats(self.hl, self.agc,RAkey1='RAdeg',DECkey1='de2000',RAkey2='radeg',DECkey2='decdeg', velocity1=None, velocity2=None, maxveloffset = voffset,maxoffset=self.max_match_offset)
 
@@ -427,7 +463,6 @@ class sample:
         joined_table.add_columns([c1,c2,c3,c4])
 
         joined_table.write('temp.fits',format='fits',overwrite=True)
-
         joined_table = fits.getdata('temp.fits')
 
         self.table1 = joined_table
@@ -445,7 +480,7 @@ class sample:
         joined_table2.add_column(c1)
         self.table2 = joined_table2
         
-        # boolean columns are getting coverted weird
+        # boolean columns are getting converted weird
         try:
             joined_table2['AGCflag'] = (joined_table2['AGCflag'] == 84)
             joined_table2['HLflag'] = (joined_table2['HLflag'] == 84)
@@ -489,7 +524,7 @@ class sample:
         plt.savefig('dv_of_matches.pdf')
 
 class panel_plots:
-    def plotimagesagc(self,flag, outfile_string='test',agcflag=False,nsaflag=False,onlyflag=False):
+    def plotimages(self,flag, outfile_string='test',agcflag=False,nsaflag=False,onlyflag=False,startindex=0):
         
         nsaindex = self.t.NSAID[flag]
         hra1 = self.hcoord.ra.deg[flag]
@@ -505,56 +540,63 @@ class panel_plots:
         
         plt.figure(figsize=(12,10))
         plt.subplots_adjust(bottom=.05,left=.05,top=.9,right=.95,hspace=.35)
-        i=0
+        # plots suddenly stopped working for AGC
+        # tryting to see if starting at a different index will help
+        if agcflag:
+            startindex=10
+
+        i=0 + startindex
         nsubplot = 1
         nrow=4
         ncol=5
+        if sum(flag) == 0:
+            print('no duplicates to plot')
+            return
         while nsubplot < nrow*ncol+1:#for i in range(9):
             plt.subplot(nrow,ncol,nsubplot)
             print('flag index = ',i)
             try:
-
-                try:
-                    if agcflag:
-                        w = getlegacy(ara3[i],adec3[i],ra2=nra2[i],dec2=ndec2[i],ra3=hra1[i],dec3=hdec1[i],agcflag=agcflag,onlyflag=onlyflag)
-                    elif nsaflag:
-                        w = getlegacy(nra2[i], ndec2[i],ra2=hra1[i],dec2=hdec1[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
-                    else:
-                        w = getlegacy(hra1[i], hdec1[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
-                except:
-                    i = i + 1
-                    print('trouble in paradise')
-                    print('maybe coords are outside Legacy Survey?')
-                    if agcflag:
-                        print(ara3[i],adec3[i])
-                    elif nsaflag:
-                        print(nra2[i],ndec2[i])
-                    else:
-                        print(hra1[i],hdec1[i])
-                    continue
-                #plt.axis([50,200,50,200])
-                plt.axis([75,175,75,175])
-                plt.title(str(hlname[i])+'\n NSA '+str(nsaid[i])+' / AGC '+str(agcnumber[i]))
-                if nsubplot == 1:
-                    plt.text(80, 205,str(outfile_string),fontsize=16,horizontalalignment='left')
-                self.add_allgals(w, agcflag=agcflag)
-                if w21[i] > .1:
-                    plt.text(80, 80,'W21='+str(w21[i]),fontsize=10)
-                plt.xticks(fontsize=8)
-                plt.yticks(fontsize=8)
+                if agcflag:
+                    print('agcflag is set',i,nsubplot)
+                    w = getlegacy(ara3[i],adec3[i],ra2=nra2[i],dec2=ndec2[i],ra3=hra1[i],dec3=hdec1[i],agcflag=agcflag,onlyflag=onlyflag)
+                elif nsaflag:
+                    w = getlegacy(nra2[i], ndec2[i],ra2=hra1[i],dec2=hdec1[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+                else:
+                    w = getlegacy(hra1[i], hdec1[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+            except:
                 i = i + 1
-                nsubplot += 1
-            except IndexError:
-                break
+                print('trouble in paradise',i)
+                print('maybe coords are outside Legacy Survey?')
+                if agcflag:
+                    print(ara3[i],adec3[i])
+                elif nsaflag:
+                    print(nra2[i],ndec2[i])
+                else:
+                    print(hra1[i],hdec1[i])
+                continue
+            #plt.axis([50,200,50,200])
+            plt.axis([75,175,75,175])
+            plt.title(str(hlname[i])+'\n NSA '+str(nsaid[i])+' / AGC '+str(agcnumber[i]))
+            if nsubplot == 1:
+                plt.text(80, 205,str(outfile_string),fontsize=16,horizontalalignment='left')
+            self.add_allgals(w, agcflag=agcflag)
+            if w21[i] > .1:
+                plt.text(80, 80,'W21='+str(w21[i]),fontsize=10)
+            plt.xticks(fontsize=8)
+            plt.yticks(fontsize=8)
+            i = i + 1
+            nsubplot += 1
         plt.savefig('../plots/AGC-HL-NSA-'+outfile_string+'.png')
     def add_allgals(self,w,agcflag=False):
-        cats = [self.acoord, self.ncoord, self.hcoord]
+        cats = [self.acoord, self.ncoord, self.hcoord,self.nedcoord]
         symbols=['co','b*','r+']
         edgecolors = ['c','w','r']
+        symbols=['co','b*','r+','kD']
+        edgecolors = ['c','w','r','xkcd:goldenrod']
         if agcflag:
-            facecolors = ['None','b','r']
+            facecolors = ['None','b','r','None']
         else:
-            facecolors = ['c','b','r']
+            facecolors = ['c','b','r','None']
         sizes = [10,14,14,20]
     
         w = WCS('hyper-nsa-test.fits',naxis=2)
@@ -573,25 +615,42 @@ class fulltable(panel_plots):
         self.hvel = self.t['v'] # mean of optical and radio velocities
         self.nvel = self.t['Z']*3.e5
         self.avel = self.t['vhelagc']
+
+        # Boolean columns are not preserved correctly
+        # topcat recognizes them ok, but they come in as integers (84=True, 70-something= False)
+        # resetting flags here to boolean arrays
         self.AGCflag = self.t.AGCflag == 84
         self.HLflag = self.t.HLflag == 84
         self.NSAflag = self.t.NSAflag == 84
-
+        self.temp_fix_for_ned()
+    def temp_fix_for_ned(self):
+        # as a first test, I want to plot positions of NED sources on image cutouts
+        # I haven't encorporated the NED columns into smart_kitchen_sink.fits
+        # so just going to read in catalog separately so that it's available to plot in plotimage
+                
+        nedfile = homedir+'/github/Virgo/tables/ned-noprolog-10dec2019.txt'
+        self.ned = ascii.read(nedfile,delimiter='|')
+        self.nedcoord = SkyCoord(self.ned['RA']*u.deg,self.ned['DEC']*u.deg, frame='icrs')
+        # updating allgals to include NED
     def agc_only(self):
-
+        # keep galaxies that are in AGC and NOT in (HL and NSA)
         flag = self.AGCflag & ~self.HLflag & ~self.NSAflag
-        self.plotimagesagc(flag,outfile_string='AGConly',agcflag=True,onlyflag=True)
+        self.plotimages(flag,outfile_string='AGConly',agcflag=True,onlyflag=True)
+        #self.plotimages(flag,outfile_string='AGConly',onlyflag=True)
         self.agc_only_flag = flag
+        plt.savefig('AGConly.png')
         pass
     def hl_only(self):
         flag = ~self.AGCflag & self.HLflag & ~self.NSAflag
-        self.plotimagesagc(flag,outfile_string='HLonly',onlyflag=True)
+        self.plotimages(flag,outfile_string='HLonly',onlyflag=True)
         self.hl_only_flag = flag
+        plt.savefig('HLonly.png')
         pass
     def nsa_only(self):
         flag = ~self.AGCflag & ~self.HLflag & self.NSAflag
-        self.plotimagesagc(flag,outfile_string='NSAonly',nsaflag=True,onlyflag=True)
+        self.plotimages(flag,outfile_string='NSAonly',nsaflag=True,onlyflag=True)
         self.nsa_only_flag = flag
+        plt.savefig('NSAonly.png')
         pass
     def plot_only(self):
         self.agc_only()
@@ -620,7 +679,12 @@ class fulltable(panel_plots):
                 nsaflag=True
             else:
                 nsaflag=False
-            self.plotimagesagc(plotflag,outfile_string=fields[i]+'-duplicates',nsaflag=nsaflag,agcflag=agcflag,onlyflag=True)
+            self.plotimages(plotflag,outfile_string=n+'-duplicates',nsaflag=nsaflag,agcflag=agcflag,onlyflag=True)
+            print(i)
+            plt.savefig(n+'-duplicates.png')
+    def plotall(self):
+        self.plot_only()
+        self.plot_duplicates()
 if __name__ == '__main__':
         
     ## start with HL - match to NSA and AGC
