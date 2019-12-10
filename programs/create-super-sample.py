@@ -16,11 +16,16 @@ from astropy.io import fits, ascii
 from astropy.table import Table, join, hstack, Column, MaskedColumn
 from astropy.coordinates import SkyCoord
 from astropy import units as u
+from astropy.wcs import WCS
+from astropy.visualization import simple_norm
 
 from matplotlib import pyplot as plt
+from matplotlib.patches import Rectangle
+
+from urllib.parse import urlencode
+from urllib.request import urlretrieve
 
 homedir = os.getenv('HOME')
-
 sys.path.append(homedir+'/github/APPSS/')
 from join_catalogs import make_new_cats, join_cats
 
@@ -57,6 +62,45 @@ def duplicates(table,column,flag=None):
         unique, counts = np.unique(table[column][flag], return_counts=True)
     print('number of duplicates = ',sum(counts > 1))
     #print('duplicates = ',unique[counts > 1])
+    return unique, counts
+
+def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,onlyflag=False):
+    #url='http://legacysurvey.org/viewer/fits-cutout?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=mzls+bass-dr6&pixscale=0.27&bands=r'
+    url='http://legacysurvey.org/viewer/cutout.fits?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&pixscale=1.00'
+    #http://legacysurvey.org/viewer/cutout.fits?ra=156.2778&dec=28.0920&layer=dr8&pixscale=1.00
+    fname = 'hyper-nsa-test.fits'
+    urlretrieve(url, fname)
+    t,h = fits.getdata(fname,header=True)
+    # write out r-band image
+    # nevermind - John M figured out how to use MEF with WCS
+    #fits.writeto('r-test.fits',t[1],header=h,overwrite=True)
+    norm = simple_norm(t[1],stretch='asinh',percent=99.5)
+    plt.imshow(t[1],origin='upper',cmap='gray_r', norm=norm)
+    dx=20
+    if agcflag:
+        colors = ['cyan','blue','red']
+    else:
+        colors = ['red','blue','cyan']
+    if onlyflag:
+        colors = ['k','k','k']
+    if (ra2 is not(None)) & (ra3 is not(None)):
+        ra = np.array([ra1,ra2, ra3])
+        dec = np.array([dec1,dec2, dec3])   
+        #w = WCS('r-test.fits')
+        #px,py = w.wcs_world2pix(ra,dec)
+        w = WCS('hyper-nsa-test.fits',naxis=2)
+        px,py = w.wcs_world2pix(ra,dec,1)
+        #print(px,py)
+        r1 = Rectangle((px[0]-dx/2, py[0]-dx/2), dx, dx, edgecolor=colors[0], facecolor='none')
+        dx=17.5
+        r2 = Rectangle((px[1]-dx/2, py[1]-dx/2), dx, dx, edgecolor=colors[1], facecolor='none')
+        dx=15
+        r3 = Rectangle((px[2]-dx/2, py[2]-dx/2), dx, dx, edgecolor=colors[2], facecolor='none')
+        plt.gca().add_patch(r1)
+        plt.gca().add_patch(r2)
+        plt.gca().add_patch(r3)
+        return w
+
 
 class sample:
     def __init__(self, max_match_offset=5.):
@@ -443,6 +487,140 @@ class sample:
         plt.ylabel('v_r of matched galaxy')
         plt.legend()
         plt.savefig('dv_of_matches.pdf')
+
+class panel_plots:
+    def plotimagesagc(self,flag, outfile_string='test',agcflag=False,nsaflag=False,onlyflag=False):
+        
+        nsaindex = self.t.NSAID[flag]
+        hra1 = self.hcoord.ra.deg[flag]
+        hdec1 = self.hcoord.dec.deg[flag]
+        nra2 = self.ncoord.ra.deg[flag]
+        ndec2 = self.ncoord.dec.deg[flag]
+        ara3 = self.acoord.ra.deg[flag]
+        adec3 = self.acoord.dec.deg[flag]
+        w21 = self.t.width[flag]
+        hlname = self.t.objname[flag]
+        nsaid = self.t.NSAID[flag]
+        agcnumber = self.t.AGCnr[flag]
+        
+        plt.figure(figsize=(12,10))
+        plt.subplots_adjust(bottom=.05,left=.05,top=.9,right=.95,hspace=.35)
+        i=0
+        nsubplot = 1
+        nrow=4
+        ncol=5
+        while nsubplot < nrow*ncol+1:#for i in range(9):
+            plt.subplot(nrow,ncol,nsubplot)
+            print('flag index = ',i)
+            try:
+
+                try:
+                    if agcflag:
+                        w = getlegacy(ara3[i],adec3[i],ra2=nra2[i],dec2=ndec2[i],ra3=hra1[i],dec3=hdec1[i],agcflag=agcflag,onlyflag=onlyflag)
+                    elif nsaflag:
+                        w = getlegacy(nra2[i], ndec2[i],ra2=hra1[i],dec2=hdec1[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+                    else:
+                        w = getlegacy(hra1[i], hdec1[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+                except:
+                    i = i + 1
+                    print('trouble in paradise')
+                    print('maybe coords are outside Legacy Survey?')
+                    if agcflag:
+                        print(ara3[i],adec3[i])
+                    elif nsaflag:
+                        print(nra2[i],ndec2[i])
+                    else:
+                        print(hra1[i],hdec1[i])
+                    continue
+                #plt.axis([50,200,50,200])
+                plt.axis([75,175,75,175])
+                plt.title(str(hlname[i])+'\n NSA '+str(nsaid[i])+' / AGC '+str(agcnumber[i]))
+                if nsubplot == 1:
+                    plt.text(80, 205,str(outfile_string),fontsize=16,horizontalalignment='left')
+                self.add_allgals(w, agcflag=agcflag)
+                if w21[i] > .1:
+                    plt.text(80, 80,'W21='+str(w21[i]),fontsize=10)
+                plt.xticks(fontsize=8)
+                plt.yticks(fontsize=8)
+                i = i + 1
+                nsubplot += 1
+            except IndexError:
+                break
+        plt.savefig('../plots/AGC-HL-NSA-'+outfile_string+'.png')
+    def add_allgals(self,w,agcflag=False):
+        cats = [self.acoord, self.ncoord, self.hcoord]
+        symbols=['co','b*','r+']
+        edgecolors = ['c','w','r']
+        if agcflag:
+            facecolors = ['None','b','r']
+        else:
+            facecolors = ['c','b','r']
+        sizes = [10,14,14,20]
+    
+        w = WCS('hyper-nsa-test.fits',naxis=2)
+        for i,c in enumerate(cats):
+            px,py = w.wcs_world2pix(c.ra.deg,c.dec.deg,1)
+            plt.plot(px,py,symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i])
+        
+class fulltable(panel_plots):
+    def __init__(self):
+        # this file contains all columns from HL, AGC and NSA
+        self.t = fits.getdata('smart_kitchen_sink.fits')
+        self.hcoord = SkyCoord(self.t['al2000']*u.hr,self.t['de2000']*u.deg,frame='icrs')
+        self.ncoord = SkyCoord(self.t['RA_2']*u.deg,self.t['DEC_2']*u.deg,frame='icrs')
+        self.acoord = SkyCoord(self.t['radeg']*u.deg,self.t['decdeg']*u.deg, frame='icrs')
+
+        self.hvel = self.t['v'] # mean of optical and radio velocities
+        self.nvel = self.t['Z']*3.e5
+        self.avel = self.t['vhelagc']
+        self.AGCflag = self.t.AGCflag == 84
+        self.HLflag = self.t.HLflag == 84
+        self.NSAflag = self.t.NSAflag == 84
+
+    def agc_only(self):
+
+        flag = self.AGCflag & ~self.HLflag & ~self.NSAflag
+        self.plotimagesagc(flag,outfile_string='AGConly',agcflag=True,onlyflag=True)
+        self.agc_only_flag = flag
+        pass
+    def hl_only(self):
+        flag = ~self.AGCflag & self.HLflag & ~self.NSAflag
+        self.plotimagesagc(flag,outfile_string='HLonly',onlyflag=True)
+        self.hl_only_flag = flag
+        pass
+    def nsa_only(self):
+        flag = ~self.AGCflag & ~self.HLflag & self.NSAflag
+        self.plotimagesagc(flag,outfile_string='NSAonly',nsaflag=True,onlyflag=True)
+        self.nsa_only_flag = flag
+        pass
+    def plot_only(self):
+        self.agc_only()
+        self.hl_only()
+        self.nsa_only()
+    def plot_duplicates(self):
+
+        columns=['objname','AGCnr','NSAID']
+        fields = ['HL','AGC','NSA']
+        flags = [self.HLflag,self.AGCflag,self.NSAflag]
+        for i,n in enumerate(fields):
+            print('checking HL ',n,' name')
+            unique, counts = duplicates(self.t,columns[i],flag=flags[i])
+            plotids = unique[counts > 1]
+            plotflag = np.zeros(len(flags[i]),'bool')
+            for id in plotids:
+                matchflag = id == self.t[columns[i]]
+                plotflag[matchflag] = np.ones(sum(matchflag),'bool')
+
+
+            if i == 1:
+                agcflag=True
+            else:
+                agcflag=False
+            if i == 2:
+                nsaflag=True
+            else:
+                nsaflag=False
+            self.plotimagesagc(plotflag,outfile_string=fields[i]+'-duplicates',nsaflag=nsaflag,agcflag=agcflag,onlyflag=True)
 if __name__ == '__main__':
         
     ## start with HL - match to NSA and AGC
@@ -450,9 +628,11 @@ if __name__ == '__main__':
     
 
     #s = sample()
-    s = sample(max_match_offset=7.)
-    
-
+    #s = sample(max_match_offset=7.)
+    print('Welcome!')
+    print('')
+    print('To build catalogs, try: \n\n \t s=sample()\n \t s.get_smart() \n \n OR\n\t s.run_it()')
+    print('\n\nTo read table and plot images, try: \n\n \t t=fulltable()\n \t t.agc_only() )')
     ## track NSA and AGC names of matches
 
     ## add HL objects with closest match > 5"
