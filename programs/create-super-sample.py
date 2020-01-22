@@ -30,7 +30,6 @@ sys.path.append(homedir+'/github/APPSS/')
 from join_catalogs import make_new_cats, join_cats
 
 
-
 ## import argparse
 
 ## parser = argparse.ArgumentParser(description ='Match the Halpha observations with Virgo NSA catalog')
@@ -55,6 +54,8 @@ ramin = 100.
 vmax = 3300.
 vmin = 500.
 
+legacy_pixel_scale = 0.262 # arcsec/pixel
+
 def duplicates(table,column,flag=None):
     if flag is None:
         unique, counts = np.unique(table[column], return_counts=True)
@@ -64,18 +65,77 @@ def duplicates(table,column,flag=None):
     #print('duplicates = ',unique[counts > 1])
     return unique, counts
 
-def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,onlyflag=False):
-    #url='http://legacysurvey.org/viewer/fits-cutout?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=mzls+bass-dr6&pixscale=0.27&bands=r'
-    url='http://legacysurvey.org/viewer/cutout.fits?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&pixscale=1.00'
-    #http://legacysurvey.org/viewer/cutout.fits?ra=156.2778&dec=28.0920&layer=dr8&pixscale=1.00
-    fname = 'hyper-nsa-test.fits'
-    urlretrieve(url, fname)
-    t,h = fits.getdata(fname,header=True)
+def getlegacyimages(ra,dec):
+    '''
+    new function to download images in one fell swoop
+
+    doing this so we can make cutouts of entire catalog, and then check each galaxy by hand
+
+    This will need to be re-run each time the matching is altered, and the kitchen-sink catalog changes.
+    
+    '''
+    for i in enumerate(ra):
+        # name image files by index of galaxy
+        galnumber = i
+        if galnumber is None:
+            jpeg_name = 'hyper-nsa-test.jpg'
+            fits_name = 'hyper-nsa-test.fits'
+
+            #url='http://legacysurvey.org/viewer/fits-cutout?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=mzls+bass-dr6&pixscale=0.27&bands=r'
+            url='http://legacysurvey.org/viewer/cutout.fits?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&size=150&pixscale=1.00'
+            urlretrieve(url, fits_name)
+            # to get cutout
+            url='http://legacysurvey.org/viewer/jpeg-cutout?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&size=150&pixscale=1.00'
+            #http://legacysurvey.org/viewer/cutout.fits?ra=156.2778&dec=28.0920&layer=dr8&pixscale=1.00
+            urlretrieve(url, jpeg_name)
+        else:
+            jpeg_name = 'legacy-im-'+str(galnumber)+'.jpg'
+            fits_name = 'legacy-im-'+str(galnumber)'.fits'
+            # check if images already exist
+            # if not download images
+            if not(os.path.exists(jpeg_name)):
+                url='http://legacysurvey.org/viewer/jpeg-cutout?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&size=150&pixscale=1.00'
+                urlretrieve(url, jpeg_name)
+            if not(os.path.exists(fits_name)):
+                url='http://legacysurvey.org/viewer/cutout.fits?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&size=150&pixscale=1.00'
+                urlretrieve(url, fits_name)
+    pass
+
+def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,onlyflag=False,galnumber=None):
+    if galnumber is None:
+        jpeg_name = 'hyper-nsa-test.jpg'
+        fits_name = 'hyper-nsa-test.fits'
+
+        #url='http://legacysurvey.org/viewer/fits-cutout?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=mzls+bass-dr6&pixscale=0.27&bands=r'
+        url='http://legacysurvey.org/viewer/cutout.fits?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&size=150&pixscale=1.00'
+        urlretrieve(url, fits_name)
+        # to get cutout
+        url='http://legacysurvey.org/viewer/jpeg-cutout?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&size=150&pixscale=1.00'
+        #http://legacysurvey.org/viewer/cutout.fits?ra=156.2778&dec=28.0920&layer=dr8&pixscale=1.00
+        urlretrieve(url, jpeg_name)
+    else:
+        jpeg_name = 'legacy-im-'+str(galnumber)+'.jpg'
+        fits_name = 'legacy-im-'+str(galnumber)'.fits'
+        # check if images already exist
+        # if not download images
+        if not(os.path.exists(jpeg_name)):
+            url='http://legacysurvey.org/viewer/jpeg-cutout?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&size=150&pixscale=1.00'
+            urlretrieve(url, jpeg_name)
+        if not(os.path.exists(fits_name)):
+            url='http://legacysurvey.org/viewer/cutout.fits?ra='+str(ra1)+'&dec='+str(dec1)+'&layer=dr8&size=150&pixscale=1.00'
+            urlretrieve(url, fits_name)
+            
+
+    t,h = fits.getdata(fits_name,header=True)
+    
     # write out r-band image
     # nevermind - John M figured out how to use MEF with WCS
     #fits.writeto('r-test.fits',t[1],header=h,overwrite=True)
     norm = simple_norm(t[1],stretch='asinh',percent=99.5)
     plt.imshow(t[1],origin='upper',cmap='gray_r', norm=norm)
+
+    # update this to plot the jpeg color image
+    
     dx=20
     if agcflag:
         colors = ['cyan','blue','red']
@@ -103,7 +163,7 @@ def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,only
 
 
 class sample:
-    def __init__(self, max_match_offset=5.):
+    def __init__(self, max_match_offset=7.5):
         
         ## read in my HL catalog
         '''
@@ -176,6 +236,13 @@ class sample:
         nedfile = homedir+'/github/Virgo/tables/ned-noprolog-10dec2019.txt'
         self.ned = ascii.read(nedfile,delimiter='|')
 
+        # having issues with ned, maybe because of masked array?
+        # going to write out fits and read it back in
+        #
+        self.ned.write('temp.fits',format='fits',overwrite=True)
+        self.ned = fits.getdata('temp.fits')
+        os.remove('temp.fits')
+        self.cull_ned()
         ################################################################
         ## read in NSA catalog
         #  using newest version of NSA
@@ -225,6 +292,7 @@ class sample:
         self.match_agc_2_hl()
         self.match_nsa_2_agc()
         self.count_sample()
+        
     def cull_hl(self):
         vbest = self.hl['v']
         vflag = (vbest > vmin) & (vbest < vmax)
@@ -241,10 +309,27 @@ class sample:
         overlap = vflag & raflag & decflag
         self.nsa = self.nsa[overlap]
 
+    def cull_ned(self):
+        vbest = self.ned['Velocity']
+        vflag = (vbest > vmin) & (vbest < vmax)
+        raflag = (self.ned['RA'] > ramin) & (self.ned['RA'] < ramax) 
+        decflag = (self.ned['DEC'] < decmax) & (self.ned['DEC'] > decmin)
+        # only keep objects with spectroscopic redshifts
+        # https://ned.ipac.caltech.edu/help/faq5.html#5f
+        
+        speczflag = (self.ned['Redshift Flag'] == 'SPEC') | ((self.ned['Redshift Flag'] == 'N/A') & (self.ned['Redshift Points'] > 2.1))
+        print('ned speczflag = ',sum(speczflag))
+        #speczflag =  (self.ned['Redshift Flag'] == 'N/A') 
+        overlap = vflag & raflag & decflag & speczflag
+        self.ned = self.ned[overlap]
+
     def cull_agc(self):
         # create velocity that is VOPT if present, and V21 otherwise
-        voptflag = self.agc['VOPT'] > 1.
-        vbest = voptflag*self.agc['VOPT'] + ~voptflag*self.agc['V21']
+        # voptflag = self.agc['VOPT'] > 1.
+        # vbest = voptflag*self.agc['VOPT'] + ~voptflag*self.agc['V21']
+
+        # newest version of agc has vhelagc
+        # using this as velocity
         vbest = self.agc['vhelagc']
         #avflag1 = (agc['VOPT'] > vmin) & (agc['VOPT'] < vmax)
         #avflag2 = (agc['V21'] > vmin) & (agc['V21'] < vmax)
@@ -426,18 +511,23 @@ class sample:
             duplicates(self.sample_table,n+'_name',flag=self.sample_table[n+'flag'])
         
         
-    def get_smart(self,maxoffset=10.):
+    def get_smart(self,maxoffset=7.5,veloffset=50.):
+        '''
+        matching offset in arcsec
+
+        veloffset in km/s
+        '''
+        # use code I already wrote to match catalogs for A100+SDSS!!!
         self.max_match_offset = maxoffset
-        # and use code I already wrote to match catalogs!!!
 
+        ###############################################
         ## FIRST MATCH AGC AND HYPERLEDA
+        ###############################################
+        velocity1 = self.hvel
+        velocity2 = self.avel
 
-        velocity1 = self.avel
-        velocity2 = self.nvel
-        voffset = 300.
-        voffset = None
-        
-        hl_2, hl_matchflag, agc_2, agc_matchflag = make_new_cats(self.hl, self.agc,RAkey1='RAdeg',DECkey1='de2000',RAkey2='radeg',DECkey2='decdeg', velocity1=None, velocity2=None, maxveloffset = voffset,maxoffset=self.max_match_offset)
+        # don't use velocity matching for now        
+        hl_2, hl_matchflag, agc_2, agc_matchflag = make_new_cats(self.hl, self.agc,RAkey1='RAdeg',DECkey1='de2000',RAkey2='radeg',DECkey2='decdeg', velocity1=velocity1, velocity2=velocity2, maxveloffset = veloffset,maxoffset=maxoffset)
 
         # getting data coercion error
         # testing by matching agc and nsa - match
@@ -449,18 +539,30 @@ class sample:
         # will write this out and read it back in in the __init__ function...
         # hl_2, hl_matchflag, agc_2, agc__matchflag = make_new_cats(self.nsa, self.agc,RAkey1='RA',DECkey1='DEC',RAkey2='radeg',DECkey2='decdeg', velocity1=None, velocity2=None, maxveloffset = voffset,maxoffset=max_match_offset)
         
+        ###############################################
         # join HL and AGC into one table
+        ###############################################
         joined_table = hstack([hl_2,agc_2])
+        
+        ###############################################
         # add columns that track if galaxy is in agc and in nsa
+        ###############################################
         c1 = Column(hl_matchflag,name='HLflag')
         c2 = Column(agc_matchflag,name='AGCflag')
         ra = np.zeros(len(hl_matchflag),'f')
         dec = np.zeros(len(hl_matchflag),'f')
         ra = hl_matchflag*joined_table['RAdeg'] + ~hl_matchflag*joined_table['radeg']
         dec = hl_matchflag*joined_table['de2000'] + ~hl_matchflag*joined_table['decdeg']
+
         c3 = Column(ra,name='RA',dtype='f')
         c4 = Column(dec,name='DEC',dtype='f')
-        joined_table.add_columns([c1,c2,c3,c4])
+
+        # adding another column to track velocity
+        # uses HL velocity for all objects in HL catalog
+        # uses AGC velocity for any objects in AGC but NOT in HL
+        vel = hl_matchflag*joined_table['v'] + ~hl_matchflag*joined_table['vhelagc']
+        c5 = Column(vel,name='HL-AGC-VEL',dtype='f')
+        joined_table.add_columns([c1,c2,c3,c4,c5])
 
         joined_table.write('temp.fits',format='fits',overwrite=True)
         joined_table = fits.getdata('temp.fits')
@@ -471,34 +573,89 @@ class sample:
         fields = ['HL','AGC']
         for i,n in enumerate(fields):
             print('checking HL ',n,' name')
-        ## SECOND MATCH NSA TO  AGC+HYPERLEDA        
+            
+        ###############################################
+        ## SECOND MATCH NSA TO  AGC+HYPERLEDA
+        ###############################################    
         # now repeat - join NSA to HL+AGC table
-        hlagc_2, hlagc_matchflag, nsa_2, nsa_matchflag = make_new_cats(joined_table, self.nsa, RAkey1='RA',DECkey1='DEC',RAkey2='RA',DECkey2='DEC', velocity1=None, velocity2=None, maxveloffset = voffset,maxoffset=self.max_match_offset)
+        v1 = joined_table['HL-AGC-VEL']
+        v2 = self.nsa['Z']*3.e5
+        hlagc_2, hlagc_matchflag, nsa_2, nsa_matchflag = make_new_cats(joined_table, self.nsa, RAkey1='RA',DECkey1='DEC',RAkey2='RA',DECkey2='DEC', velocity1=v1, velocity2=v2, maxveloffset = veloffset,maxoffset=maxoffset)
         # write out joined a100-sdss-nsa catalog
         joined_table2 = hstack([hlagc_2,nsa_2])
         c1 = Column(nsa_matchflag,name='NSAflag')
         joined_table2.add_column(c1)
-        self.table2 = joined_table2
-        
+
+        ra = hlagc_matchflag*joined_table2['RA_1'] + ~hlagc_matchflag*joined_table2['RA_2']
+        dec = hlagc_matchflag*joined_table2['DEC_1'] + ~hlagc_matchflag*joined_table2['DEC_2']
+
+        c3 = Column(ra,name='RA-HL-AGC-NSA',dtype='f')
+        c4 = Column(dec,name='DEC-HL-AGC-NSA',dtype='f')
+
+        # adding another column to track velocity
+        # uses HL velocity for all objects in HL catalog
+        # uses AGC velocity for any objects in AGC but NOT in HL
+        vel = hlagc_matchflag*joined_table2['HL-AGC-VEL'] + ~hlagc_matchflag*joined_table2['Z']*3.e5
+        c5 = Column(vel,name='HL-AGC-NSA-VEL',dtype='f')
+        joined_table2.add_columns([c3,c4,c5])
+
+        ###############################################
+        ## FIX BOOLEAN COLUMNS
+        ###############################################
         # boolean columns are getting converted weird
+        # when I write and then read the fits table
+
         try:
             joined_table2['AGCflag'] = (joined_table2['AGCflag'] == 84)
             joined_table2['HLflag'] = (joined_table2['HLflag'] == 84)
         except KeyError:
             print('trouble in paradise')
 
-        joined_table2.write('smart_kitchen_sink.fits',format='fits',overwrite=True)
+        # trying this to see if it avoids KeyError that I am getting
+        #
+        # KeyError was just me being stupid
+        # this does fix the data coercion error though...
+        #
+        # need to figure out how to convert the table to fits format
+        # without writing it out and reading it back in
+        joined_table2.write('temp.fits',format='fits',overwrite=True)
+        joined_table2 = fits.getdata('temp.fits')
+        ###########################################
+        ## THIRD MATCH NED TO  AGC+HYPERLEDA+NSA
+        ###############################################
+        self.test = joined_table2
+        v1 = joined_table2['HL-AGC-NSA-VEL']
+        v2 = self.ned['Velocity']
 
+        hlagc_3, hlagc_matchflag3, ned_2, ned_matchflag = make_new_cats(joined_table2, self.ned, RAkey1='RA_1',DECkey1='DEC_1',RAkey2='RA',DECkey2='DEC', velocity1=v1, velocity2=v2, maxveloffset = veloffset,maxoffset=maxoffset)
+        # write out joined a100-sdss-nsa catalog
+        joined_table3 = hstack([hlagc_3,ned_2])
+        c1 = Column(ned_matchflag,name='NEDflag')
+        joined_table3.add_column(c1)
 
+        
+        ###############################################
+        ## FIX BOOLEAN COLUMNS...AGAIN
+        ###############################################
+        # boolean columns are getting converted weird
+        # when I write and then read the fits table
+        try:
+            joined_table3['AGCflag'] = (joined_table3['AGCflag'] == 84)
+            joined_table3['HLflag'] = (joined_table3['HLflag'] == 84)
+            joined_table3['NSAflag'] = (joined_table3['NSAflag'] == 84)
+        except KeyError:
+            print('trouble in paradise')
+            
+        joined_table3.write('smart_kitchen_sink.fits',format='fits',overwrite=True)
+        self.table2 = joined_table3
         self.check_duplicates_t2()
     def check_duplicates_t2(self):
         print('METHOD 2')
-        columns=['objname','AGCnr','NSAID']
-        fields = ['HL','AGC','NSA']
+        columns=['objname','AGCnr','NSAID','Object Name']
+        fields = ['HL','AGC','NSA','NED']
         for i,n in enumerate(fields):
             print('checking HL ',n,' name')
             duplicates(self.table2,columns[i],flag=self.table2[n+'flag'])
-
     def check_vel(self, table2flag=False):
         # compare recession velocities of "matches"
         plt.figure(figsize=(8,6))
@@ -524,8 +681,8 @@ class sample:
         plt.savefig('dv_of_matches.pdf')
 
 class panel_plots:
-    def plotimages(self,flag, outfile_string='test',agcflag=False,nsaflag=False,onlyflag=False,startindex=0):
-        
+    def plotimages(self,flag, outfile_string='test',agcflag=False,nsaflag=False,nedflag=False,onlyflag=False,startindex=0):
+        galnumber = np.arange(len(flag))[flag]
         nsaindex = self.t.NSAID[flag]
         hra1 = self.hcoord.ra.deg[flag]
         hdec1 = self.hcoord.dec.deg[flag]
@@ -533,13 +690,15 @@ class panel_plots:
         ndec2 = self.ncoord.dec.deg[flag]
         ara3 = self.acoord.ra.deg[flag]
         adec3 = self.acoord.dec.deg[flag]
+        nedra = self.nedcoord.ra.deg[flag]
+        neddec = self.nedcoord.dec.deg[flag]
         w21 = self.t.width[flag]
         hlname = self.t.objname[flag]
         nsaid = self.t.NSAID[flag]
         agcnumber = self.t.AGCnr[flag]
-        
+        nedname = self.t['Object Name'][flag]
         plt.figure(figsize=(12,10))
-        plt.subplots_adjust(bottom=.05,left=.05,top=.9,right=.95,hspace=.35)
+        plt.subplots_adjust(bottom=.05,left=.05,top=.9,right=.95,hspace=.5)
         # plots suddenly stopped working for AGC
         # tryting to see if starting at a different index will help
         if agcflag:
@@ -554,15 +713,17 @@ class panel_plots:
             return
         while nsubplot < nrow*ncol+1:#for i in range(9):
             plt.subplot(nrow,ncol,nsubplot)
-            print('flag index = ',i)
+            #print('flag index = ',i)
             try:
                 if agcflag:
-                    print('agcflag is set',i,nsubplot)
-                    w = getlegacy(ara3[i],adec3[i],ra2=nra2[i],dec2=ndec2[i],ra3=hra1[i],dec3=hdec1[i],agcflag=agcflag,onlyflag=onlyflag)
+                    #print('agcflag is set',i,nsubplot)
+                    w = getlegacy(ara3[i],adec3[i],ra2=nra2[i],dec2=ndec2[i],ra3=hra1[i],dec3=hdec1[i],agcflag=agcflag,onlyflag=onlyflag,galnumber=galnumber)
                 elif nsaflag:
-                    w = getlegacy(nra2[i], ndec2[i],ra2=hra1[i],dec2=hdec1[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+                    w = getlegacy(nra2[i], ndec2[i],ra2=hra1[i],dec2=hdec1[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag,galnumber=galnumber)
+                elif nedflag:
+                    w = getlegacy(nedra[i], neddec[i],ra2=hra1[i],dec2=hdec1[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag,galnumber=galnumber)
                 else:
-                    w = getlegacy(hra1[i], hdec1[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+                    w = getlegacy(hra1[i], hdec1[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag,galnumber=galnumber)
             except:
                 i = i + 1
                 print('trouble in paradise',i)
@@ -576,7 +737,7 @@ class panel_plots:
                 continue
             #plt.axis([50,200,50,200])
             plt.axis([75,175,75,175])
-            plt.title(str(hlname[i])+'\n NSA '+str(nsaid[i])+' / AGC '+str(agcnumber[i]))
+            plt.title(str(hlname[i])+'\n'+nedname[i]+'\n NSA '+str(nsaid[i])+' / AGC '+str(agcnumber[i]),fontsize=8)
             if nsubplot == 1:
                 plt.text(80, 205,str(outfile_string),fontsize=16,horizontalalignment='left')
             self.add_allgals(w, agcflag=agcflag)
@@ -588,16 +749,16 @@ class panel_plots:
             nsubplot += 1
         plt.savefig('../plots/AGC-HL-NSA-'+outfile_string+'.png')
     def add_allgals(self,w,agcflag=False):
-        cats = [self.acoord, self.ncoord, self.hcoord,self.nedcoord]
+        cats = [self.acoord, self.ncoord, self.hcoord,self.nedcoord,self.glcoord]
         symbols=['co','b*','r+']
         edgecolors = ['c','w','r']
-        symbols=['co','b*','r+','kD']
-        edgecolors = ['c','w','r','xkcd:goldenrod']
+        symbols=['co','b*','r+','kD','x']
+        edgecolors = ['c','w','r','xkcd:goldenrod', 'g']
         if agcflag:
-            facecolors = ['None','b','r','None']
+            facecolors = ['None','b','r','None','g']
         else:
-            facecolors = ['c','b','r','None']
-        sizes = [10,14,14,20]
+            facecolors = ['c','b','r','None','g']
+        sizes = [10,14,14,20,20]
     
         w = WCS('hyper-nsa-test.fits',naxis=2)
         for i,c in enumerate(cats):
@@ -611,10 +772,13 @@ class fulltable(panel_plots):
         self.hcoord = SkyCoord(self.t['al2000']*u.hr,self.t['de2000']*u.deg,frame='icrs')
         self.ncoord = SkyCoord(self.t['RA_2']*u.deg,self.t['DEC_2']*u.deg,frame='icrs')
         self.acoord = SkyCoord(self.t['radeg']*u.deg,self.t['decdeg']*u.deg, frame='icrs')
+        self.nedcoord = SkyCoord(self.t['RA']*u.deg,self.t['DEC']*u.deg, frame='icrs')
 
         self.hvel = self.t['v'] # mean of optical and radio velocities
         self.nvel = self.t['Z']*3.e5
         self.avel = self.t['vhelagc']
+        self.nedvel = self.t['Velocity']        
+        
 
         # Boolean columns are not preserved correctly
         # topcat recognizes them ok, but they come in as integers (84=True, 70-something= False)
@@ -622,7 +786,34 @@ class fulltable(panel_plots):
         self.AGCflag = self.t.AGCflag == 84
         self.HLflag = self.t.HLflag == 84
         self.NSAflag = self.t.NSAflag == 84
-        self.temp_fix_for_ned()
+        self.NEDflag = self.t.NEDflag == 84
+        
+
+        self.hl_only_flag = ~self.AGCflag & self.HLflag & ~self.NSAflag & ~self.NEDflag
+        self.agc_only_flag = self.AGCflag & ~self.HLflag & ~self.NSAflag & ~self.NEDflag
+        self.nsa_only_flag = ~self.AGCflag & ~self.HLflag & self.NSAflag & ~self.NEDflag
+        self.ned_only_flag = ~self.AGCflag & ~self.HLflag & ~self.NSAflag & self.NEDflag
+
+
+        self.fields = ['HL','AGC','NSA','NED']
+        #self.temp_fix_for_ned()
+        self.gl = fits.getdata('/Users/rfinn/research/VirgoFilaments/Gianluca/nsa_HyperLeda_NED_Steer2017dist_Virgo_field_sources_extension_H0_74_0_final_Kim2016corr_inclCOsample.18Dec2020.fits')
+        keepflag = self.gl['v_HL'] > 500.
+        self.gl = self.gl[keepflag]
+        self.glcoord = SkyCoord(self.gl['RA']*u.deg,self.gl['DEC']*u.deg, frame='icrs')
+        
+    def summary_statistics(self):
+        print('number in combined mastertable = ',len(self.AGCflag))
+        print('number in all cats = ',sum(self.AGCflag & self.HLflag & self.NSAflag & self.NEDflag))
+        print('number in all cats except NED = ',sum(self.AGCflag & self.HLflag & self.NSAflag & ~self.NEDflag))
+        totalflag = np.array(self.AGCflag,'i') + np.array(self.HLflag,'i') + np.array(self.NSAflag,'i') + np.array(self.NEDflag,'i')
+        print('number in 3 cats = ',sum(totalflag > 2))
+        print('number in 2 cats = ',sum(totalflag > 1))
+        print('number in HL only = ',sum(~self.AGCflag & self.HLflag & ~self.NSAflag & ~self.NEDflag))
+        print('number in AGC only = ',sum(self.AGCflag & ~self.HLflag & ~self.NSAflag & ~self.NEDflag))
+        print('number in NSA only = ',sum(~self.AGCflag & ~self.HLflag & self.NSAflag & ~self.NEDflag))
+        print('number in NED only = ',sum(~self.AGCflag & ~self.HLflag & ~self.NSAflag & self.NEDflag))        
+              
     def temp_fix_for_ned(self):
         # as a first test, I want to plot positions of NED sources on image cutouts
         # I haven't encorporated the NED columns into smart_kitchen_sink.fits
@@ -632,35 +823,49 @@ class fulltable(panel_plots):
         self.ned = ascii.read(nedfile,delimiter='|')
         self.nedcoord = SkyCoord(self.ned['RA']*u.deg,self.ned['DEC']*u.deg, frame='icrs')
         # updating allgals to include NED
+    def all_cats(self):
+        # keep galaxies that are in AGC and NOT in (HL and NSA)
+        flag = self.AGCflag & self.HLflag & self.NSAflag & self.NEDflag
+        self.plotimages(flag,outfile_string='All Catalogs',agcflag=False,onlyflag=False)
+        #self.plotimages(flag,outfile_string='AGConly',onlyflag=True)
+        plt.savefig('All-catalogs.png')
+        pass
     def agc_only(self):
         # keep galaxies that are in AGC and NOT in (HL and NSA)
-        flag = self.AGCflag & ~self.HLflag & ~self.NSAflag
+        flag = self.AGCflag & ~self.HLflag & ~self.NSAflag & ~self.NEDflag
         self.plotimages(flag,outfile_string='AGConly',agcflag=True,onlyflag=True)
         #self.plotimages(flag,outfile_string='AGConly',onlyflag=True)
         self.agc_only_flag = flag
         plt.savefig('AGConly.png')
         pass
     def hl_only(self):
-        flag = ~self.AGCflag & self.HLflag & ~self.NSAflag
+        flag = ~self.AGCflag & self.HLflag & ~self.NSAflag & ~self.NEDflag
         self.plotimages(flag,outfile_string='HLonly',onlyflag=True)
         self.hl_only_flag = flag
         plt.savefig('HLonly.png')
         pass
     def nsa_only(self):
-        flag = ~self.AGCflag & ~self.HLflag & self.NSAflag
+        flag = ~self.AGCflag & ~self.HLflag & self.NSAflag & ~self.NEDflag
         self.plotimages(flag,outfile_string='NSAonly',nsaflag=True,onlyflag=True)
         self.nsa_only_flag = flag
         plt.savefig('NSAonly.png')
+        pass
+    def ned_only(self):
+        flag = ~self.AGCflag & ~self.HLflag & ~self.NSAflag & self.NEDflag
+        self.plotimages(flag,outfile_string='NEDonly',nedflag=True,onlyflag=True)
+        self.ned_only_flag = flag
+        plt.savefig('NEDonly.png')
         pass
     def plot_only(self):
         self.agc_only()
         self.hl_only()
         self.nsa_only()
+        self.ned_only()
     def plot_duplicates(self):
 
-        columns=['objname','AGCnr','NSAID']
-        fields = ['HL','AGC','NSA']
-        flags = [self.HLflag,self.AGCflag,self.NSAflag]
+        columns=['objname','AGCnr','NSAID','Object Name']
+        fields = ['HL','AGC','NSA','NED']
+        flags = [self.HLflag,self.AGCflag,self.NSAflag,self.NEDflag]
         for i,n in enumerate(fields):
             print('checking HL ',n,' name')
             unique, counts = duplicates(self.t,columns[i],flag=flags[i])
@@ -679,12 +884,50 @@ class fulltable(panel_plots):
                 nsaflag=True
             else:
                 nsaflag=False
-            self.plotimages(plotflag,outfile_string=n+'-duplicates',nsaflag=nsaflag,agcflag=agcflag,onlyflag=True)
+            if i == 3:
+                nedflag=True
+            else:
+                nedflag=False
+            self.plotimages(plotflag,outfile_string=n+'-duplicates',nsaflag=nsaflag,agcflag=agcflag,nedflag=nedflag,onlyflag=True)
             print(i)
             plt.savefig(n+'-duplicates.png')
     def plotall(self):
         self.plot_only()
         self.plot_duplicates()
+    def velhist(self):
+        plt.figure()
+        arrays = [self.hvel,self.avel,self.nvel,self.nedvel]
+        names = ['HL','AGC','NSA','NED']
+        flags = [self.HLflag,self.AGCflag,self.NSAflag,self.NEDflag]
+        colors=['r','c','b','#ff7f0e']#'xkcd:goldenrod']
+        mybins = np.linspace(450,3500,100)
+        for i in range(len(names)):
+            t = plt.hist(arrays[i][flags[i]],label=names[i],histtype='step',bins=mybins,color=colors[i])
+        plt.legend(loc='upper right')
+        plt.xlabel('Recession Velocity')
+        plt.savefig('velhist.png')
+    def positions_only(self):
+        plt.figure(figsize=(10,8))
+        ra = [self.hcoord.ra,self.acoord.ra,self.ncoord.ra,self.nedcoord.ra]
+        dec = [self.hcoord.dec,self.acoord.dec,self.ncoord.dec,self.nedcoord.dec]
+        vel = [self.hvel,self.avel,self.nvel,self.nedvel]
+        flags = [self.hl_only_flag,self.agc_only_flag,self.nsa_only_flag,self.ned_only_flag]
+        colors=['r','c','b','xkcd:goldenrod']
+        symbols=['r+','co','b*','kD']
+        edgecolors = ['r','c','w','xkcd:goldenrod']
+        facecolors = ['r','c','b','None']
+        sizes = [14,10,14,8]
+    
+        
+        for i,r in enumerate(ra):
+            #plt.scatter(r,dec[i],c=colors[i],label=self.fields[i]+' only')
+            plt.plot(r[flags[i]],dec[i][flags[i]],symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i],label=self.fields[i]+' only')
+        plt.xlabel('RA (deg)')
+        plt.ylabel('DEC (deg)')
+        plt.legend()
+        plt.savefig('positions-only.png')
+                   
+        pass
 if __name__ == '__main__':
         
     ## start with HL - match to NSA and AGC
