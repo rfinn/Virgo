@@ -59,7 +59,7 @@ for i,d in enumerate(filefilterlist):
         print('found it')
         filefilterlist[i] = filefilterlist[i].replace("Skybackground", "SKYFLAT")
 
-
+# keep only unique directory names
 dirnames = set(filefilterlist)
 
 

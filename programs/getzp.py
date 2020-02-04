@@ -88,6 +88,7 @@ def panstarrs_query(ra_deg, dec_deg, rad_deg, maxmag=20,
     """
     vquery = Vizier(columns=['objID', 'RAJ2000', 'DEJ2000',
                              'e_RAJ2000', 'e_DEJ2000',
+                             'objID', 'f_objID', 'Qual',
                              'gmag', 'e_gmag',
                              'rmag', 'e_rmag',
                              'imag', 'e_imag',
@@ -312,11 +313,11 @@ class getzp():
         if self.filter == 'R':
             # conversion from Blanton+2007
             # http://www.astronomy.ohio-state.edu/~martini/usefuldata.html
-            header.set('PHOTZP',float('{:.3f}'.format(zp.bestc[1]+.21)))
+            header.set('PHOTZP',float('{:.3f}'.format(-1.*zp.bestc[1]+.21)))
             header.set('LAMBDA_EFF (um)',float(.6442))
 
         else:
-            header.set('PHOTZP',float('{:.3f}'.format(zp.bestc[1])))
+            header.set('PHOTZP',float('{:.3f}'.format(-1.*zp.bestc[1])))
             
         header.set('PHOTSYS','AB')
         header.set('FLUXZPJY',float(3631))
