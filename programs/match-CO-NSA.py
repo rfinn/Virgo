@@ -21,10 +21,10 @@ jcat = SkyCoord(jdat.RA*u.degree,jdat.DEC*u.degree,frame='icrs')
 index,dist2d,dist3d = virgocat.match_to_catalog_sky(jcat)
 
 # only keep matches with matched RA and Dec w/in 1 arcsec
-matchflag = dist2d.degree < 2./3600
+matchflag = dist2d.degree < 5./3600
 
 # write out line-matched catalog
-outfile= table_ext + 'nsa_CO-HI.virgo.fits'
+#outfile= table_ext + 'nsa_CO-HI.virgo.fits'
 outfile= table_ext + 'nsa_CO-Gianluca.virgo.fits'
 matchedarray1=np.zeros(len(vdat),dtype=jdat.dtype)
 matchedarray1[matchflag] = jdat[index[matchflag]]

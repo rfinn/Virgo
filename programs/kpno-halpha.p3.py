@@ -452,7 +452,7 @@ offsets_INT = {#135046:[5.,4.], # already observed
            18363:[6.,14.],
            145672:[4.,-10.],
            165875:[10.,2.],
-           145846:[4.,11.],
+           145846:[18.,15.5],
            165956:[-3.,0.],
            145879:[-4.,12.],
            166280:[-6.,0.],
@@ -468,6 +468,7 @@ offsets_INT = {#135046:[5.,4.], # already observed
            15333:[7.,0],
            166297:[-5.,-2.5],
            146289:[9.,-2.5]
+           
            }
 
 #I am commenting these out as the offsets aren't working well and I want to keep it simple by having one source per pointing.
@@ -749,7 +750,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='b')
             plt.gca().add_artist(rect)
         if ha_obs[j]:
-            size=galsize+.005
+            size=galsize+2*.005
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='r')
             plt.gca().add_artist(rect)
         #plt.legend(['filament','CO','Halpha'])
