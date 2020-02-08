@@ -19,6 +19,8 @@ from astropy import units as u
 from astropy.wcs import WCS
 from astropy.visualization import simple_norm
 
+from astroquery.skyview import SkyView
+
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 from PIL import Image
@@ -50,7 +52,8 @@ max_match_offset = 5.
 
 
 ## BOUNDARIES OF SURVEY REGION
-decmin = -1.2 
+decmin = -1.2
+decmin = -35
 decmax = 75 
 ramax = 280.
 ramin = 100. 
@@ -206,7 +209,7 @@ class sample:
 
         de2000 > -35 and de2000 < 75 and  al2000 < 280./360.*24.  and al2000 > 100./360.*24. and v < 3300 and v > 500 and objtype='G'
 
-        - output as csv
+        - output as csv, separator is other, ,
 
 
         
@@ -220,6 +223,7 @@ class sample:
         ## READ IN HYPERLEDA CATALO
         ################################################################
         hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-09dec2019-full.csv'
+        hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-05Feb20.csv'
         self.hl = ascii.read(hlfile)
         self.hl = Table(self.hl)
         self.cull_hl()
@@ -357,8 +361,12 @@ class sample:
 
     def cull_agc(self):
         # create velocity that is V21 if present, and VOPT otherwise
-        v21flag = self.agc['V21'] > 1.
-        vbest = ~v21flag*self.agc['VOPT'] + v21flag*self.agc['V21']
+        flag = self.agc['V21'] > 1.
+        vbest = ~flag*self.agc['VOPT'] + flag*self.agc['V21']
+
+        # or create velocit that is vopt if present, and V21 otherwise
+        flag = self.agc['OPT'] > 1.
+        vbest = flag*self.agc['VOPT'] + ~flag*self.agc['V21']
 
         # newest version of agc has vhelagc
         # using this as velocity
@@ -833,6 +841,13 @@ class panel_plots:
             if w21[i] > .1:
                 plt.text(.05, .05,'W21='+str(w21[i]),fontsize=8,c='.7', transform=plt.gca().transAxes)
             plt.text(.05,.85,'Gal '+str(galnumber[i]),fontsize=8,c='.7', transform=plt.gca().transAxes)
+            if self.HLflag[i]:
+                gname = self.t['objname'][i]
+            elif self.AGCflag[i]:
+                gname = 'AGC'+self.t['AGCnr'][i]
+            elif self.NSAflag[i]:
+                gname = 'NSAID'+self.t['NSAID'][i]
+            plt.text(.05,.1,'Gal '+str(gname),fontsize=8,c='.7', transform=plt.gca().transAxes)
             plt.xticks(fontsize=8)
             plt.yticks(fontsize=8)
             i = i + 1
@@ -881,31 +896,38 @@ class panel_plots:
             plt.subplot(nrow,ncol,nsubplot)
             #print('flag index = ',i)
             #try:
-            if agcflag:
-                print('agcflag is set',i,nsubplot)
-                w = getlegacy(ara3[i],adec3[i],ra2=nra2[i],dec2=ndec2[i],ra3=hra1[i],dec3=hdec1[i],agcflag=agcflag,onlyflag=onlyflag)
-            elif nsaflag:
-                w = getlegacy(nra2[i], ndec2[i],ra2=hra1[i],dec2=hdec1[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
-            elif nedflag:
-                w = getlegacy(nedra[i], neddec[i],ra2=hra1[i],dec2=hdec1[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
-            else:
-                w = getlegacy(super_ra[i], super_dec[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+            massflag=False
+            w = getlegacy(super_ra[i], super_dec[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
             if w is None:
-
-                plt.xticks([],[])
-                plt.yticks([],[])
-                galids_in_fov.append([])
-                nsubplot += 1
                 print('trouble in paradise',i)
                 print('maybe coords are outside Legacy Survey?')
-                if agcflag:
-                    print(ara3[i],adec3[i])
-                elif nsaflag:
-                    print(nra2[i],ndec2[i])
+                print(super_ra[i],super_dec[i])
+                # try to get 2MASS J image
+                # check to see if 2MASS image exists
+                gra = '%.5f'%(super_ra[i]) # accuracy is of order .1"
+                gdec = '%.5f'%(super_dec[i])
+                galpos = gra+'-'+gdec
+                rootname = 'cutouts/2MASS-J-'+str(galpos)
+
+                fits_name = rootname+'.fits'
+                if not(os.path.exists(fits_name)):
+                    print('downloading 2MASS J image ')
+                #
+                    c = SkyCoord(ra=super_ra[i]*u.deg,dec=super_dec[i]*u.deg)
+                    x = SkyView.get_images(position=c,survey=['2MASS-J'])
+                    # save fits image
+                    fits.writeto(fits_name, x[0][0].data, header=x[0][0].header)
                 else:
-                    print(hra1[i],hdec1[i])
-                i = i + 1
-                continue
+                    print('using 2mass image ',fits_name)
+                im, h = fits.getdata(fits_name,header=True)
+                w = WCS(h)
+                norm = simple_norm(im,stretch='asinh',percent=99.5)
+                plt.imshow(im,origin='upper',cmap='gray_r', norm=norm)
+                # pixel scale is 1 arcsec
+                # therefore, to show a 60x60 arcsec image, want to set boundary to center-30:center+30
+                im_nrow,im_ncol=im.shape
+
+                massflag=True
             #plt.axis([50,200,50,200])
             #plt.axis([75,175,75,175])
 
@@ -914,14 +936,22 @@ class panel_plots:
             #    plt.text(10, 205,str(outfile_string), dtype='i'),fontsize=16,horizontalalignment='left')
             ids = self.add_allgals(w, agcflag=agcflag)
             galids_in_fov.append(ids)
+            if massflag:
+                text_color='k'
+            else:
+                text_color='0.7'
             if w21[i] > .1:
-                plt.text(.05, .05,'W21='+str(w21[i]),fontsize=8,c='.7', transform=plt.gca().transAxes)
-            plt.text(.05,.85,'Gal '+str(galnumber[i]),fontsize=8,c='.7', transform=plt.gca().transAxes)
+                plt.text(.05, .05,'W21='+str(w21[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
+            plt.text(.05,.85,'Gal '+str(galnumber[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
             # remove ticks for internal images
             #print(nsubplot,np.mod(nsubplot,ncol))
             # adjust ticksize of outer left and bottom images
-            plt.xticks(np.arange(0,image_size,20),fontsize=8)
-            plt.yticks(np.arange(0,image_size,20),fontsize=8)
+            if massflag:
+                plt.axis([int(im_nrow/2-image_size/2),int(im_nrow/2+image_size/2),int(im_ncol/2-image_size/2),int(im_ncol/2+image_size/2)])
+            else:
+                plt.xticks(np.arange(0,image_size,20),fontsize=8)
+                plt.yticks(np.arange(0,image_size,20),fontsize=8)
+
             #plt.axis([20,80,20,80])
             if (nsubplot < nrow*(ncol-1)):
                 plt.xticks([],[])
@@ -932,7 +962,7 @@ class panel_plots:
             nsubplot += 1
         #plt.savefig('../plots/densearray-'+outfile_string+'.png')
         return galids_in_fov
-    def add_allgals(self,w,agcflag=False):
+    def add_allgals(self,w,agcflag=False,twomass_flag=False):
         
         cats = [self.acoord, self.ncoord, self.hcoord,self.glcoord]
         symbols=['co','b*','r+']
@@ -954,7 +984,11 @@ class panel_plots:
             galnumber = np.arange(len(c.ra.deg))
             #print('number of galaxies in catalog = ',len(c.ra.deg))
             # only keep objects on image
-            keepflag = (px > 0) & (py > 0) & (px < image_size) & (py < image_size)
+            if twomass_flag:
+                #assume image is 300 pixels(default), pix
+                keepflag = (px > 0) & (py > 0) & (px < image_size) & (py < image_size)
+            else:
+                keepflag = (px > 0) & (py > 0) & (px < image_size) & (py < image_size)
             plt.plot(px[keepflag],py[keepflag],symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i])
             # label points
             #print('number of galaxies in FOV = ',sum(keepflag))
@@ -981,6 +1015,7 @@ class fulltable(panel_plots):
     def __init__(self,nedflag=False):
         # this file contains all columns from HL, AGC and NSA
         self.t = fits.getdata('smart_kitchen_sink.fits')
+        #self.t = fits.getdata('smart_kitchen_sink_05feb2020.fits')
         self.hcoord = SkyCoord(self.t['al2000']*u.hr,self.t['de2000']*u.deg,frame='icrs')
         self.ncoord = SkyCoord(self.t['RA_2']*u.deg,self.t['DEC_2']*u.deg,frame='icrs')
         self.acoord = SkyCoord(self.t['RA_1']*u.deg,self.t['DEC_1']*u.deg, frame='icrs')
@@ -1017,12 +1052,13 @@ class fulltable(panel_plots):
 
         self.nedflag = nedflag
         self.fields = ['HL','AGC','NSA','NED']
+        self.fields = ['HL','AGC','NSA','GL']
         #self.temp_fix_for_ned()
         self.gl = fits.getdata('/Users/rfinn/research/VirgoFilaments/Gianluca/nsa_HyperLeda_NED_Steer2017dist_Virgo_field_sources_extension_H0_74_0_final_Kim2016corr_inclCOsample.18Dec2020.fits')
         keepflag = self.gl['v_HL'] > 500.
         self.gl = self.gl[keepflag]
         self.glcoord = SkyCoord(self.gl['RA']*u.deg,self.gl['DEC']*u.deg, frame='icrs')
-
+        self.gvel = self.gl['v_HL']
         self.galids_in_fov = len(self.AGCflag)*[None]
         print('LENGTH GALIDS_IN_FOV = ',len(self.galids_in_fov))
     def summary_statistics(self):
@@ -1143,6 +1179,7 @@ class fulltable(panel_plots):
         self.plot_only()
         self.plot_duplicates()
     def plot_all(self,startgal=None):
+        plt.close('all')
         flag = np.ones_like(self.AGCflag, dtype='bool')
         #print('LENGTH OF GALIDS IN FOV = ',len(self.galids_in_fov))
         #self.plotimages(flag,outfile_string='All Galaxies',agcflag=False,onlyflag=True)
@@ -1159,7 +1196,8 @@ class fulltable(panel_plots):
         else:
             first_plot = int(np.floor(startgal/ngalperplot))
             allplots = [i for i in range(first_plot,nplots)]
-        for i in allplots:
+        #for i in allplots:
+        for i in range(1):
             
             startindex = i*ngalperplot
             s1 = '%04d'%(startindex)
@@ -1183,7 +1221,7 @@ class fulltable(panel_plots):
             #print('LENGTH OF GALIDS IN FOV = ',len(self.galids_in_fov))
             # include range of galaxy ids in name of pdf file
             plt.savefig('plots/gcutouts-'+s1+'-'+s2+'.pdf')
-            plt.close('all')
+
             self.write_spreadsheet()
         pass
     def write_spreadsheet(self):
@@ -1264,6 +1302,7 @@ class fulltable(panel_plots):
         plt.savefig('velhist.png')
     def positions_only(self):
         plt.figure(figsize=(10,8))
+        self.nedonly = False
         if self.nedonly:
             ra = [self.hcoord.ra,self.acoord.ra,self.ncoord.ra,self.nedcoord.ra]
             dec = [self.hcoord.dec,self.acoord.dec,self.ncoord.dec,self.nedcoord.dec]
@@ -1275,20 +1314,44 @@ class fulltable(panel_plots):
             facecolors = ['r','c','b','None']
             sizes = [14,10,14,8]
         else:
-            ra = [self.hcoord.ra,self.acoord.ra,self.ncoord.ra]
-            dec = [self.hcoord.dec,self.acoord.dec,self.ncoord.dec]
-            vel = [self.hvel,self.avel,self.nvel]
-            flags = [self.hl_only_flag,self.agc_only_flag,self.nsa_only_flag]
-            colors=['r','c','b','xkcd:goldenrod']
-            symbols=['r+','co','b*','kD']
-            edgecolors = ['r','c','w','xkcd:goldenrod']
-            facecolors = ['r','c','b','None']
-            sizes = [14,10,14,8]
+            ra = [self.glcoord.ra,self.hcoord.ra,self.acoord.ra,self.ncoord.ra]
+            dec = [self.glcoord.dec,self.hcoord.dec,self.acoord.dec,self.ncoord.dec]
+            vel = [self.gvel,self.hvel,self.avel,self.nvel]
+            flags = [np.ones(len(self.glcoord.ra),'bool'),self.hl_only_flag,self.agc_only_flag,self.nsa_only_flag]
+            #colors=['r','c','b','xkcd:goldenrod']
+            #symbols=['r+','co','b*','kD']
+            #edgecolors = ['r','c','w','xkcd:goldenrod']
+            #facecolors = ['r','c','b','None']
+            symbols=['gs','yD','co','r^']
+            facecolors = ['None','None','None','None']
+            edgecolors = ['g','y','c','r']
+            sizes = [2,4,4,3]
     
         
         for i,r in enumerate(ra):
             #plt.scatter(r,dec[i],c=colors[i],label=self.fields[i]+' only')
             plt.plot(r[flags[i]],dec[i][flags[i]],symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i],label=self.fields[i]+' only')
+        plt.xlabel('RA (deg)')
+        plt.ylabel('DEC (deg)')
+        plt.legend()
+        plt.savefig('positions-only.png')
+    def positions(self):
+        plt.figure(figsize=(10,8))
+        self.nedonly = False
+        ra = [self.glcoord.ra,self.hcoord.ra,self.acoord.ra,self.ncoord.ra]
+        dec = [self.glcoord.dec,self.hcoord.dec,self.acoord.dec,self.ncoord.dec]
+        vel = [self.gvel,self.hvel,self.avel,self.nvel]
+        flags = [np.ones(len(self.glcoord.ra),'bool'),self.HLflag,self.AGCflag,self.NSAflag]
+        symbols=['k.','yD','co','ro']
+        facecolors = ['None','None','None','None']
+        edgecolors = ['k','y','c','r']
+        sizes = [1,4,6,7]
+        fields=['GL','HL','AGC','NSA']
+    
+        
+        for i in np.array([3,2,1,0],'i'):
+            #plt.scatter(r,dec[i],c=colors[i],label=self.fields[i]+' only')
+            plt.plot(ra[i][flags[i]],dec[i][flags[i]],symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i],label=fields[i])
         plt.xlabel('RA (deg)')
         plt.ylabel('DEC (deg)')
         plt.legend()
