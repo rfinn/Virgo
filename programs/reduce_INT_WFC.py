@@ -36,6 +36,7 @@ if data_dir.find('Users/rfinn') > -1: # running on macbook
 
 else: # assume this is Virgo machine
     theli_path = homedir+'/gui-2.10.5/scripts/'
+    print('theli path = ',theli_path)
     # make sure python 2 is called instead of python 3
     #p = os.getenv("PATH")
     #os.environ["PATH"] = '/usr/local/anaconda2/bin/:'+p
