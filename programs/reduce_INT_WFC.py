@@ -69,6 +69,7 @@ def split_files():
             os.chdir(theli_path)
             #os.chmod('process_split_WFC@INT.sh', stat.S_IEXEC)
             command_string = './process_split_WFC@INT.sh '+data_dir+' '+d
+            print(command_string)
             rc = subprocess.call(command_string, shell=True, executable='/bin/bash')
             #os.system(command_string)
             os.chdir(data_dir)
