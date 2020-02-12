@@ -84,8 +84,14 @@ def process_bias():
             if d == 'BIAS':
                 # process bias frames
                 print('processing bias frames in', d)
-                command_string = theli_path+'parallel_manager.sh process_bias_para.sh '+data_dir+' BIAS'
-                os.system(command_string)
+                
+                command_string = './parallel_manager.sh process_bias_para.sh '+data_dir+' BIAS'
+                print(command_string)
+                rc = subprocess.call(command_string, shell=True, executable='/bin/bash')
+                #os.system(command_string)
+                os.chdir(data_dir)
+                return
+
 def process_flats():
     # process Flat frames
     for d in dirnames:
@@ -93,6 +99,7 @@ def process_flats():
             if d.find('FLAT'):
                 # process flats
                 print('processing flatfield images in ',d)
+                
                 command_string = theli_path+'parallel_manager.sh process_flat_para.sh '+data_dir+' BIAS '+d
                 command_string = theli_path+'create_flat_ratio.sh '+data_dir+' '+d
                 command_string = theli_path+'parallel_manager.sh create_norm_para.sh '+data_dir+' '+d
@@ -172,8 +179,8 @@ def create_astroref_cat():
 if __name__ == '__main__':
     print('good luck!')
     
-    split_files()
-    #process_bias()
+    #split_files()
+    process_bias()
     #process_flats()
     #calibrate_images()
     #preview_weights()
