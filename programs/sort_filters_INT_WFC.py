@@ -65,22 +65,22 @@ for i,d in enumerate(filefilterlist):
 # make directory for BIAS
 # make directory for each flat/filter combination
 
+# keep only unique directory names
+dirnames = set(filefilterlist)
+
 for d in dirnames:
-    if d.find('--') > -1:
-        continue
-    if os.path.exists(d):
-        continue
-    else:
-        if d.find('BIAS') > -1:
+    if d.find('BIAS') > -1:
+        if not(os.path.exists(d)):
             os.mkdir(d)
-        elif d.find('FLAT') > -1:
+    elif d.find('FLAT') > -1:
+        if not(os.path.exists(d)):
             os.mkdir(d)
 
 # move bias frames to subdirectory
 # move flats there
 # move files to appropriate subdirectory
 for f,d in zip(ic.files,filefilterlist):
-    if (filefilterlist.find('FLAT') > -1) | (filefilterlist.find('BIAS') > -1):
+    if (d.find('FLAT') > -1) | (d.find('BIAS') > -1):
         try:
             os.rename(f,d+'/'+f)
         except:
@@ -88,10 +88,10 @@ for f,d in zip(ic.files,filefilterlist):
             
 
 # make target directories
-t = set(filter)
+t = set(filters)
 unique_filters = [f.replace(' ','') for f in t]
 for f in unique_filters:
-    fdir = 'target'+f
+    fdir = 'target-'+f
     if os.path.exists(fdir):
         continue
     else:
