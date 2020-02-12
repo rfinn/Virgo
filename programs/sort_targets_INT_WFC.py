@@ -79,4 +79,11 @@ for f,d in zip(ic.files,filefilterlist):
         os.rename(f,d+'/'+f)
     except:
         print("Error moving file {} to directory {}".format(f,d))
+
+        
+
+
+
+
+
         
