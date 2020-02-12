@@ -63,7 +63,8 @@ def split_files():
     # change to theli dir because all scripts call other programs in a relative way
 
     # split files
-    for d in dirnames:
+    temp = dirnames[1:]
+    for d in temp:
         if os.path.exists(d):
             print('splitting files in ',d)
             os.chdir(theli_path)
@@ -176,7 +177,7 @@ def create_astroref_cat():
 if __name__ == '__main__':
     print('good luck!')
     
-    #split_files()
+    split_files()
     process_bias()
     #process_flats()
     #calibrate_images()
