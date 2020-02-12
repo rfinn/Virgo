@@ -63,7 +63,6 @@ def split_files():
     # change to theli dir because all scripts call other programs in a relative way
 
     # split files
-    i=0
     for d in dirnames:
         if os.path.exists(d):
             print('splitting files in ',d)
@@ -74,9 +73,7 @@ def split_files():
             rc = subprocess.call(command_string, shell=True, executable='/bin/bash')
             #os.system(command_string)
             os.chdir(data_dir)
-            i += 1
-            if i > 0:
-                return
+            return
 def process_bias():
     # process BIAS frames
     for d in dirnames:
@@ -84,7 +81,7 @@ def process_bias():
             if d == 'BIAS':
                 # process bias frames
                 print('processing bias frames in', d)
-                
+                os.chdir(theli_path)
                 command_string = './parallel_manager.sh process_bias_para.sh '+data_dir+' BIAS'
                 print(command_string)
                 rc = subprocess.call(command_string, shell=True, executable='/bin/bash')
