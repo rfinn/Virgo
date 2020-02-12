@@ -63,7 +63,7 @@ def split_files():
     # change to theli dir because all scripts call other programs in a relative way
 
     # split files
-    temp = dirnames[1:]
+    temp = dirnames[2:]
     for d in temp:
         if os.path.exists(d):
             print('splitting files in ',d)
@@ -74,7 +74,7 @@ def split_files():
             rc = subprocess.call(command_string, shell=True, executable='/bin/bash')
             #os.system(command_string)
             os.chdir(data_dir)
-            return
+            
 def process_bias():
     # process BIAS frames
     for d in dirnames:
