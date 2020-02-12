@@ -39,8 +39,8 @@ else: # assume this is Virgo machine
     theli_path = homedir+'/theli-1.9.5/scripts/Linux_64/'
     print('theli path = ',theli_path)
     # make sure python 2 is called instead of python 3
-    #p = os.getenv("PATH")
-    #os.environ["PATH"] = '/usr/local/anaconda2/bin/:'+p
+    p = os.getenv("PATH")
+    os.environ["PATH"] = '/usr/local/anaconda2/bin/:'+p
 
 
 # append path to scripts so it knows where they are
@@ -64,8 +64,9 @@ def split_files():
     # change to theli dir because all scripts call other programs in a relative way
 
     # split files
-    temp = dirnames[2:]
-    for d in temp:
+    for d in dirnames:
+    #temp = dirnames[2:]
+    #for d in temp:
         if os.path.exists(d):
             print('splitting files in ',d)
             os.chdir(theli_path)
@@ -84,7 +85,7 @@ def process_bias():
                 # process bias frames
                 print('processing bias frames in', d)
                 os.chdir(theli_path)
-                command_string = './parallel_manager.sh process_bias_para.sh '+data_dir+' BIAS'
+                command_string = './parallel_manager.sh process_bias_eclipse_para.sh '+data_dir+' BIAS'
                 print(command_string)
                 rc = subprocess.call(command_string, shell=True, executable='/bin/bash')
                 #os.system(command_string)
