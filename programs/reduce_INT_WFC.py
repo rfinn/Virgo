@@ -177,7 +177,7 @@ def create_astroref_cat():
 if __name__ == '__main__':
     print('good luck!')
     
-    split_files()
+    #split_files()
     process_bias()
     #process_flats()
     #calibrate_images()
