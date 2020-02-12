@@ -83,7 +83,7 @@ def process_bias():
                 # process bias frames
                 print('processing bias frames in', d)
                 os.chdir(theli_path)
-                command_string = './parallel_manager.sh process_bias_para.sh '+data_dir+' BIAS'
+                command_string = './parallel_manager.sh ./process_bias_para.sh '+data_dir+' BIAS'
                 print(command_string)
                 rc = subprocess.call(command_string, shell=True, executable='/bin/bash')
                 #os.system(command_string)
@@ -124,7 +124,7 @@ def calibrate_images():
                 ofilter = d.split('-')[1]
                 if ofilter == ffilter:
                     print('processing images in ',d)
-                    command_string =  theli_path+'/parallel_manager.sh process_science_para.sh '+data_dir+' BIAS '+f+' '+d
+                    command_string =  './parallel_manager.sh ./process_science_para.sh '+data_dir+' BIAS '+f+' '+d
                     os.system(command_string)
 
 def preview_weights():
