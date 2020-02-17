@@ -6,7 +6,7 @@ read in Halpha file
 - removed the last line
 - will read it in and write it out as fits file
 
-- mv downloaded file to "latest"
+- copy downloaded file to "latest"
 cp Observing-Summary-Halpha-good-2019May28.csv Observing-Summary-Halpha-good-latest.csv
 
 %run programs/match-Ha-NSA.py --write-fits
@@ -23,7 +23,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description ='Match the Halpha observations with Virgo NSA catalog')
 
-parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
+parser.add_argument('--table-path', dest = 'tablepath', default = 'github/Virgo/tables/', help = 'path to github/Virgo/tables, relative to home directory')
 parser.add_argument('--write-fits',dest = 'writefits', action='store_true',help='write out fits version of observing summary file?')
 parser.add_argument('--input',dest = 'input', default='Observing-Summary-Halpha-good-latest.csv',help='write out fits version of observing summary file?')
         

@@ -89,7 +89,7 @@ from astroplan.plots import plot_airmass
 ###### otherwise, set to False
 ########################################
 
-INGrun=True
+INGrun=False
 
 ########################################
 ###### RUN-SPECIFIC PARAMETERS  ########
@@ -100,6 +100,7 @@ if INGrun:
     telescope_run = '2019May/INT-2019May-197filter-'
 else:
     telescope_run = '2019June/MLO-2019June-'
+    telescope_run = '2020Feb/KPNO-2020Feb-'
     #telescope_run = '2019May/MLO-2019May-'
 
 outfile_prefix = outfile_prefix+telescope_run

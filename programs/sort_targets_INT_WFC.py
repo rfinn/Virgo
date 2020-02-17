@@ -37,15 +37,31 @@ After basic calibration, we can sort science objects, make directory for each un
 
 '''
 #import ccdproc
-from ccdproc import ImageFileCollection
+#from ccdproc import ImageFileCollection
 import os
+import glob
+from astropy.io import fits
 
-ic = ImageFileCollection(os.getcwd(),keywords='*',glob_include='r*.fit*')
+# this is not working
+# seems like something is wrong with DATE-OBS card, but don't know what
 
+#ic = ImageFileCollection(os.getcwd(),keywords=['FILTER','OBJECT'],glob_include='r*.fit*')
+
+filters=[]
+object_names=[]
+infiles = glob.glob('r*.fit*')
+for f in infiles:
+    d,h = fits.getdata(f,header=True)
+    filters.append(h['FILTER'])
+    object_names.append(h['OBJECT'])
+
+    
 # get list of filter, imagetype, and object names
 
-filters = ic.values('wffband')
-object_names = ic.values('object')
+#filters = ic.values('wffband')
+#object_names = ic.values('object')
+#filters = ic.values('FILTER')
+#object_names = ic.values('OBJECT')
 
 # create a unique set of object-filter
 filefilterlist = ["{}-{}".format(str(i).replace(" ","").replace("-","").replace("_",""),str(j).replace(" ","")) for i,j in zip(object_names,filters)]
@@ -71,12 +87,12 @@ for d in dirnames:
     if os.path.exists(d):
         continue
     else:
-        os.mkdir(d)
+        os.mkdir('../'+d)
 
 # move files to appropriate subdirectory
-for f,d in zip(ic.files,filefilterlist):
+for f,d in zip(infiles,filefilterlist):
     try:
-        os.rename(f,d+'/'+f)
+        os.rename(f,'../'+d+'/'+f)
     except:
         print("Error moving file {} to directory {}".format(f,d))
 
