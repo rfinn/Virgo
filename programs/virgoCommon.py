@@ -4,14 +4,15 @@ import os
 #Get current path so program can tell if this is being run on Kelly's or Rose's computer
 mypath=os.getcwd()
 if mypath.find('rfinn') > -1:
+    homedir = os.getenv("HOME")
     print("Running on Rose's computer")
     #agcfile='/Users/rfinn/idl/programs/idl_alfa/agctotal.sav'
-    gitpath='/Users/rfinn/github/'
-    nsapath = '/Users/rfinn/research/NSA/'
-    gswlpath = '/Users/rfinn/Dropbox/Research/GSWLC/'
-    agcpath = '/Users/rfinn/research/AGC/'
-    outfile_prefix = '/Users/rfinn/Dropbox/Research/Virgo/finding-charts/'
-    tablepath = '/Users/rfinn/github/Virgo/tables/'
+    gitpath=homedir+'/github/'
+    nsapath = homedir+'/research/NSA/'
+    gswlpath = homedir+'/research/GSWLC/'
+    agcpath = homedir+'/research/AGC/'
+    outfile_prefix = homedir+'/research/Virgo/finding-charts/'
+    tablepath = homedir+'/github/Virgo/tables/'
 
 elif mypath.find('kelly') > -1:
     print("Running on Kellys's computer")
