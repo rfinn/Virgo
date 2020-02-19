@@ -20,6 +20,7 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 import argparse
+import os
 
 parser = argparse.ArgumentParser(description ='Match the Halpha observations with Virgo NSA catalog')
 
@@ -29,18 +30,18 @@ parser.add_argument('--input',dest = 'input', default='Observing-Summary-Halpha-
         
 args = parser.parse_args()
 
-
+homedir = os.getenv("HOME")
 
 if args.writefits:
     ### Read in csv and write out fits
-    infile = args.tablepath+args.input
+    infile = homedir+'/'+args.tablepath+args.input
     outfile = infile.replace('csv','fits')
     hadat = np.recfromcsv(infile)
     fits.writeto(outfile,hadat,overwrite=True)
 
 
-vdat = fits.getdata(args.tablepath +'nsa.virgo.fits')
-hdat = fits.getdata(args.tablepath + 'Observing-Summary-Halpha-good-latest.fits')
+vdat = fits.getdata(homedir+'/'+args.tablepath +'nsa.virgo.fits')
+hdat = fits.getdata(homedir+'/'+args.tablepath + 'Observing-Summary-Halpha-good-latest.fits')
 
 nsadict=dict((a,b) for a,b in zip(vdat.NSAID,np.arange(len(vdat.NSAID))))
 # match by NSAID
@@ -51,7 +52,7 @@ for i in range(len(hdat.nsa_id)):
         index[i] = nsadict[int(hdat.nsa_id[i])]
         matchflag[i] = 1
     except:
-        print 'could not match NSAID = ',hdat.nsa_id[i]
+        print('could not match NSAID = ',hdat.nsa_id[i])
         #print 'recession velocity = ',vdat.Z[nsadict[hdat.nsa_id[i]]]*3.e5
     
 
