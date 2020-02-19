@@ -1120,7 +1120,7 @@ def airmass_plots(KPNO=False,ING=False,MLO=False):
 
 
     delta_t = end_time - start_time
-    observing_time = start_time + delta_t*np.linspace(0, 1, 75)
+    observing_time = start_time + delta_t*np.linspace(0, 1, 30)
     nplots = int(sum(obs_mass_flag)/8.)
     if (sum(obs_mass_flag)/8.) > nplots:
         remainder = sum(obs_mass_flag) - 8*nplots
@@ -1129,6 +1129,7 @@ def airmass_plots(KPNO=False,ING=False,MLO=False):
 
     print(nplots)
     for j in range(nplots):
+        print('nplots = ',nplots)
         plt.figure()
         legend_list = []
         if j == (nplots - 1):
@@ -1136,6 +1137,7 @@ def airmass_plots(KPNO=False,ING=False,MLO=False):
         else:
             lastplot = 8
         for i in range(lastplot):
+            print('\t galaxy number = ',i)
             pointing_center = coords.SkyCoord(pointing_ra[8*j+i]*u.deg, pointing_dec[8*j+i]*u.deg, frame='icrs')
             if i == 3:
                 plot_airmass(pointing_center,observer_site,observing_time,brightness_shading=True)
