@@ -478,16 +478,21 @@ offsets_HDI = {#135046:[5.,4.], # already observed
            #157073:[4.,0],
            #64408:[2.,-1],
            147731:[0.,3],
-           87097:[-3.,-3.],
-           90957:[8.,9.],
            #50207:[-8.,12.],
            #64280:[-8.5,-3.],
            #64353:[14.5,12.],
            #135051:[1.5,1.5],
-           15877:[4.,-7],
+           15877:[4.,-5],
            #156774:[-4.,-2.],
            #135296:[-3.,3],
-           135465:[0.,2.],
+           87097:[-2.,-4.],
+           87100:[0.,7],
+           90176:[0.,3.], 
+           90957:[8.,9.],
+           135465:[0.,0.],
+           136430:[1.2,-.5],# for guide star    
+           137391:[10.5,-5.],    
+           138642:[5.,3.5],
            #50379:[0.,3.],
            #135527:[0.,-2.5],
            #135602:[0,-2.5],
@@ -509,16 +514,15 @@ offsets_HDI = {#135046:[5.,4.], # already observed
            #48222:[-4.,3.3],
            #137045:[-5.,-3.],
            #107715:[0.,2.],
-           137391:[10.5,-2.],
+
            #137460:[-8.,0.],
            #107764:[19.,-3.],
            #88142:[5.,-10.],
            #137993:[-7.,0.],
-           90176:[0.,3.],
+
            #138221:[-3.6,2.2],
-           87097:[-3.,-3.],
            #87086:[3.,0.],
-           138642:[4.,2.],
+
            159520:[0.,-4.5],
            #159779:[0.75,-2.],
            101649:[8.,0.],
@@ -557,7 +561,7 @@ offsets_HDI = {#135046:[5.,4.], # already observed
            69842:[16.,1.],
            147731:[0.,3.],
            135129:[0.,-3.],
-           87100:[-8.,0],
+
            61693:[5.,0], # shift to get M51 on the chip :)
            165896:[6.7,2.5],
            15333:[7.,0],
@@ -859,7 +863,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     plt.ylabel('DEC (deg)')
     plt.gca().invert_yaxis()
     if plotsingle:
-        plt.savefig(outfile_prefix+'Pointing%02d.png'%(i+1))
+        plt.savefig(outfile_prefix+'Pointing%02d-NSA'+str(pointing_id[i])+'.png'%(i+1))
 
 def plot_INT_footprint(center_ra,center_dec):
     #using full detector sizes for now because 
@@ -945,7 +949,8 @@ def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=F
     if moretargets:
         plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
     else:
-        plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
+        plt.savefig(outfile_prefix+'Pointing%03d-NSA-%i.png'%(npointing,pointing_id[npointing-1]))
+        #plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
 
 def guide_cameras(npointing,offset_ra=0,offset_dec=0):
     i = npointing - 1
