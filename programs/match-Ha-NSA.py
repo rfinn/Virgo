@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 '''
-read in Halpha file
+UPDATE HALPHA TABLE:
 - downloaded Halpha file from https://docs.google.com/spreadsheets/d/1vmY5RrzM_LU2rPkebBq3chwj85vPlUcTKR1US2OvchM/edit?usp=sharing
-- removed the last line
-- will read it in and write it out as fits file
-
+- save it as a csv
 - copy downloaded file to "latest"
 cp Observing-Summary-Halpha-good-2019May28.csv Observing-Summary-Halpha-good-latest.csv
 
+USAGE:
+From github/Virgo directory
 %run programs/match-Ha-NSA.py --write-fits
 
 
@@ -30,18 +30,18 @@ parser.add_argument('--input',dest = 'input', default='Observing-Summary-Halpha-
         
 args = parser.parse_args()
 
-homedir = os.getenv("HOME")
+homedir = os.getenv("HOME")+'/'
 
 if args.writefits:
     ### Read in csv and write out fits
-    infile = homedir+'/'+args.tablepath+args.input
+    infile = homedir+args.tablepath+args.input
     outfile = infile.replace('csv','fits')
     hadat = np.recfromcsv(infile)
     fits.writeto(outfile,hadat,overwrite=True)
 
 
-vdat = fits.getdata(homedir+'/'+args.tablepath +'nsa.virgo.fits')
-hdat = fits.getdata(homedir+'/'+args.tablepath + 'Observing-Summary-Halpha-good-latest.fits')
+vdat = fits.getdata(homedir+args.tablepath +'nsa.virgo.fits')
+hdat = fits.getdata(homedir+args.tablepath + 'Observing-Summary-Halpha-good-latest.fits')
 
 nsadict=dict((a,b) for a,b in zip(vdat.NSAID,np.arange(len(vdat.NSAID))))
 # match by NSAID
@@ -61,7 +61,7 @@ for i in range(len(hdat.nsa_id)):
 
 
 # write out line-matched catalog
-outfile= args.tablepath + 'nsa_Halpha.virgo.fits'
+outfile= homedir+args.tablepath + 'nsa_Halpha.virgo.fits'
 matchedarray1=np.zeros(len(vdat),dtype=hdat.dtype)
 matchedarray1[index[matchflag]] = hdat[matchflag]
 
