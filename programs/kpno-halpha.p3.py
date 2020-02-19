@@ -103,7 +103,7 @@ else:
     telescope_run = '2020Feb/KPNO-2020Feb-'
     #telescope_run = '2019May/MLO-2019May-'
 
-outfile_prefix = outfile_prefix+telescope_run
+outfile_prefix = outfile_directory+telescope_run
 
 max_pointing = None
 
@@ -487,12 +487,17 @@ offsets_HDI = {#135046:[5.,4.], # already observed
            #135296:[-3.,3],
            87097:[-2.,-4.],
            87100:[0.,7],
-           90176:[0.,3.], 
-           90957:[8.,9.],
+           90176:[0.,3.],
+           90956:[0.,-1.],
+           90957:[8.,0.],
+           101649:[0.,0.],
+           118414:[-5.,4.],
            135465:[0.,0.],
            136430:[1.2,-.5],# for guide star    
            137391:[10.5,-5.],    
            138642:[4.5,3.5],
+           139741:[0.,-1.5],
+           160627:[-1.,-10],
            #50379:[0.,3.],
            #135527:[0.,-2.5],
            #135602:[0,-2.5],
@@ -525,13 +530,13 @@ offsets_HDI = {#135046:[5.,4.], # already observed
 
            159520:[0.,-4.5],
            #159779:[0.75,-2.],
-           101649:[8.,0.],
+
            #93963:[11.5,-2.],
-           92459:[5.,-3.],
+           92459:[14.5,-7.],
            #140301:[0.,-3.3],
-           160627:[4.,-14.5],
+
            #117685:[0.,-1.5],
-           118414:[-4.,0.],
+
            #143701:[0.,0.],
            #163875:[0.,2.],
            #143841:[-2.,12.],
@@ -573,7 +578,7 @@ offsets_HDI = {#135046:[5.,4.], # already observed
 #I am commenting these out as the offsets aren't working well and I want to keep it simple by having one source per pointing.
 offsets_MLO = {#87097:[3.,3.],
                # 90957:[-4.,3.5],
-               # 139741:[-3.,0],
+
                # 143305:[0,3.0],
                # 61693:[0,-4.0],
                # 56478:[-4.5,0],
@@ -863,7 +868,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     plt.ylabel('DEC (deg)')
     plt.gca().invert_yaxis()
     if plotsingle:
-        plt.savefig(outfile_prefix+'Pointing%02d-NSA'+str(pointing_id[i])+'.png'%(i+1))
+        plt.savefig(outfile_directory+'NSA-'+str(pointing_id[i])+'-Pointing%02d.png'%(i+1))
 
 def plot_INT_footprint(center_ra,center_dec):
     #using full detector sizes for now because 
@@ -947,9 +952,11 @@ def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=F
         fig = plt.figure(figsize = (8,8.))
         finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING=ING,MLO=MLO,KPNO=KPNO)
     if moretargets:
-        plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
+        plt.savefig(outfile_directory+'NSA-'+str(pointing_id[npointing-1])+'-Pointing%03d-lowMass.png'%(npointing))            
+        #plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
     else:
-        plt.savefig(outfile_prefix+'Pointing%03d-NSA-%i.png'%(npointing,pointing_id[npointing-1]))
+        plt.savefig(outfile_directory+'NSA-'+str(pointing_id[npointing-1])+'-Pointing%03d.png'%(npointing))    
+        #plt.savefig(outfile_prefix+'Pointing%03d-NSA-%i.png'%(npointing,pointing_id[npointing-1]))
         #plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
 
 def guide_cameras(npointing,offset_ra=0,offset_dec=0):

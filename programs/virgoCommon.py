@@ -11,7 +11,7 @@ if mypath.find('rfinn') > -1:
     nsapath = homedir+'/research/NSA/'
     gswlpath = homedir+'/research/GSWLC/'
     agcpath = homedir+'/research/AGC/'
-    outfile_prefix = homedir+'/research/Virgo/finding-charts/'
+    outfile_directory = homedir+'/research/Virgo/finding-charts/'
     tablepath = homedir+'/github/Virgo/tables/'
 
 elif mypath.find('kelly') > -1:
@@ -28,7 +28,7 @@ elif mypath.find('grudnick') > -1:
     nsapath = '/Users/grudnick/Temp/'
     gswlpath = '/Users/grudnick/Temp/'
     agcpath = '/Users/grudnick/Temp/'
-    outfile_prefix = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts/'
+    outfile_directory = '/Users/grudnick/Dropbox/Virgo_filaments/finding-charts/'
     tablepath = '/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/Virgo/tables/'
 
     
