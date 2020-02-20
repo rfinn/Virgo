@@ -83,8 +83,8 @@ from astroplan import Observer
 from astroplan.plots import plot_airmass
 
 # prevent auto downloading of tables for airmass plots
-from astropy.utils import iers
-iers.conf.auto_download = False
+#from astropy.utils import iers
+#iers.conf.auto_download = False
 
 
 ########################################
@@ -914,7 +914,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     plt.ylabel('DEC (deg)')
     plt.gca().invert_yaxis()
     if plotsingle:
-        plt.savefig(outfile_directory+'NSA-'+str(pointing_id[i])+'-'+telescope_run+'-Pointing%02d.png'%(i+1))
+        plt.savefig(outfile_directory+telescope_run+'-Pointing%02d-NSA-%i.png'%(i+1, str(pointing_id[i])))
 
 def plot_INT_footprint(center_ra,center_dec):
     #using full detector sizes for now because 
@@ -998,10 +998,12 @@ def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=F
         fig = plt.figure(figsize = (8,8.))
         finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING=ING,MLO=MLO,KPNO=KPNO)
     if moretargets:
-        plt.savefig(outfile_directory+'NSA-'+str(pointing_id[npointing-1])+'-'+telescope_run+'Pointing%03d-lowMass.png'%(npointing))            
+        plt.savefig(outfile_directory+telescope_run+'-Pointing%02d-NSA-%i-lowMass.png'%(i+1, str(pointing_id[i])))
+        #plt.savefig(outfile_directory+'NSA-'+str(pointing_id[npointing-1])+'-'+telescope_run+'Pointing%03d-lowMass.png'%(npointing))            
         #plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
     else:
-        plt.savefig(outfile_directory+'NSA-'+str(pointing_id[npointing-1])+'-'+telescope_run+'Pointing%03d.png'%(npointing))    
+        plt.savefig(outfile_directory+telescope_run+'-Pointing%02d-NSA-%i.png'%(i+1, str(pointing_id[i])))
+        #plt.savefig(outfile_directory+'NSA-'+str(pointing_id[npointing-1])+'-'+telescope_run+'Pointing%03d.png'%(npointing))    
         #plt.savefig(outfile_prefix+'Pointing%03d-NSA-%i.png'%(npointing,pointing_id[npointing-1]))
         #plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
 
