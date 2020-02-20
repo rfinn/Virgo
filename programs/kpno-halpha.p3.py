@@ -74,13 +74,17 @@ from astropy import coordinates as coords
 from astropy import units as u
 from astroquery.skyview import SkyView
 
-from astropy.coordinates import EarthLocation
+from astropy.coordinates import EarthLocation, AltAz
 from astropy.time import Time
 
 from astropy.coordinates import AltAz
 
 from astroplan import Observer
 from astroplan.plots import plot_airmass
+
+# prevent auto downloading of tables for airmass plots
+from astropy.utils import iers
+iers.conf.auto_download = False
 
 
 ########################################
@@ -1074,6 +1078,90 @@ def show_guide_camera(npointing,south_camera=True,offset_ra=0,offset_dec=0,plots
 
 
         
+def airmass_plotsv2(KPNO=False,ING=False,MLO=False):
+
+    observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
+
+    if KPNO:
+        print('plotting airmass curves for Kitt Peak')
+        observing_location = EarthLocation.of_site('Kitt Peak')
+        observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
+        start_time = Time('2017-03-12 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
+        end_time = Time('2017-03-12 14:00:00')
+        start_time = Time('2020-02-24 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
+        end_time = Time('2020-02-24 14:00:00')
+        
+    elif MLO:
+        print('plotting airmass curves for MLO')
+        observing_location = EarthLocation.of_site(u'Palomar')
+        observer_site = Observer.at_site("Palomar", timezone="US/Pacific")
+        # for run starting 2019-Apr-04 at MLO
+        #start_time = Time('2019-04-03 01:00:00') # need to enter UTC time, MLO UTC+6?
+        #end_time = Time('2019-04-03 14:00:00')
+        #start_time = Time('2019-05-04 01:00:00') # need to enter UTC time, MLO UTC+6?
+        #end_time = Time('2019-05-04 14:00:00')
+        start_time = Time('2019-06-04 01:00:00') # need to enter UTC time, MLO UTC+6?
+        end_time = Time('2019-06-04 14:00:00')
+        
+    elif ING:
+        print('plotting airmass curves for INT')
+        observing_location = EarthLocation.of_site(u'Roque de los Muchachos')
+        observer_site = Observer.at_site("Roque de los Muchachos", timezone="GMT")
+        # for run starting 2019-Feb-04 at INT
+        #start_time = Time('2019-02-04 19:00:00') # INT is on UTC
+        #end_time = Time('2019-02-05 07:00:00')
+        # for run starting 2019-May-29 at INT
+        start_time = Time('2019-05-29 19:00:00') # INT is on UTC
+        end_time = Time('2019-05-30 07:00:00')
+
+
+
+    delta_t = end_time - start_time
+    observing_time = start_time + delta_t*np.linspace(0, 1, 30)
+    nplots = int(sum(obs_mass_flag)/8.)
+    if (sum(obs_mass_flag)/8.) > nplots:
+        remainder = sum(obs_mass_flag) - 8*nplots
+        nplots += 1
+        partial = True
+
+    print(nplots)
+    for j in range(nplots):
+        print('nplots = ',nplots)
+        plt.figure()
+        legend_list = []
+        if j == (nplots - 1):
+            lastplot = remainder
+        else:
+            lastplot = 8
+        for i in range(lastplot):
+            print('\t galaxy number = ',i)
+            pointing_center = coords.SkyCoord(pointing_ra[8*j+i]*u.deg, pointing_dec[8*j+i]*u.deg, frame='icrs')
+            if i == 3:
+                plot_airmass(pointing_center,observer_site,observing_time,brightness_shading=True)
+            else:
+                plot_airmass(pointing_center,observer_site,observing_time)
+            legend_list.append('Pointing %02d'%(8*j+i+1))
+    
+        plt.legend(legend_list)
+        #plt.ylim(0.9,2.5)
+        plt.gca().invert_yaxis()
+        plt.subplots_adjust(bottom=.15)
+        #plt.axvline(x=7*u.hour,ls='--',color='k')
+        plt.axhline(y=2,ls='--',color='k')
+        plt.savefig(outfile_directory+'airmass-%02d.png'%(j+1))
+        
+
+    ##     delta_hours = np.linspace(0, 12, 100)*u.hour
+    ##     full_night_times = observing_time + delta_hours
+    ##     full_night_aa_frames = AltAz(location=observing_location, obstime=full_night_times)
+    ##     full_night_aa_coos = pointing_center.transform_to(full_night_aa_frames)
+
+    ##     plt.plot(delta_hours, full_night_aa_coos.secz,label='Pointing %02d'%(i+1))
+    ##     plot_airmass(pointing_center, observing_location, observing_time)
+    ##     plt.xlabel('Hours from 6 pm AZ time')
+    ##     plt.ylabel('Airmass [Sec(z)]')
+    ##     plt.ylim(0.9,2.5)
+    ##     plt.tight_layout()
 def airmass_plots(KPNO=False,ING=False,MLO=False):
 
     observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
