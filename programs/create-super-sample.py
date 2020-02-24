@@ -224,6 +224,7 @@ class sample:
         ################################################################
         hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-09dec2019-full.csv'
         hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-05Feb20.csv'
+        hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-24Feb20.csv'        
         self.hl = ascii.read(hlfile)
         self.hl = Table(self.hl)
         self.cull_hl()
@@ -1384,10 +1385,10 @@ if __name__ == '__main__':
 
     ## add remaining AGC galaxies with no HL and no NSA within 5"
 
-    t = fulltable()
+    #t = fulltable()
     #t.plot_all(startgal=6850)
     #t.plot_all(startgal=8950)
-    t.plot_all()
+    #t.plot_all()
     
 
 
