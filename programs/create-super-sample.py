@@ -5,7 +5,19 @@ GOAL:
 - create a super list of all galaxies in
 
 USAGE:
-- here you go
+- example will print out when you run
+
+- to create new mastertable
+    s = sample()
+    s.get_smart()
+
+- to create new cutouts, run from supersample directory
+- make sure there is a cutouts and plots subdirectory
+    t = fulltable()
+    t.plot_all()
+    
+
+
 
 '''
 import numpy as np
@@ -264,6 +276,7 @@ class sample:
         /Users/rfinn/github/Virgo/tables/ned-noprolog-10dec2019.txt
         '''
 
+        '''
         nedfile = homedir+'/github/Virgo/tables/ned-noprolog-10dec2019.txt'
         self.ned = ascii.read(nedfile,delimiter='|')
 
@@ -274,6 +287,8 @@ class sample:
         self.ned = fits.getdata('temp.fits')
         os.remove('temp.fits')
         self.cull_ned()
+
+        '''
         ################################################################
         ## read in NSA catalog
         #  using newest version of NSA
@@ -296,9 +311,11 @@ class sample:
 
         # using full agc so I can remove HIonly
         agcfile = '/Users/rfinn/research/AGC/agcnorthminus1.2019Sep24.fits'
+        agcfile = homedir+'/research/AGC/agcnorthminus1.fits'        
         self.agc = fits.getdata(agcfile)
         self.agc = Table(self.agc)
         self.cull_agc_full()
+        #self.cull_agc()
         #self.agc = Table(self.agc)
         
         # flags to track nsa matches to HL and AGC
@@ -316,12 +333,12 @@ class sample:
         self.hcoord = SkyCoord(self.hl['al2000']*u.hr,self.hl['de2000']*u.deg,frame='icrs')
         self.ncoord = SkyCoord(self.nsa['RA']*u.deg,self.nsa['DEC']*u.deg,frame='icrs')
         self.acoord = SkyCoord(self.agc[self.agc_ra_key]*u.deg,self.agc[self.agc_dec_key]*u.deg, frame='icrs')
-        self.nedcoord = SkyCoord(self.ned['RA']*u.deg,self.ned['DEC']*u.deg, frame='icrs')
+        #self.nedcoord = SkyCoord(self.ned['RA']*u.deg,self.ned['DEC']*u.deg, frame='icrs')
 
         self.hvel = self.hl['v'] # mean of optical and radio velocities
         self.nvel = self.nsa['Z']*3.e5
         self.avel = self.agc_vbest
-        self.nedvel = self.ned['Velocity']
+        #self.nedvel = self.ned['Velocity']
         
     def run_it(self, maxoffset=10):
         self.max_match_offset = maxoffset
@@ -399,8 +416,14 @@ class sample:
         #avflag1 = (agc['VOPT'] > vmin) & (agc['VOPT'] < vmax)
         #avflag2 = (agc['V21'] > vmin) & (agc['V21'] < vmax)
         avflag = (vbest > vmin) & (vbest < vmax)
-        raflag = (self.agc['RA'] > ramin) & (self.agc['RA'] < ramax) 
-        decflag = (self.agc['DEC'] < decmax) & (self.agc['DEC'] > decmin)
+        #raflag = (self.agc['RA'] > ramin) & (self.agc['RA'] < ramax) 
+        #decflag = (self.agc['DEC'] < decmax) & (self.agc['DEC'] > decmin)
+        self.agc_ra_key = 'RA'
+        self.agc_dec_key = 'DEC'
+        raflag = (self.agc['radeg'] > ramin) & (self.agc['radeg'] < ramax) 
+        decflag = (self.agc['decdeg'] < decmax) & (self.agc['decdeg'] > decmin)
+        self.agc_ra_key = 'radeg'
+        self.agc_dec_key = 'decdeg'
 
         # cut based on iposition
         # keep iposition > 7
@@ -410,10 +433,11 @@ class sample:
         overlap = avflag & raflag & decflag & ipflag & description_flag
         self.agc = self.agc[overlap]
         self.agc_vbest = vbest[overlap]
-        self.agc_ra_key = 'RA'
-        self.agc_dec_key = 'DEC'
         c = Column(self.agc_vbest,name='vhelagc')
         self.agc.add_column(c)
+        c1 = Column(self.agc['radeg'],name='RA')
+        c2 = Column(self.agc['decdeg'],name='DEC')
+        self.agc.add_columns([c1,c2])
     def match_nsa_2_hl(self):
         '''
         HL catalog is the start of the super sample
@@ -702,6 +726,7 @@ class sample:
 
         #####  SKIPPING NED MATCH FOR NOW ##############
 
+        ## REDO THIS TO MATCH TO GIANLUCA'S CATALOG
         
         ## ###########################################
         ## ## THIRD MATCH NED TO  AGC+HYPERLEDA+NSA
@@ -899,7 +924,9 @@ class panel_plots:
             #try:
             massflag=False
             w = getlegacy(super_ra[i], super_dec[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+            jpegflag=True
             if w is None:
+                jpegflag=False
                 print('trouble in paradise',i)
                 print('maybe coords are outside Legacy Survey?')
                 print(super_ra[i],super_dec[i])
@@ -909,13 +936,15 @@ class panel_plots:
                 gdec = '%.5f'%(super_dec[i])
                 galpos = gra+'-'+gdec
                 rootname = 'cutouts/2MASS-J-'+str(galpos)
+                rootname = 'cutouts/DSS2-'+str(galpos)+'-'+str(image_size)+'-1arcsecpix'     
 
                 fits_name = rootname+'.fits'
                 if not(os.path.exists(fits_name)):
-                    print('downloading 2MASS J image ')
+                    #print('downloading 2MASS J image ')
+                    print('downloading DSS2 Image ')                    
                 #
                     c = SkyCoord(ra=super_ra[i]*u.deg,dec=super_dec[i]*u.deg)
-                    x = SkyView.get_images(position=c,survey=['2MASS-J'])
+                    x = SkyView.get_images(position=c,survey=['DSS2 Red'],pixels=[60,60])
                     # save fits image
                     fits.writeto(fits_name, x[0][0].data, header=x[0][0].header)
                 else:
@@ -935,7 +964,7 @@ class panel_plots:
             #plt.title(str(hlname[i])+'\n'+nedname[i]+'\n NSA '+str(nsaid[i])+' / AGC '+str(agcnumber[i]),fontsize=8)
             #if nsubplot == 1:
             #    plt.text(10, 205,str(outfile_string), dtype='i'),fontsize=16,horizontalalignment='left')
-            ids = self.add_allgals(w, agcflag=agcflag)
+            ids = self.add_allgals(w, agcflag=agcflag,jpegflag=jpegflag)
             galids_in_fov.append(ids)
             if massflag:
                 text_color='k'
@@ -954,7 +983,7 @@ class panel_plots:
                 plt.yticks(np.arange(0,image_size,20),fontsize=8)
 
             #plt.axis([20,80,20,80])
-            if (nsubplot < nrow*(ncol-1)):
+            if (nsubplot < (nrow-1)*(ncol)):
                 plt.xticks([],[])
             if (np.mod(nsubplot,ncol) > 1) | (np.mod(nsubplot,ncol) == 0) :
                 #print('no y labels')
@@ -963,7 +992,70 @@ class panel_plots:
             nsubplot += 1
         #plt.savefig('../plots/densearray-'+outfile_string+'.png')
         return galids_in_fov
-    def add_allgals(self,w,agcflag=False,twomass_flag=False):
+
+    def one_gal(self,i,dssflag=False):
+        plt.figure(figsize=(4,4))
+        flag = np.ones_like(self.AGCflag, dtype='bool')
+        agcflag=False
+        onlyflag=False
+        nsaindex = self.t.NSAID[flag]
+        hra1 = self.hcoord.ra.deg[flag]
+        hdec1 = self.hcoord.dec.deg[flag]
+        nra2 = self.ncoord.ra.deg[flag]
+        ndec2 = self.ncoord.dec.deg[flag]
+        ara3 = self.acoord.ra.deg[flag]
+        adec3 = self.acoord.dec.deg[flag]
+        #nedra = self.nedcoord.ra.deg[flag]
+        #neddec = self.nedcoord.dec.deg[flag]
+        super_ra = self.t['RA-COMBINED']
+        super_dec = self.t['DEC-COMBINED']
+        w21 = self.t.width[flag]
+        if dssflag:
+            w = None
+            jpegflag = False
+        else:
+            w = getlegacy(super_ra[i], super_dec[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+            jpegflag = True
+        if w is None:
+            jpegflag = False
+            print('trouble in paradise',i)
+            print('maybe coords are outside Legacy Survey?')
+            print(super_ra[i],super_dec[i])
+            # try to get 2MASS J image
+            # check to see if 2MASS image exists
+            gra = '%.5f'%(super_ra[i]) # accuracy is of order .1"
+            gdec = '%.5f'%(super_dec[i])
+            galpos = gra+'-'+gdec
+            rootname = 'cutouts/2MASS-J-'+str(galpos)
+            rootname = 'cutouts/DSS2-'+str(galpos)+'-'+str(image_size)+'-1arcsecpix'     
+
+            fits_name = rootname+'.fits'
+            if not(os.path.exists(fits_name)):
+                #print('downloading 2MASS J image ')
+                print('downloading DSS2 Image ')                    
+                #
+                c = SkyCoord(ra=super_ra[i]*u.deg,dec=super_dec[i]*u.deg)
+                x = SkyView.get_images(position=c,survey=['DSS2 Red'],pixels=[60,60])
+                # save fits image
+                fits.writeto(fits_name, x[0][0].data, header=x[0][0].header)
+            else:
+                print('using 2mass image ',fits_name)
+            im, h = fits.getdata(fits_name,header=True)
+            w = WCS(h)
+            norm = simple_norm(im,stretch='asinh',percent=99.5)
+            plt.imshow(im,origin='upper',cmap='gray_r', norm=norm)
+
+        ids = self.add_allgals(w, agcflag=agcflag,jpegflag = jpegflag)
+        text_color='0.7'
+        if w21[i] > .1:
+            plt.text(.05, .05,'W21='+str(w21[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
+            plt.text(.05,.85,'Gal '+str(galnumber[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
+            # remove ticks for internal images
+            #print(nsubplot,np.mod(nsubplot,ncol))
+            # adjust ticksize of outer left and bottom images
+        return ids
+
+    def add_allgals(self,w,agcflag=False,twomass_flag=False,jpegflag=False):
         
         cats = [self.acoord, self.ncoord, self.hcoord,self.glcoord]
         symbols=['co','b*','r+']
@@ -990,7 +1082,10 @@ class panel_plots:
                 keepflag = (px > 0) & (py > 0) & (px < image_size) & (py < image_size)
             else:
                 keepflag = (px > 0) & (py > 0) & (px < image_size) & (py < image_size)
-            plt.plot(px[keepflag],py[keepflag],symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i])
+            if jpegflag:
+                plt.plot(px[keepflag],image_size - py[keepflag],symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i])
+            else:
+                plt.plot(px[keepflag],py[keepflag],symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i])
             # label points
             #print('number of galaxies in FOV = ',sum(keepflag))
             gnumbers = galnumber[keepflag]
@@ -998,7 +1093,8 @@ class panel_plots:
             if i < (len(edgecolors)-1): # by stopping at 3, I am not labeling Gianluca's catalog id
                 gals_in_fov.append(gnumbers.tolist())
                 for x,y in zip(px[keepflag],py[keepflag]):
-
+                    if jpegflag:
+                        y = image_size - y
                     label = str(gnumbers[j])
 
                     plt.annotate(label, # this is the text
@@ -1055,7 +1151,7 @@ class fulltable(panel_plots):
         self.fields = ['HL','AGC','NSA','NED']
         self.fields = ['HL','AGC','NSA','GL']
         #self.temp_fix_for_ned()
-        self.gl = fits.getdata('/Users/rfinn/research/VirgoFilaments/Gianluca/nsa_HyperLeda_NED_Steer2017dist_Virgo_field_sources_extension_H0_74_0_final_Kim2016corr_inclCOsample.18Dec2020.fits')
+        self.gl = fits.getdata(homedir+'/research/VirgoFilaments/Gianluca/nsa_HyperLeda_NED_Steer2017dist_Virgo_field_sources_extension_H0_74_0_final_Kim2016corr_inclCOsample.18Dec2020.fits')
         keepflag = self.gl['v_HL'] > 500.
         self.gl = self.gl[keepflag]
         self.glcoord = SkyCoord(self.gl['RA']*u.deg,self.gl['DEC']*u.deg, frame='icrs')
@@ -1197,13 +1293,13 @@ class fulltable(panel_plots):
         else:
             first_plot = int(np.floor(startgal/ngalperplot))
             allplots = [i for i in range(first_plot,nplots)]
-        #for i in allplots:
-        for i in range(1):
-            
+        for i in allplots:
+        #for i in range(1):
+            plt.close('all')
             startindex = i*ngalperplot
             s1 = '%04d'%(startindex)
             n2 = startindex+49
-            if n2 > ngal:
+            if n2 > (ngal-1):
                 n2 = ngal-1
                 endindex=n2
                 print('MAKING LAST PLOT')
@@ -1268,8 +1364,12 @@ class fulltable(panel_plots):
                    #names=['galnumber','class','parent','objid_in_fov','HL','NED','NSAID','AGC','RA','DEC'])
         # Create a Pandas Excel writer using XlsxWriter as the engine.
         writer = pd.ExcelWriter('virgo_check_sample_by_eye.xlsx', engine='xlsxwriter')
-
-        for i in range(9):
+        gals_per_sheet=1000
+        ngal = len(galnumber)
+        nsheets = int(ngal/gals_per_sheet)
+        if (ngal/gals_per_sheet - nsheets) > 0:
+            nsheets += 1
+        for i in range(nsheets):
             start_index = i*1000
             end_index = start_index + 1000
             if end_index > len(self.AGCflag):

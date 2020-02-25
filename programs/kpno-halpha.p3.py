@@ -82,9 +82,6 @@ from astropy.coordinates import AltAz
 from astroplan import Observer
 from astroplan.plots import plot_airmass
 
-# prevent auto downloading of tables for airmass plots
-#from astropy.utils import iers
-#iers.conf.auto_download = False
 
 
 ########################################
@@ -849,7 +846,11 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     elif MLO:
         delta_imagex = 13./60. # image width in deg
         delta_imagey = 13./60 # image width in deg
+    print(pos,delta_imagex)
+    print('running SkyView')
     xout = SkyView.get_images(pos,survey=['DSS'],height=delta_imagex*u.degree,width=delta_imagey*u.degree)
+    print('finished SkyView')
+    print(xout[0][0].data)
     b=xout[0][0]
     ax.imshow(xout[0][0].data,interpolation='none',aspect='equal',cmap='gray_r',extent=[b.header['CRVAL1']-(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
                                                            b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
@@ -998,11 +999,11 @@ def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=F
         fig = plt.figure(figsize = (8,8.))
         finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING=ING,MLO=MLO,KPNO=KPNO)
     if moretargets:
-        plt.savefig(outfile_directory+telescope_run+'-Pointing%02d-NSA-%i-lowMass.png'%(i+1, str(pointing_id[i])))
+        plt.savefig(outfile_directory+telescope_run+'-Pointing%02d-NSA-%i-lowMass.png'%(i+1, (pointing_id[npointing-1])))
         #plt.savefig(outfile_directory+'NSA-'+str(pointing_id[npointing-1])+'-'+telescope_run+'Pointing%03d-lowMass.png'%(npointing))            
         #plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
     else:
-        plt.savefig(outfile_directory+telescope_run+'-Pointing%02d-NSA-%i.png'%(i+1, str(pointing_id[i])))
+        plt.savefig(outfile_directory+telescope_run+'Pointing%03d-NSA-%i.png'%(npointing, (pointing_id[npointing-1])))
         #plt.savefig(outfile_directory+'NSA-'+str(pointing_id[npointing-1])+'-'+telescope_run+'Pointing%03d.png'%(npointing))    
         #plt.savefig(outfile_prefix+'Pointing%03d-NSA-%i.png'%(npointing,pointing_id[npointing-1]))
         #plt.savefig(outfile_prefix+'Pointing%03d-platinum.png'%(npointing))
@@ -1165,6 +1166,9 @@ def airmass_plotsv2(KPNO=False,ING=False,MLO=False):
     ##     plt.ylim(0.9,2.5)
     ##     plt.tight_layout()
 def airmass_plots(KPNO=False,ING=False,MLO=False):
+    # prevent auto downloading of tables for airmass plots
+    from astropy.utils import iers
+    iers.conf.auto_download = False
 
     observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
 
@@ -1351,3 +1355,17 @@ def get_more_targets():
     plt.gca().invert_xaxis()
     #plt.ylim(0,50)
 
+### FOCUS ON NGC 5353
+
+fig=plt.figure(figsize=(6,5))
+plt.plot(nsa.RA[vflag],nsa.DEC[vflag],'ko',c='0.7',markersize=4,alpha=0.2)
+
+# NGC5353/4 Filament
+radec = (nsa.RA > 192.) & (nsa.RA < 209) & (nsa.DEC > 0.) & (nsa.DEC < 50.) 
+radec_flag = radec & (nsa.DEC >(2*(nsa.RA - 205.) + 20) ) & (nsa.DEC < (2*(nsa.RA - 205.) + 55))
+filament = radec_flag & (nsa.Z*3.e5 >2000.) & (nsa.Z*3.e5 < 3238.)
+plt.scatter(nsa.RA[filament],nsa.DEC[filament],c=nsa.Z[filament]*3.e5,zorder=20,s=20,vmin=1000,vmax=3000,lw=0.5,cmap='jet')
+xl = np.linspace(196,230,100)
+yl = (2*(xl - 205.) + 20)
+#plt.plot(xl,yl,'r-')
+NGCfilament = filament
