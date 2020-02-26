@@ -119,10 +119,15 @@ def getlegacyimages(ra,dec):
             print('previously downloaded ',fits_name)
     pass
 
-def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,onlyflag=False,jpeg=True):
+def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,onlyflag=False,jpeg=True,imsize=None):
+    '''
+    imsize is size of desired cutout in arcmin
+    '''
     gra = '%.5f'%(ra1) # accuracy is of order .1"
     gdec = '%.5f'%(dec1)
     galnumber = gra+'-'+gdec
+    if imsize is not None:
+        image_size=imsize
     rootname = 'cutouts/legacy-im-'+str(galnumber)+'-'+str(image_size)
     jpeg_name = rootname+'.jpg'
 
@@ -995,7 +1000,7 @@ class panel_plots:
         #plt.savefig('../plots/densearray-'+outfile_string+'.png')
         return galids_in_fov
 
-    def one_gal(self,i,dssflag=False):
+    def one_gal(self,i,dssflag=False,imsize=None):
         plt.figure(figsize=(4,4))
         flag = np.ones_like(self.AGCflag, dtype='bool')
         agcflag=False
@@ -1016,10 +1021,12 @@ class panel_plots:
             w = None
             jpegflag = False
         else:
-            w = getlegacy(super_ra[i], super_dec[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag)
+            w = getlegacy(super_ra[i], super_dec[i],ra2=nra2[i],dec2=ndec2[i],ra3=ara3[i],dec3=adec3[i],agcflag=agcflag,onlyflag=onlyflag,imsize=imsize)
             jpegflag = True
         if w is None:
             jpegflag = False
+            if imsize is not None:
+                image_size=imsize
             print('trouble in paradise',i)
             print('maybe coords are outside Legacy Survey?')
             print(super_ra[i],super_dec[i])
@@ -1028,7 +1035,6 @@ class panel_plots:
             gra = '%.5f'%(super_ra[i]) # accuracy is of order .1"
             gdec = '%.5f'%(super_dec[i])
             galpos = gra+'-'+gdec
-            rootname = 'cutouts/2MASS-J-'+str(galpos)
             rootname = 'cutouts/DSS2-'+str(galpos)+'-'+str(image_size)+'-1arcsecpix'     
 
             fits_name = rootname+'.fits'
@@ -1041,7 +1047,7 @@ class panel_plots:
                 # save fits image
                 fits.writeto(fits_name, x[0][0].data, header=x[0][0].header)
             else:
-                print('using 2mass image ',fits_name)
+                print('using DSS2 image ',fits_name)
             im, h = fits.getdata(fits_name,header=True)
             w = WCS(h)
             norm = simple_norm(im,stretch='asinh',percent=99.5)
