@@ -168,6 +168,8 @@ def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,only
     # write out r-band image
     # nevermind - John M figured out how to use MEF with WCS
     #fits.writeto('r-test.fits',t[1],header=h,overwrite=True)
+    if np.mean(t[1]) == 0:
+        return None
     norm = simple_norm(t[1],stretch='asinh',percent=99.5)
     if jpeg:
         t = Image.open(jpeg_name)

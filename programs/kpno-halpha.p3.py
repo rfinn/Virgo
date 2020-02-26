@@ -241,14 +241,16 @@ pointing_ra = nsa.RA[obs_mass_flag]
 pointing_dec = nsa.DEC[obs_mass_flag]
 pointing_id = nsa.NSAID[obs_mass_flag]
 pointing_mag = 22.5 - 2.5 * np.log10(nsa.NMGY[obs_mass_flag])
-
-
+pointing_vr = nsa.Z[obs_mass_flag]*3.e5
+NGCfilament = NGCfilament[obs_mass_flag]
 # sort by RA
 sorted_indices = np.argsort(pointing_ra)
 pointing_dec = pointing_dec[sorted_indices]
 pointing_ra = pointing_ra[sorted_indices]
 pointing_id = pointing_id[sorted_indices]
 pointing_mag = pointing_mag[sorted_indices]
+pointing_vr = pointing_vr[sorted_indices]
+NGCfilament = NGCfilament[sorted_indices]
 nsadict = dict((a,b) for a,b in zip(pointing_id,np.arange(len(pointing_id))))
 
 ########################################
@@ -747,7 +749,7 @@ def make_plot(plotsingle=True):
     #add_detections()
     add_pointings()
     add_CJpoints()
-    plt.axis([190,212,15,50])
+    #plt.axis([190,212,15,50])
     plt.gca().invert_xaxis()
     if plotsingle:
         plt.xlabel('$RA \ (deg) $')
@@ -1355,17 +1357,18 @@ def get_more_targets():
     plt.gca().invert_xaxis()
     #plt.ylim(0,50)
 
-### FOCUS ON NGC 5353
+def ngcfilament():
+    ### FOCUS ON NGC 5353
+    fig=plt.figure(figsize=(6,5))
+    plt.plot(pointing_ra,pointing_dec,'ko',c='0.7',markersize=4,alpha=0.2)
 
-fig=plt.figure(figsize=(6,5))
-plt.plot(nsa.RA[vflag],nsa.DEC[vflag],'ko',c='0.7',markersize=4,alpha=0.2)
-
-# NGC5353/4 Filament
-radec = (nsa.RA > 192.) & (nsa.RA < 209) & (nsa.DEC > 0.) & (nsa.DEC < 50.) 
-radec_flag = radec & (nsa.DEC >(2*(nsa.RA - 205.) + 20) ) & (nsa.DEC < (2*(nsa.RA - 205.) + 55))
-filament = radec_flag & (nsa.Z*3.e5 >2000.) & (nsa.Z*3.e5 < 3238.)
-plt.scatter(nsa.RA[filament],nsa.DEC[filament],c=nsa.Z[filament]*3.e5,zorder=20,s=20,vmin=1000,vmax=3000,lw=0.5,cmap='jet')
-xl = np.linspace(196,230,100)
-yl = (2*(xl - 205.) + 20)
-#plt.plot(xl,yl,'r-')
-NGCfilament = filament
+    # NGC5353/4 Filament
+    plt.scatter(pointing_ra[NGCfilament],pointing_dec[NGCfilament],c=pointing_vr[NGCfilament],zorder=20,s=20,vmin=1000,vmax=3000,lw=0.5,cmap='jet')
+    
+    xl = np.linspace(196,230,100)
+    yl = (2*(xl - 205.) + 20)
+    #plt.plot(xl,yl,'r-')
+    #NGCfilament = filament
+    plt.colorbar()
+    plt.gca().invert_xaxis()
+    #return filament
