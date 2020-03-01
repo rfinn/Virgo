@@ -126,7 +126,7 @@ maxmass = 11.2
 ##### look for lower mass sources at early RA
 ###############################################
 moretargets = False
-
+moretargets = True
 ########################################
 ######  READ IN DATA TABLES  #######
 ########################################
@@ -199,6 +199,7 @@ extra_targ_flag = (nsa.NSAID == 135136) #| (nsa.NSAID == 135129) ### Greg - why 
 # no Halpha
 # stellar mass between 8.5 < log(M*/Msun) < 10.  according to NSF proposal
 #obs_mass_flag = COsample & ~ha_obs #& (jmass.MSTAR_50 > 8.5) #& (jmass.MSTAR_50 < 10.) #& (nsa.SERSIC_BA > 0.2)
+
 obs_mass_flag = (COsample & ~ha_obs) | extra_targ_flag
     
 if INGrun:
@@ -212,6 +213,8 @@ if INGrun:
 # SELECTING LOWER MASS TARGETS FOR INT RUN IN FEB 2019
 more_targets_flag = (nsa.Z*3.e5 < 2300.) & (nsa.RA > 115.) & (nsa.RA < 140.) & ~COsample & ~ha_obs & (nsa.DEC > 20.) & (nsa.DEC < 40.) & (jmass.MSTAR_50 > 8.5)
 
+# FOR KPNO RUN IN FEB 2020
+more_targets_flag =  (nsa.RA > 115.) & (nsa.RA < 140.) & ~COsample & ~ha_obs & (nsa.DEC > 0.) & (nsa.DEC < 50.) & (jmass.MSTAR_50 > 8.5) &  (nsa.Z*3.e5 < 3000.)
 if moretargets == True:
     print('setting sample to more_targets_flag')
     obs_mass_flag = more_targets_flag
@@ -513,6 +516,7 @@ offsets_HDI = {#135046:[5.,4.], # already observed
            117583:[-2,1.],# for guide star
            118414:[-6,4.],    
            125153:[1.5,0.],
+           134885:[7.,1.5],
            135465:[0.,0.],    
            136430:[1.2,-.5],# for guide star    
            137391:[10.5,-5.],    
@@ -850,9 +854,15 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
         delta_imagey = 13./60 # image width in deg
     print(pos,delta_imagex)
     print('running SkyView')
-    xout = SkyView.get_images(pos,survey=['DSS'],height=delta_imagex*u.degree,width=delta_imagey*u.degree)
+    #xout = SkyView.get_images(pos,survey=['DSS2 Red'],height=delta_imagex*u.degree,width=delta_imagey*u.degree)
+    image_dimension = int(delta_imagex*60.)
+    print(image_dimension)
+    print(delta_imagex, delta_imagey)
+    xout = SkyView.get_images(pos,survey=['DSS2 Red'],height=delta_imagex*u.degree,width=delta_imagey*u.degree)#,pixels=[image_dimension,image_dimension])
+    #xout = SkyView.get_images(pos,survey=['DSS'],pixels=[image_dimension, image_dimension])#,cache=False)#height=delta_imagex*u.degree,width=delta_imagey*u.degree)
     print('finished SkyView')
-    print(xout[0][0].data)
+    #print(xout)
+    #print(xout[0][0].data)
     b=xout[0][0]
     ax.imshow(xout[0][0].data,interpolation='none',aspect='equal',cmap='gray_r',extent=[b.header['CRVAL1']-(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
                                                            b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],
@@ -1001,7 +1011,7 @@ def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=F
         fig = plt.figure(figsize = (8,8.))
         finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING=ING,MLO=MLO,KPNO=KPNO)
     if moretargets:
-        plt.savefig(outfile_directory+telescope_run+'-Pointing%02d-NSA-%i-lowMass.png'%(i+1, (pointing_id[npointing-1])))
+        plt.savefig(outfile_directory+telescope_run+'-Pointing%03d-NSA-%i-lowMass.png'%(npointing, (pointing_id[npointing-1])))
         #plt.savefig(outfile_directory+'NSA-'+str(pointing_id[npointing-1])+'-'+telescope_run+'Pointing%03d-lowMass.png'%(npointing))            
         #plt.savefig(outfile_prefix+'Pointing%03d-lowMass-platinum.png'%(npointing))
     else:
@@ -1372,3 +1382,4 @@ def ngcfilament():
     plt.colorbar()
     plt.gca().invert_xaxis()
     #return filament
+

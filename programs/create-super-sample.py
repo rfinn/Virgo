@@ -75,7 +75,7 @@ vmin = 500.
 ## LEGACY SURVEY
 legacy_pixel_scale = 0.262 # arcsec/pixel, don't actually use this
 image_size = 60 # image size to download from legacy survey, in pixels
-
+default_image_size = image_size
 def duplicates(table,column,flag=None):
     if flag is None:
         unique, counts = np.unique(table[column], return_counts=True)
@@ -128,6 +128,8 @@ def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,only
     galnumber = gra+'-'+gdec
     if imsize is not None:
         image_size=imsize
+    else:
+        image_size=default_image_size
     rootname = 'cutouts/legacy-im-'+str(galnumber)+'-'+str(image_size)
     jpeg_name = rootname+'.jpg'
 
@@ -888,6 +890,7 @@ class panel_plots:
         plt.savefig('../plots/AGC-HL-NSA-'+outfile_string+'.png')
     def densearray(self,flag, outfile_string='test',agcflag=False,nsaflag=False,nedflag=False,onlyflag=False,startindex=0,endindex=None):
         nsaindex = self.t.NSAID[flag]
+        galnumber = np.arange(len(self.t))[flag]
         hra1 = self.hcoord.ra.deg[flag]
         hdec1 = self.hcoord.dec.deg[flag]
         nra2 = self.ncoord.ra.deg[flag]
@@ -904,7 +907,7 @@ class panel_plots:
         nsaid = self.t.NSAID[flag]
         agcnumber = self.t.AGCnr[flag]
         #nedname = self.t['Object Name'][flag]
-        galnumber = np.arange(len(hra1))[flag]
+
         plt.figure(figsize=(12,7))
         plt.subplots_adjust(bottom=.05,left=.05,top=.9,right=.95,hspace=.01,wspace=.01)
         # plots suddenly stopped working for AGC
@@ -1000,8 +1003,9 @@ class panel_plots:
         #plt.savefig('../plots/densearray-'+outfile_string+'.png')
         return galids_in_fov
 
-    def one_gal(self,i,dssflag=False,imsize=None):
-        plt.figure(figsize=(4,4))
+    def one_gal(self,i,dssflag=False,imsize=None,plotsingle=True):
+        if plotsingle:
+            plt.figure(figsize=(4,4))
         flag = np.ones_like(self.AGCflag, dtype='bool')
         agcflag=False
         onlyflag=False
@@ -1027,6 +1031,8 @@ class panel_plots:
             jpegflag = False
             if imsize is not None:
                 image_size=imsize
+            else:
+                image_size = default_image_size
             print('trouble in paradise',i)
             print('maybe coords are outside Legacy Survey?')
             print(super_ra[i],super_dec[i])
@@ -1053,18 +1059,24 @@ class panel_plots:
             norm = simple_norm(im,stretch='asinh',percent=99.5)
             plt.imshow(im,origin='upper',cmap='gray_r', norm=norm)
 
-        ids = self.add_allgals(w, agcflag=agcflag,jpegflag = jpegflag)
+        ids = self.add_allgals(w, agcflag=agcflag,jpegflag = jpegflag,imsize=imsize)
         text_color='0.7'
-        if w21[i] > .1:
-            plt.text(.05, .05,'W21='+str(w21[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
-            plt.text(.05,.85,'Gal '+str(galnumber[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
+        if plotsingle:
+            if w21[i] > .1:
+                plt.text(.05, .05,'W21='+str(w21[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
+                plt.text(.05,.85,'Gal '+str(galnumber[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
             # remove ticks for internal images
             #print(nsubplot,np.mod(nsubplot,ncol))
             # adjust ticksize of outer left and bottom images
         return ids
 
-    def add_allgals(self,w,agcflag=False,twomass_flag=False,jpegflag=False):
-        
+    def add_allgals(self,w,agcflag=False,twomass_flag=False,jpegflag=False,imsize=None):
+
+        if imsize is None:
+            image_size = default_image_size
+        else:
+            image_size = imsize
+            print('cutout image size is ',image_size)
         cats = [self.acoord, self.ncoord, self.hcoord,self.glcoord]
         symbols=['co','b*','r+']
         edgecolors = ['c','w','r']
@@ -1329,6 +1341,7 @@ class fulltable(panel_plots):
 
             self.write_spreadsheet()
         pass
+
     def write_spreadsheet(self):
         '''
         spreadsheet to use in reviewing each galaxy in the sample.
@@ -1391,6 +1404,69 @@ class fulltable(panel_plots):
 
         # Close the Pandas Excel writer and output the Excel file.
         writer.save()
+    def plot_stars(self,startgal=None):
+        plt.close('all')
+
+        # load finished sample
+        byeye = ascii.read('virgo_check_sample_by_eye.csv',delimiter=',')
+
+        
+        self.starflag = byeye['class'] == 3
+        star_indices = np.arange(len(self.starflag))[self.starflag]
+        
+        #print('LENGTH OF GALIDS IN FOV = ',len(self.galids_in_fov))
+        #self.plotimages(flag,outfile_string='All Galaxies',agcflag=False,onlyflag=True)
+        ngal = sum(self.starflag)
+        ngalperplot = 20
+        nplots = np.floor(ngal/ngalperplot)
+        #galids_in_fov = []
+        if (ngal/ngalperplot - nplots) > 0:
+            nplots += 1
+        nplots = int(nplots)
+        endindex = None
+        if startgal is None:
+            allplots = [i for i in range(nplots)]
+        else:
+            first_plot = int(np.floor(startgal/ngalperplot))
+            allplots = [i for i in range(first_plot,nplots)]
+        ncol=5
+        nrow=4
+        for i in allplots:
+        #for i in range(1):
+            #plt.close('all')
+            startindex = i*ngalperplot
+            s1 = '%04d'%(startindex)
+            n2 = startindex+19
+            if n2 > (ngal-1):
+                n2 = ngal-1
+                endindex=n2
+                print('MAKING LAST PLOT')
+            s2 = '%04d'%(n2)
+            print(s1,s2)
+            plt.figure(figsize=(6,4))
+            plt.subplots_adjust(hspace=.3,wspace=.3)
+            for j in range(nrow*ncol):
+                if (j+nrow*ncol*i) > (ngal-1):
+                    break
+                plt.subplot(nrow,ncol,j+1)
+                self.one_gal(star_indices[j + nrow*ncol*i],plotsingle=False)
+                plt.title('gal '+str(star_indices[j+nrow*ncol*i]),fontsize=8)
+                plt.xticks([])
+                plt.yticks([])
+                
+            plt.savefig('plots/stars-'+s1+'-'+s2+'.pdf')
+
+    def stars_only(self):
+        # load finished sample
+        byeye = ascii.read('virgo_check_sample_by_eye.csv',delimiter=',')
+
+        
+        self.starflag = byeye['class'] == 3
+        for i in range(4):
+            self.plotimages(self.starflag,outfile_string='stars',nsaflag=False,onlyflag=False)
+            plt.savefig('stars-'+str(i)+'.png')
+
+
     def velhist(self):
         plt.figure()
         if self.nedflag:
