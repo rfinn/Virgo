@@ -33,6 +33,7 @@ class catalog:
         n = self.cleancat.colnames
         self.cleancat.remove_column(n[0])
         self.cleancat.write('clean_sample.fits',format='fits',overwrite=True)
+        self.kitchen[~self.cutflag].write('clean_kitchen_sink.fits',format='fits',overwrite=True)
     def catalog_for_z0MGS(self):
         '''
         need RA, DEC, and search radius
