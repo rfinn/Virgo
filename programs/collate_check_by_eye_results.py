@@ -57,7 +57,7 @@ class mydataframe:
         class_individual = [0,1,2,3,4,5,6,7,8,9,16]
         for i in class_individual:
             print('number of objects with class',i,' = ',sum(self.df['class'] == i))
-        print('percent of sample removed = %.2f'%(nremoved/len(self.df)))            
+        print('percent of sample removed = %.1f'%(nremoved/len(self.df)*100))            
     def print_statistics_north(self):
         print('DEC > -1 galaxies only')
         dflag = self.df['DEC'] > -1
@@ -68,8 +68,13 @@ class mydataframe:
         class_individual = [0,1,2,3,4,5,6,7,8,9,16]
         for i in class_individual:
               print('number of objects with class',i,' = ',sum((self.df['class'] == i)& dflag))
-        print('percent of sample removed = %.2f'%(nremoved/sum(dflag)))
-
+        print('percent of sample removed = %.1f'%(nremoved/sum(dflag)*100))
+    def print_id9_for_gianluca(self):
+        flag = (self.df['class'] == 9)
+        ids = self.df['galnumber'][flag]
+        #hl = self.df['HL'][flag]
+        print('problem with GL catalog')
+        print(ids)
     def classification_hist(self):
         plt.figure()
         plt.hist(self.df['class'])
