@@ -193,12 +193,13 @@ def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,only
         colors = ['red','blue','cyan']
     if onlyflag:
         colors = ['k','k','k']
+    w = WCS(fits_name,naxis=2)        
     if (ra2 is not(None)) & (ra3 is not(None)):
-        ra = np.array([ra1,ra2, ra3])
+        ra = np.array([ra1,ra2,ra3])
         dec = np.array([dec1,dec2, dec3])   
         #w = WCS('r-test.fits')
         #px,py = w.wcs_world2pix(ra,dec)
-        w = WCS(fits_name,naxis=2)
+
         px,py = w.wcs_world2pix(ra,dec,1)
         #print(px,py)
         r1 = Rectangle((px[0]-dx/2, py[0]-dx/2), dx, dx, edgecolor=colors[0], facecolor='none')
@@ -209,7 +210,8 @@ def getlegacy(ra1,dec1,ra2=None,dec2=None, ra3=None,dec3=None,agcflag=False,only
         plt.gca().add_patch(r1)
         #plt.gca().add_patch(r2)
         #plt.gca().add_patch(r3)
-        return w
+    
+    return w
 
 
 class sample:
@@ -1064,7 +1066,7 @@ class panel_plots:
         if plotsingle:
             if w21[i] > .1:
                 plt.text(.05, .05,'W21='+str(w21[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
-                plt.text(.05,.85,'Gal '+str(galnumber[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
+                plt.text(.05,.85,'Gal '+str(i),fontsize=8,c=text_color, transform=plt.gca().transAxes)
             # remove ticks for internal images
             #print(nsubplot,np.mod(nsubplot,ncol))
             # adjust ticksize of outer left and bottom images
