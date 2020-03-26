@@ -9,13 +9,20 @@ GOAL:
   - merge shredded galaxies
 
 '''
+import numpy as np
+import sys
+import os
 
 from astropy.io import fits, ascii
 from astropy.table import Table, join, hstack, Column, MaskedColumn 
 from astropy.coordinates import SkyCoord
-import numpy as np
-import sys
-import os
+import astropy.units as u
+
+from astroquery.ned import Ned
+
+from matplotlib import pyplot as plt
+
+from mksupersample import getlegacy, getlegacyimages
 
 homedir = os.getenv('HOME')
 sys.path.append(homedir+'/github/APPSS/')
@@ -25,9 +32,180 @@ from join_catalogs import make_new_cats, join_cats
 kitchen_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink.fits'
 byeye_classifications = '/home/rfinn/research/Virgo/supersample/virgo_check_sample_by_eye.csv'
 
+## BOUNDARIES OF SURVEY REGION
+decmin = -35
+decmax = 75 
+ramax = 280.
+ramin = 100. 
+vmax = 3300.
+vmin = 500.
+
+image_size = 60 # image size to download from legacy survey, in pixels
+default_image_size = image_size
+
+class cutouts:
+    def densearray(self,ra=None,dec=None,names=None,ra2=None,dec2=None,outfile_string='test',agcflag=False,onlyflag=True,startindex=None,endindex=None):
+        plt.figure(figsize=(12,7))
+        plt.subplots_adjust(bottom=.05,left=.05,top=.9,right=.95,hspace=.01,wspace=.01)
+        if ra is None:
+            print('need an ra and dec')
+            return
+        nsubplot = 1
+        nrow=5
+        ncol=10
+        if endindex is not None:
+            maxcount = endindex-startindex+1
+        else:
+            maxcount = nrow*ncol+1
+        if startindex is not None:
+            i = startindex
+        else:
+            i = 0
+        while nsubplot < maxcount:
+            jpgflag=True
+            #print(i,nsubplot,maxcount)
+            plt.subplot(nrow,ncol,nsubplot)
+            #print('flag index = ',i)
+            #try:
+            massflag=False
+            # get ra and dec
+
+            w = getlegacy(ra[i], dec[i],jpeg=jpgflag,imsize=image_size)
+
+            if w is None:
+                jpgflag=False
+                print('trouble in paradise',i)
+                print('maybe coords are outside Legacy Survey?')
+                print(ra[i],dec[i])
+                # try to get 2MASS J image
+                # check to see if 2MASS image exists
+                gra = '%.5f'%(ra[i]) # accuracy is of order .1"
+                gdec = '%.5f'%(dec[i])
+                galpos = gra+'-'+gdec
+                rootname = 'cutouts/DSS2-'+str(galpos)+'-'+str(image_size)+'-1arcsecpix'     
+                
+                fits_name = rootname+'.fits'
+                if not(os.path.exists(fits_name)):
+                    print('downloading DSS2 Image ')                    
+                    #
+                    c = SkyCoord(ra=ra[i]*u.deg,dec=dec[i]*u.deg)
+                    x = SkyView.get_images(position=c,survey=['DSS2 Red'],pixels=[60,60])
+                    # save fits image
+                    fits.writeto(fits_name, x[0][0].data, header=x[0][0].header)
+                else:
+                    print('using 2mass image ',fits_name)
+                im, h = fits.getdata(fits_name,header=True)
+                w = WCS(h)
+                norm = simple_norm(im,stretch='asinh',percent=99.5)
+                plt.imshow(im,origin='upper',cmap='gray_r', norm=norm)
+                # pixel scale is 1 arcsec
+                # therefore, to show a 60x60 arcsec image, want to set boundary to center-30:center+30
+                im_nrow,im_ncol=im.shape
+            
+                massflag=True
+
+            if massflag:
+                text_color='k'
+            else:
+                text_color='0.7'
+            plt.text(.05,.85,'AGC '+str(names[i]),fontsize=8,c=text_color, transform=plt.gca().transAxes)
+            # remove ticks for internal images
+            #print(nsubplot,np.mod(nsubplot,ncol))
+            # adjust ticksize of outer left and bottom images
+            if massflag:
+                plt.axis([int(im_nrow/2-image_size/2),int(im_nrow/2+image_size/2),int(im_ncol/2-image_size/2),int(im_ncol/2+image_size/2)])
+            else:
+                plt.xticks(np.arange(0,image_size,20),fontsize=8)
+                plt.yticks(np.arange(0,image_size,20),fontsize=8)
+
+                    #plt.axis([20,80,20,80])
+            if (nsubplot < (nrow-1)*(ncol)):
+                plt.xticks([],[])
+            if (np.mod(nsubplot,ncol) > 1) | (np.mod(nsubplot,ncol) == 0) :
+                #print('no y labels')
+                plt.yticks([],[])
+
+            #print('jpegflag = ',jpgflag)
+            gfov = self.addgals(w,ra,dec,ra2,dec2,jpegflag=jpgflag)
+            print('AGC ',names[i],': ',gfov)
+            i = i + 1
+            nsubplot += 1
+    def addgals(self,w,ra1,dec1,ra2,dec2,jpegflag=True):
+        c1 = SkyCoord(ra1*u.deg,dec1*u.deg,frame='icrs')
+        c2 = SkyCoord(ra2*u.deg,dec2*u.deg,frame='icrs')
+        cats = [c1,c2]
+        symbols=['co','b*','r+']
+        edgecolors = ['c','w','r']
+        symbols=['co','r^','yD','gs']
+        edgecolors = ['c','b','r','xkcd:goldenrod', 'g']
+        edgecolors = ['c','r','y', 'g']
+        facecolors = ['None','None','None','None','None']
+        sizes = [14,14,14,16,18]
+        text_offsets = [(10,14),(10,7),(10,0),(10,-7),(10,-14)]
+        allgals = []
+        for i,c in enumerate(cats):
+            px,py = w.wcs_world2pix(c.ra.deg,c.dec.deg,1)
+            galnumber = np.arange(len(c.ra.deg))
+            #print('number of galaxies in catalog = ',len(c.ra.deg))
+            # only keep objects on image
+            keepflag = (px > 0) & (py > 0) & (px < image_size) & (py < image_size)
+            if jpegflag:
+                plt.plot(px[keepflag],image_size - py[keepflag],symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i])
+            else:
+                plt.plot(px[keepflag],py[keepflag],symbols[i],mec=edgecolors[i],mfc=facecolors[i],markersize=sizes[i])
+            # label points
+            #print('number of galaxies in FOV = ',sum(keepflag))
+            gnumbers = galnumber[keepflag]
+            
+        #print(allgals)
+        allgals = gnumbers.tolist()
+        return allgals
+
+    def plot_all(self,ra=None,dec=None,flag=None,names=None,startgal=None,ra2=None,dec2=None):
+        plt.close('all')
+
+        #print('LENGTH OF GALIDS IN FOV = ',len(self.galids_in_fov))
+        #self.plotimages(flag,outfile_string='All Galaxies',agcflag=False,onlyflag=True)
+        if ra is not None:
+            ra = ra[flag]
+            dec = dec[flag]
+            names = names[flag]            
+        else:
+            print('must give an array of ra to plot_all')
+        ngal = sum(flag)
+        ngalperplot = 50
+        nplots = np.floor(ngal/ngalperplot)
+        #galids_in_fov = []
+        if (ngal/ngalperplot - nplots) > 0:
+            nplots += 1
+        nplots = int(nplots)
+        endindex = None
+        if startgal is None:
+            allplots = [i for i in range(nplots)]
+        else:
+            first_plot = int(np.floor(startgal/ngalperplot))
+            allplots = [i for i in range(first_plot,nplots)]
+        for i in allplots:
+        #for i in range(1):
+            plt.close('all')
+            startindex = i*ngalperplot
+            s1 = '%04d'%(startindex)
+            n2 = startindex+49
+            if n2 > (ngal-1):
+                n2 = ngal-1
+                endindex=n2
+                print('MAKING LAST PLOT')
+            s2 = '%04d'%(n2)
+            print(s1,s2)
+
+            self.densearray(ra=ra,dec=dec,names=names,outfile_string='All-Galaxies',agcflag=False,onlyflag=True,startindex = startindex, endindex=endindex,ra2=ra2,dec2=dec2)
+
+            plt.savefig('plots/gcutouts-'+s1+'-'+s2+'.pdf')
+            plt.savefig('plots/gcutouts-'+s1+'-'+s2+'.png')
 
 ###  CATALOG CLASS
-class catalog:
+###  This is the main class
+class catalog(cutouts):
     def __init__(self,kitchen_sink,byeye_classifications):
         self.kitchen = fits.getdata(kitchen_sink)
         self.kitchen = Table(self.kitchen)
@@ -38,8 +216,17 @@ class catalog:
         #self.remove_agc_only()
         self.get_radec_first()
         self.cut_catalog()
+
         self.match_a100()
         self.check_new_a100()
+        self.get_NEDname()
+        # this galaxy is not in the A100,
+        # so ok to add this after matching with A100
+        self.fix_8822()
+        self.add_galid()
+        self.write_clean()        
+        #self.read_clean_a100()
+
     def merge_class4(self):
         # find class 4 objects
         class4 = (self.byeye['class'] == 4)
@@ -60,11 +247,11 @@ class catalog:
         # with parent entry
         
         for i in range(len(HL4)):
-            print(galid[i], 'parents = ',parents[i])
+            #print(galid[i], 'parents = ',parents[i])
             parentflag = self.byeye['galnumber'] == int(float(parents[i]))
             parentid = np.arange(len(class4))[parentflag]            
             #print('len(parentid) = ',len(parentid))
-            print(parents[i],parentid,galid[i])
+            #print(parents[i],parentid,galid[i])
             if len(parentid) == 0:
                 print('error matching parent {} for galaxy {}'.format(parents[i],galid[i]))
                 
@@ -77,24 +264,32 @@ class catalog:
                 AGCp = (self.byeye['AGC'][parentflag] != 0)[0]
                 #print(HLp,HL4[i],parentid,sum(parentflag))
                 if not(HLp) and HL4[i]:
-                    self.merge_sources(parentid,galid[i],HL=True)
+                    self.merge_sources(parentid,galid[i],HL=True,cat=self.kitchen)
                     self.kitchen['HLflag'][parentid] = True                    
                 if not(NSAp) and NSA4[i]:
-                    self.merge_sources(parentid,galid[i],NSA=True)
+                    self.merge_sources(parentid,galid[i],NSA=True,cat=self.kitchen)
                     self.kitchen['NSAflag'][parentid] = True                    
                 if not(AGCp) and AGC4[i]:
-                    self.merge_sources(parentid,galid[i],AGC=True)
+                    self.merge_sources(parentid,galid[i],AGC=True,cat=self.kitchen)
                     self.kitchen['AGCflag'][parentid] = True
-    def merge_sources(self,parentid,galid,HL=False,NSA=False,AGC=False):
-        colnames = self.kitchen.colnames
+
+    def merge_sources(self,parentid,galid,cat=None,HL=False,NSA=False,AGC=False,A100=False):
+        if cat is None:
+            cat = self.kitchen
+        else:
+            cat = cat
+            
+        colnames = cat.colnames
         if HL:
             survey_columns = np.arange(0,45)
         if AGC:
             survey_columns = np.arange(44,83)
         if NSA:
             survey_columns = np.arange(90,200)
+        if A100:
+            survey_columns = np.arange(205,389)
         for i in survey_columns:
-            self.kitchen[colnames[i]][parentid] = self.kitchen[colnames[i]][galid]
+            cat[colnames[i]][parentid] = cat[colnames[i]][galid]
 
     def get_radec_first(self):
         # ra is RA HL for those with HL data, then RA NSA 
@@ -110,8 +305,7 @@ class catalog:
         
         # if galaxy is class = 4, use the RA, DEC of parent
         # didn't implement this yet
-        
-        pass
+
     def cut_catalog(self):
         self.cutflag = (self.byeye['class'] == 2) | (self.byeye['class'] == 4) | (self.byeye['class'] == 0)
 
@@ -141,6 +335,7 @@ class catalog:
         pass
     def match_a100(self):
         # read in a100
+        #self.a100 = fits.getdata('/home/rfinn/research/Virgo/tables/a100-sdss-wise-virgo.fits')
         self.a100 = fits.getdata('/home/rfinn/research/Virgo/tables/a100-sdss-wise-virgo.fits')
         #a100coord = SkyCoord(a100['RAdeg_Use'],a100['DECdeg_Use'],frame='icrs',unit='deg')
         # define clean catalog coords
@@ -183,45 +378,212 @@ class catalog:
             print('trouble in paradise')
         '''
         self.clean_a100 = joined_table2
-        self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
-
-    def check_new_a100(self):
         # inspect new a100 sources
         a100flag = ~self.clean_a100['HLflag'] & ~self.clean_a100['NSAflag'] & self.clean_a100['A100flag']
-
-        print(self.clean_a100['AGC'][a100flag])
-        pass
+        print('number of A100-only before cleaning = ',sum(a100flag))
+        # look for any duplicate entries from A100 (probably from WISE matching)
+        keepflag = np.ones(len(self.clean_a100['AGC']),'bool')
+        agcnames = self.clean_a100['AGC']
         
-    def get_NEDname(self):
+        for i,a in enumerate(agcnames):
+            if a100flag[i]:
+                matches = np.sum(self.clean_a100['AGC'] == a)
+                if matches > 1:
+                    keepflag[i] = False
+        self.clean_a100 = self.clean_a100[keepflag]
+
+
+        a100flag = ~self.clean_a100['HLflag'] & ~self.clean_a100['NSAflag'] & self.clean_a100['A100flag']
+        print('number of A100-only after cleaning = ',sum(a100flag))
+        self.write_clean()
+    def write_clean(self):
+        self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+
+    def check_new_a100(self,plotflag=False):
+                           
+        a100flag = ~self.clean_a100['HLflag'] & ~self.clean_a100['NSAflag'] & self.clean_a100['A100flag']
+        if plotflag:
+            self.plot_all(ra=self.clean_a100['RAdeg_Use'],dec=self.clean_a100['DECdeg_Use'],flag=a100flag,names=self.clean_a100['AGC'],ra2=self.clean_a100['RA'],dec2=self.clean_a100['DEC'])
+
+        # results from visual inspection
+        # the following sources should be merged
+
+        keepflag = np.ones(len(self.clean_a100['RA']),'bool')
+
+        child = np.array([9144, 9145, 9147, 9151],'i')
+        parent = np.array([7423, 6575, 6638, 8949],'i')
+        for i in range(len(child)):
+            print('merging {} with {}'.format(child[i],parent[i]))
+            self.merge_sources(parent[i],child[i],cat=self.clean_a100,HL=False,NSA=False,AGC=False,A100=True)
+            self.clean_a100['A100flag'][parent[i]] = True
+        # for 8949, 9151 pair, AGC 208736, use AGC coordinates
+        # delete rows corresponding to children
+        keepflag[child] = np.zeros(len(child),'bool')
+        self.clean_a100 = self.clean_a100[keepflag]
+        self.write_clean()
+    def get_NEDname_query(self):
+        ## GOT BLOCKED BY NED FOR TOO MANY QUERIES
+        ## TRYING ANOTHER APPROACH - TO MATCH TO CATALOG I DOWNLOADED FROM DEC
+        
         # look up NED name for each galaxy
         # https://astroquery.readthedocs.io/en/latest/ned/ned.html
 
         # if in HL, look up HL name
+        NEDid = []
+        for i in range(len(self.clean_a100['objname'])):
+            # check if HL id exists, look up NED name
+            # if yes, break
+            # if no NED comes back
+            # check if NSA ID exists for that galaxy. if yes, look up NED name
+            # if NED name is found, break
+            # if no NED name comes back
+            # check if A100 ID exists for that galaxy. if yes, look up NED name
+            # if no Ned name comes back, then no NED name!
+            foundit=False
+            if self.clean_a100['HLflag'][i]:
+
+                try:
+                    t = Ned.query_object(self.clean_a100['objname'][i])
+                    NEDid.append(t['Object Name'][0])
+                    foundit=True
+                    continue
+                except IndexError:
+                    pass
+                except:
+                    print(i,'2 NED did not like ',self.clean_a100['objname'][i])
+                    pass
+            if self.clean_a100['NSAflag'][i]:
+
+                try:
+                    t = Ned.query_object('NSA '+str(self.clean_a100['NSAID'][i]))
+                    NEDid.append(t['Object Name'][0])
+                    foundit=True
+                    continue
+                except IndexError:
+                    pass
+                except:
+                    print(i,'2 NED did not like ','NSA '+str(self.clean_a100['NSAID'][i]))
+                    pass
+            if self.clean_a100['A100flag'][i]:
+
+                try:
+                    #print('AGC'+str(self.clean_a100['AGC'][i]))
+                    t = Ned.query_object('AGC'+str(self.clean_a100['AGC'][i]))
+                    NEDid.append(t['Object Name'][0])
+                    foundit=True
+                    continue
+                except IndexError:
+                    pass
+                except:
+                    print(i,'2 NED did not like ','AGC'+str(self.clean_a100['AGC'][i]))
+                    pass
+            if not(foundit):
+                print("oh no - could not find NED name! so sorry...",i)
+                NEDid.append('')
+        c = Column(NEDid,name='NEDname')
+        self.clean_a100.add_column(c)
+        self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+    def get_NEDname(self):
+        # matching to catalog I downloaded on March 25, 2020
+        # read in NED file
+        '''
+        Search by by Parameters
+        decmin = -35  ** this is different from first download
+        decmax = 75
+        ramax = 280.
+        ramin = 100.
+        vmax = 3300. (units km/s)
+        vmin = 500.
+        object = Galaxy
         
-        pass
-            
-    def fix_8822(self):
+        RA has to be in hours
+        ramin = 6.6666666667
+        ramax = 18.666666667
+
+        output = text, ascii, bar separated
+        velocity lower limit = -99
+
+        Had to run this on virgo b/c I got locked out of NED.
+        can't access the website from any machine in my house!
+
+        Dowloaded text file - there was garbage at top of file (unnecessary info) that I deleted.
+
+        Saved as
+
+        /Users/rfinn/github/Virgo/tables/ned-noprolog-25mar2020.txt
+        '''
+        
+        self.read_ned()
+        self.cull_ned()
+        # set up SkyCoord for clean cat and NED
+        n = SkyCoord(self.ned['RA'],self.ned['DEC'],frame='icrs',unit='deg')
+        c = SkyCoord(self.clean_a100['RA'],self.clean_a100['DEC'],frame='icrs',unit='deg')        
+        # find matches
+        idn, d2d, d3d = c.match_to_catalog_sky(n) # matches NED to VF catalog
+        #print(d2d)
+        nedmatchflag = (d2d < 10.*u.arcsec) # keep matches within 15arcsec
+        print('number of NED matches = {}/{}'.format(sum(nedmatchflag),len(nedmatchflag)))
+        # create empty array of names
+        NEDid = np.zeros(len(self.clean_a100['RA']),dtype='|S25')
+        indices = np.arange(len(idn))
+        #print(indices[0:50])
+        #print(len(indices),len(NEDid),len(idn))
+        NEDid[indices[nedmatchflag]] = self.ned['Object Name'][idn[nedmatchflag]]
+        # transpose matched NED names into clean_a100
+        
+        c = Column(NEDid,name='NEDname')
+        self.clean_a100.add_column(c)
+        self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+    def read_ned(self):
+        nedfile = homedir+'/research/Virgo/supersample/ned-noprolog-25mar2020.txt'
+        self.ned = ascii.read(nedfile,delimiter='|')
+
+        # having issues with ned, maybe because of masked array?
+        # going to write out fits and read it back in
+        #
+        self.ned.write(homedir+'/research/Virgo/tables/ned-noprolog-10dec2019.fits',format='fits',overwrite=True)
+        self.ned = Table(fits.getdata(homedir+'/research/Virgo/tables/ned-noprolog-10dec2019.fits',format='fits',overwrite=True))
+    def cull_ned(self):
+        vbest = self.ned['Velocity']
+        vflag = (vbest > vmin) & (vbest < vmax)
+        raflag = (self.ned['RA'] > ramin) & (self.ned['RA'] < ramax) 
+        decflag = (self.ned['DEC'] < decmax) & (self.ned['DEC'] > decmin)
+        # only keep objects with spectroscopic redshifts
+        # https://ned.ipac.caltech.edu/help/faq5.html#5f
+
+        # skipping this step for now b/c just using catalog to find NEDname
+        speczflag = (self.ned['Redshift Flag'] == 'SPEC') | ((self.ned['Redshift Flag'] == 'N/A') & (self.ned['Redshift Points'] > 2.1))
+        print('ned speczflag = ',sum(speczflag))
+        #speczflag =  (self.ned['Redshift Flag'] == 'N/A') 
+        overlap = vflag & raflag & decflag #& speczflag
+        self.ned = self.ned[overlap]
+
+    def add_galid(self):
+        c = Column(np.arange(len(self.clean_a100)),name='VFID')
+        self.clean_a100.add_column(c)
+    def read_clean_a100(self):
+        self.clean_a100 = Table(fits.getdata('vf_clean_sample.fits'))
+    
+    def fix_8822(self,cat=None):
         # add blue object, this is one with CO detection
         # the following information is from NED
-        colid = ['NEDname', 'RA','DEC','vel']
+        if cat is None:
+            cat = self.clean_a100
+        else:
+            cat = cat
+        colid = ['NEDname', 'RA','DEC','vr']
         colvalues  = ['UGC8656 NOTES01', 205.129878,42.993819,2899]
 
-        colnames = np.array(self.clean_kitchen.colnames)
-        colindices = []
-        # save column number for each dictionary key
-        for i in range(len(colid)):
-            colindices.append(np.arange(len(colnames))[colnames == colid[i]])
-        colindices = np.array(colindices)
-        new_row = np.zeros_like(self.clean_kitchen[0])
+        # add an empty row
+        cat.add_row()
 
-        for i in range(len(colindices)):
-            new_row[colindices[i]] = colvalues[i] 
-        self.clean_kitchen.add_row(new_row)
+        new_index = len(self.clean_a100)-1
+
+        for i in range(len(colid)):
+            cat[colid[i]][new_index] = colvalues[i]
         
-        self.cleancat.add_row()
-        pass
-    
-    
+
+
     def write_clean_cat(self):
         self.cleancat.write('clean_sample.fits',format='fits',overwrite=True)
         self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
@@ -235,11 +597,6 @@ class catalog:
         search_radius = 10.*np.ones(len(self.cleancat)) # units are arcsec
         newtable = Table([self.cleancat['galnumber'],self.cleancat['RA'],self.cleancat['DEC'],search_radius],names=['galid','ra','dec','major'])
         newtable.write('clean_sample.txt',format='ipac',overwrite=True)
-    def catalog_for_paper(self):
-        # write out
-        # ra, dec, velocity, HL, NSA id, A100 id
-        # NED name
-        pass
         
 if __name__ == '__main__':
     c = catalog(kitchen_sink,byeye_classifications)
