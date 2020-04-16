@@ -12,6 +12,7 @@ GOAL:
 import numpy as np
 import sys
 import os
+import time
 
 from astropy.io import fits, ascii
 from astropy.table import Table, join, hstack, Column, MaskedColumn 
@@ -208,6 +209,7 @@ class cutouts:
 class catalog(cutouts):
     def __init__(self,kitchen_sink,byeye_classifications):
         self.kitchen = fits.getdata(kitchen_sink)
+
         self.kitchen = Table(self.kitchen)
         self.byeye = ascii.read(byeye_classifications, delimiter=',')
         #self.byeye['parent'] = np.array(self.byeye['parent'],'i')
@@ -216,17 +218,22 @@ class catalog(cutouts):
         #self.remove_agc_only()
         self.get_radec_first()
         self.cut_catalog()
-
         self.match_a100()
         self.check_new_a100()
-        self.get_NEDname()
+        #self.get_NEDname()
+        self.get_NEDname_query()
         # this galaxy is not in the A100,
         # so ok to add this after matching with A100
         self.fix_8822()
+        self.sort_by_dec()
+        #self.write_clean()        
         self.add_galid()
         self.write_clean()        
         #self.read_clean_a100()
-
+    def sort_by_dec(self):
+        # sort catalog by declination
+        sort_index = np.argsort(self.clean_a100['DEC'])[::-1]
+        self.clean_a100 = self.clean_a100[sort_index]
     def merge_class4(self):
         # find class 4 objects
         class4 = (self.byeye['class'] == 4)
@@ -336,7 +343,7 @@ class catalog(cutouts):
     def match_a100(self):
         # read in a100
         #self.a100 = fits.getdata('/home/rfinn/research/Virgo/tables/a100-sdss-wise-virgo.fits')
-        self.a100 = fits.getdata('/home/rfinn/research/Virgo/tables/a100-sdss-wise-virgo.fits')
+        self.a100 = fits.getdata('/home/rfinn/research/Virgo/ancil-tables/a100-sdss-wise-virgo.fits')
         #a100coord = SkyCoord(a100['RAdeg_Use'],a100['DECdeg_Use'],frame='icrs',unit='deg')
         # define clean catalog coords
         #ccoord = SkyCoord(self.ra, self.dec, frame='icrs',unit='deg')
@@ -395,6 +402,7 @@ class catalog(cutouts):
 
         a100flag = ~self.clean_a100['HLflag'] & ~self.clean_a100['NSAflag'] & self.clean_a100['A100flag']
         print('number of A100-only after cleaning = ',sum(a100flag))
+
         self.write_clean()
     def write_clean(self):
         self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
@@ -420,7 +428,6 @@ class catalog(cutouts):
         # delete rows corresponding to children
         keepflag[child] = np.zeros(len(child),'bool')
         self.clean_a100 = self.clean_a100[keepflag]
-        self.write_clean()
     def get_NEDname_query(self):
         ## GOT BLOCKED BY NED FOR TOO MANY QUERIES
         ## TRYING ANOTHER APPROACH - TO MATCH TO CATALOG I DOWNLOADED FROM DEC
@@ -441,7 +448,7 @@ class catalog(cutouts):
             # if no Ned name comes back, then no NED name!
             foundit=False
             if self.clean_a100['HLflag'][i]:
-
+                time.sleep(1)
                 try:
                     t = Ned.query_object(self.clean_a100['objname'][i])
                     NEDid.append(t['Object Name'][0])
@@ -452,35 +459,44 @@ class catalog(cutouts):
                 except:
                     print(i,'2 NED did not like ',self.clean_a100['objname'][i])
                     pass
+                
+
             if self.clean_a100['NSAflag'][i]:
-
-                try:
-                    t = Ned.query_object('NSA '+str(self.clean_a100['NSAID'][i]))
-                    NEDid.append(t['Object Name'][0])
-                    foundit=True
-                    continue
-                except IndexError:
-                    pass
-                except:
-                    print(i,'2 NED did not like ','NSA '+str(self.clean_a100['NSAID'][i]))
-                    pass
+                if not(foundit):
+                    time.sleep(1)
+                    try:
+                        t = Ned.query_object('NSA '+str(self.clean_a100['NSAID'][i]))
+                        NEDid.append(t['Object Name'][0])
+                        foundit=True
+                        continue
+                    except IndexError:
+                        pass
+                    except:
+                        print(i,'2 NED did not like ','NSA '+str(self.clean_a100['NSAID'][i]))
+                        pass
             if self.clean_a100['A100flag'][i]:
-
-                try:
-                    #print('AGC'+str(self.clean_a100['AGC'][i]))
-                    t = Ned.query_object('AGC'+str(self.clean_a100['AGC'][i]))
-                    NEDid.append(t['Object Name'][0])
-                    foundit=True
-                    continue
-                except IndexError:
-                    pass
-                except:
-                    print(i,'2 NED did not like ','AGC'+str(self.clean_a100['AGC'][i]))
-                    pass
+                if not(foundit):
+                    time.sleep(1)
+                    try:
+                        #print('AGC'+str(self.clean_a100['AGC'][i]))
+                        t = Ned.query_object('AGC'+str(self.clean_a100['AGC'][i]))
+                        NEDid.append(t['Object Name'][0])
+                        foundit=True
+                        continue
+                    except IndexError:
+                        pass
+                    except:
+                        print(i,'2 NED did not like ','AGC'+str(self.clean_a100['AGC'][i]))
+                        pass
             if not(foundit):
                 print("oh no - could not find NED name! so sorry...",i)
                 NEDid.append('')
         c = Column(NEDid,name='NEDname')
+        try:
+            nedtable = Table([c]).write('ned_names.fits',format='fits',overwrite=True)
+        except:
+            print("couldn't write ned names")
+            
         self.clean_a100.add_column(c)
         self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
     def get_NEDname(self):
@@ -515,24 +531,100 @@ class catalog(cutouts):
         
         self.read_ned()
         self.cull_ned()
+
+        # create empty array of names
+        NEDid = np.zeros(len(self.clean_a100['RA']),dtype='|S25')
+
+        
         # set up SkyCoord for clean cat and NED
         n = SkyCoord(self.ned['RA'],self.ned['DEC'],frame='icrs',unit='deg')
         c = SkyCoord(self.clean_a100['RA'],self.clean_a100['DEC'],frame='icrs',unit='deg')        
         # find matches
         idn, d2d, d3d = c.match_to_catalog_sky(n) # matches NED to VF catalog
         #print(d2d)
+
         nedmatchflag = (d2d < 10.*u.arcsec) # keep matches within 15arcsec
-        print('number of NED matches = {}/{}'.format(sum(nedmatchflag),len(nedmatchflag)))
-        # create empty array of names
-        NEDid = np.zeros(len(self.clean_a100['RA']),dtype='|S25')
+
         indices = np.arange(len(idn))
         #print(indices[0:50])
         #print(len(indices),len(NEDid),len(idn))
-        NEDid[indices[nedmatchflag]] = self.ned['Object Name'][idn[nedmatchflag]]
+        #NEDid[indices[nedmatchflag]] = self.ned['Object Name'][idn[nedmatchflag]]
         # transpose matched NED names into clean_a100
         
-        c = Column(NEDid,name='NEDname')
-        self.clean_a100.add_column(c)
+        # for each galaxy in cleaned catalog, find ned sources within 10 arcsec
+        self.NEDmultiples = np.zeros(len(self.clean_a100),'bool')
+
+        multiples = 0
+        '''
+        procedure:
+        - calc offset between VF galaxy and NED galaxies
+        - keep those w/in 15" offset
+        - if only one source, assign VF galaxy this NED id
+        - if multiples
+          - try to match the HL name to the matching NED sources, if HL name exists
+            - set multiple flag to False if match is found
+          - look for source with name starting with NGC, UGC, IC.  use this if found
+          - otherwise set to first NED source in the list
+        '''
+        
+        for i in range(len(self.clean_a100)):
+            d = np.sqrt((self.clean_a100['RA'][i] - self.ned['RA'])**2 \
+                        + (self.clean_a100['DEC'][i] - self.ned['DEC'])**2)
+            matchflag = d < 15./3600
+            if np.sum(matchflag) > 1:
+                self.NEDmultiples[i] = True
+                #if multiples < 30:
+                #    print('number of matches = ',np.sum(matchflag),multiples)
+                #    print(self.ned['Object Name', 'Redshift Flag','Redshift Points'][matchflag],'\nHLname = ',self.clean_a100['objname'][i],'\n')
+                multiples += 1
+
+                
+                # if we get multiple matches, then look at names and find one with
+                # closest match to objname if it exist.
+                indexmultiples = np.arange(len(self.ned))[matchflag]
+                if len(self.clean_a100['objname'][i]) > 1: # has a HL name
+                    n1 = self.clean_a100['objname'][i] # HL name
+                    foundmatch = False
+                    # look for match with HL name
+                    for j in indexmultiples:
+                        n2 = self.ned['Object Name'][j] # NED name
+                        if (n2[0:2] == n1[0:2]) & (n2[-2:] == n1[-2:]):
+                            # start and end of names match
+                            # so this is the correct NED name
+                            NEDid[i] = n2
+                            foundmatch = True
+                            self.NEDmultiples[i] = False
+                            print('found HL name: ',n1,n2)
+                            break
+                if (foundmatch == False): # continue looking for the best match
+                    # if not, look for more common names like NGC, UGC, IC
+                    for j in indexmultiples:
+                        if (self.ned['Object Name'][j].startswith('NGC')) | \
+                           (self.ned['Object Name'][j].startswith('UGC')) | \
+                           (self.ned['Object Name'][j].startswith('IC')):
+                            # NED name
+                            # start and end of names match
+                            NEDid[i] = self.ned['Object Name'][j]
+                            foundmatch = True
+                            print('found a nice name: ',self.clean_a100['objname'][i],NEDid[i])
+                            break
+                if (foundmatch == False):
+                    # assign closest match
+                    # set nedquery flag to true, and query these objects individually
+                    closest_match = np.arange(len(self.clean_a100))[np.where(d == min(d))[0][0]]
+                    NEDid[i] = self.ned['Object Name'][closest_match]
+                    print('taking closest match',self.clean_a100['objname'][i],NEDid[i])
+                    # could also look at number of redshifts
+            elif np.sum(matchflag) == 1:
+                NEDid[i] = self.ned['Object Name'][np.where(matchflag)[0][0]]
+                
+                        
+        print('number with multiple NED matches = ',multiples)
+        print('number of NED matches = {}/{}'.format(sum(nedmatchflag),len(nedmatchflag)))
+        
+        c1 = Column(NEDid,name='NEDname')
+        c2 = Column(self.NEDmultiples,name='NEDmultiples')# check these by hand?
+        self.clean_a100.add_columns([c1,c2,c3])
         self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
     def read_ned(self):
         nedfile = homedir+'/research/Virgo/supersample/ned-noprolog-25mar2020.txt'
@@ -552,15 +644,29 @@ class catalog(cutouts):
         # https://ned.ipac.caltech.edu/help/faq5.html#5f
 
         # skipping this step for now b/c just using catalog to find NEDname
+        # adding this back in because I am having trouble with some matches,
+        # e.g. getting an SDSS name instead of a NGC name.  maybe this will remove
+        # the yucky sources
         speczflag = (self.ned['Redshift Flag'] == 'SPEC') | ((self.ned['Redshift Flag'] == 'N/A') & (self.ned['Redshift Points'] > 2.1))
         print('ned speczflag = ',sum(speczflag))
         #speczflag =  (self.ned['Redshift Flag'] == 'N/A') 
-        overlap = vflag & raflag & decflag #& speczflag
+        overlap = vflag & raflag & decflag & speczflag
         self.ned = self.ned[overlap]
 
-    def add_galid(self):
-        c = Column(np.arange(len(self.clean_a100)),name='VFID')
-        self.clean_a100.add_column(c)
+    def add_galid(self, cat=None):
+        if cat is None:
+            cat = self.clean_a100
+        else:
+            cat = cat
+        # assign ids by descending declination
+        
+        vfid = ['VFID{0:04d}'.format(i) for i in np.arange(len(cat))]
+        c = Column(vfid,name='VFID')
+        cat.add_column(c)
+        if cat is None:
+            self.clean_a100 = cat
+        else:
+            return cat
     def read_clean_a100(self):
         self.clean_a100 = Table(fits.getdata('vf_clean_sample.fits'))
     
@@ -587,6 +693,7 @@ class catalog(cutouts):
     def write_clean_cat(self):
         self.cleancat.write('clean_sample.fits',format='fits',overwrite=True)
         self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+
     def catalog_for_z0MGS(self):
         '''
         need RA, DEC, and search radius

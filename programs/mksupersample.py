@@ -253,6 +253,7 @@ class sample:
         self.cull_hl()
         c1 = Column(self.hl['al2000']*15,name='RAdeg')
         self.hl.add_column(c1)
+        
         self.hl.write('temp.fits',format='fits',overwrite=True)
 
         self.hl = fits.getdata('temp.fits')
