@@ -57,10 +57,14 @@ from join_catalogs import make_new_cats, join_cats
         
 ## args = parser.parse_args()
 
-
+## CATALOG VERSION NUMBER
+## V1 = USE NEWER VERSION OF NSA (this is what we used for all of visual classifications)
+## V2 = USE ORIGINAL VERSION OF NSA
+VERSION = 2
 # max offset in arcsec b/w sources from different catalogs
 # and still be considered the same source
 max_match_offset = 5.
+
 
 
 ## BOUNDARIES OF SURVEY REGION
@@ -307,8 +311,21 @@ class sample:
         ################################################################
         '''
         using new NSA catalog
+
+        2020-04-18
+        switching back to v0 because found some issues with redshifts
+        |         NEDname         | NOTES |
+        |-------------------------|--------|
+        |                 NGC 2793| NSA 135797 (not in version 2 of NSA!, in version 1), PG 026189|
+        |                SHOC 206b| NSA 015877 (in v2, but ZDIST = .13!; v1 ZDIST=.0077) | 
+        |        UGC 08656 NOTES01| LEDA 214137 |
+        |                UGC 09348| in NSA 002473 (NSA version 2 vr = 27000!), SDSS, PGC 051957; should be in cat|
+        |WISEA J150535.77+590537.2| NSA 019809 (in v2, ZDIST=.0459; v1, ZDIST=.008867)|
         '''
+
         nfile = homedir+'/research/NSA/nsa_v1_0_1.fits'
+
+
         self.nsa = fits.getdata(nfile)
         self.cull_nsa()
         #self.nsa = Table(self.nsa)
@@ -329,27 +346,59 @@ class sample:
         self.cull_agc_full()
         #self.cull_agc()
         #self.agc = Table(self.agc)
+
+        
+        ################################################################
+        ## read in NSA catalog
+        #  using original version of NSA
+        ################################################################
+        '''
+        2020-04-18
+        switching back to v0 because found some issues with redshifts
+        |         NEDname         | NOTES |
+        |-------------------------|--------|
+        |                 NGC 2793| NSA 135797 (not in version 2 of NSA!, in version 1), PG 026189|
+        |                SHOC 206b| NSA 015877 (in v2, but ZDIST = .13!; v1 ZDIST=.0077) | 
+        |        UGC 08656 NOTES01| LEDA 214137 |
+        |                UGC 09348| in NSA 002473 (NSA version 2 vr = 27000!), SDSS, PGC 051957; should be in cat|
+        |WISEA J150535.77+590537.2| NSA 019809 (in v2, ZDIST=.0459; v1, ZDIST=.008867)|
+        '''
+
+        nfile = homedir+'/research/NSA/nsa_v0_1_2.fits'
+
+
+        self.nsa2 = fits.getdata(nfile)
+        self.cull_nsa2()
+        #self.nsa = Table(self.nsa)
         
         # flags to track nsa matches to HL and AGC
         self.hl_2_nsa_matchflag = np.zeros(len(self.hl['al2000']),'bool')
         self.hl_2_agc_matchflag = np.zeros(len(self.hl['de2000']),'bool')
-
+        self.hl_2_nsa2_matchflag = np.zeros(len(self.hl['al2000']),'bool')
         # flags to track nsa matches to HL and AGC
         self.nsa_2_hl_matchflag = np.zeros(len(self.nsa['RA']),'bool')
         self.nsa_2_agc_matchflag = np.zeros(len(self.nsa['RA']),'bool')
+        self.nsa_2_nsa2_matchflag = np.zeros(len(self.nsa['RA']),'bool')
 
         # flags to track AGC matches to HL and NSA
         self.agc_2_hl_matchflag = np.zeros(len(self.agc[self.agc_ra_key]),'bool')
         self.agc_2_nsa_matchflag = np.zeros(len(self.agc[self.agc_dec_key]),'bool')
+        self.agc_2_nsa2_matchflag = np.zeros(len(self.agc[self.agc_dec_key]),'bool')        
+        # flags to track nsa matches to HL and AGC
+        self.nsa2_2_hl_matchflag = np.zeros(len(self.nsa2['RA']),'bool')
+        self.nsa2_2_agc_matchflag = np.zeros(len(self.nsa2['RA']),'bool')
+        self.nsa2_2_nsa_matchflag = np.zeros(len(self.nsa2['RA']),'bool')
 
         self.hcoord = SkyCoord(self.hl['al2000']*u.hr,self.hl['de2000']*u.deg,frame='icrs')
         self.ncoord = SkyCoord(self.nsa['RA']*u.deg,self.nsa['DEC']*u.deg,frame='icrs')
         self.acoord = SkyCoord(self.agc[self.agc_ra_key]*u.deg,self.agc[self.agc_dec_key]*u.deg, frame='icrs')
+        self.n2coord = SkyCoord(self.nsa2['RA']*u.deg,self.nsa2['DEC']*u.deg,frame='icrs')        
         #self.nedcoord = SkyCoord(self.ned['RA']*u.deg,self.ned['DEC']*u.deg, frame='icrs')
 
         self.hvel = self.hl['v'] # mean of optical and radio velocities
         self.nvel = self.nsa['Z']*3.e5
         self.avel = self.agc_vbest
+        self.n2vel = self.nsa2['Z']*3.e5        
         #self.nedvel = self.ned['Velocity']
         
     def run_it(self, maxoffset=10):
@@ -373,7 +422,16 @@ class sample:
         raflag = (self.nsa['RA'] > ramin) & (self.nsa['RA'] < ramax) 
         decflag = (self.nsa['DEC'] < decmax) & (self.nsa['DEC'] > decmin)
         overlap = vflag & raflag & decflag
+        self.nsaOverlagFlag = overlap
         self.nsa = self.nsa[overlap]
+        
+    def cull_nsa2(self):
+        vbest = self.nsa2['Z']*3.e5
+        vflag = (vbest > vmin) & (vbest < vmax)
+        raflag = (self.nsa2['RA'] > ramin) & (self.nsa2['RA'] < ramax) 
+        decflag = (self.nsa2['DEC'] < decmax) & (self.nsa2['DEC'] > decmin)
+        overlap = vflag & raflag & decflag
+        self.nsa2 = self.nsa2[overlap]
 
     def cull_ned(self):
         vbest = self.ned['Velocity']
@@ -621,7 +679,7 @@ class sample:
             duplicates(self.sample_table,n+'_name',flag=self.sample_table[n+'flag'])
         
         
-    def get_smart(self,maxoffset=10,veloffset=300.):
+    def get_smart(self,maxoffset=10,veloffset=300.,matchThirdFlag=False):
         '''
         matching offset in arcsec
 
@@ -674,9 +732,10 @@ class sample:
         c5 = Column(vel,name='HL-AGC-VEL',dtype='f')
         joined_table.add_columns([c1,c2,c3,c4,c5])
 
-        joined_table.write('temp.fits',format='fits',overwrite=True)
-        joined_table = fits.getdata('temp.fits')
-
+        #print('HLflag after first join = ',joined_table['HLflag'][0:10])
+        #joined_table.write('table1.fits',format='fits',overwrite=True)
+        #joined_table = Table(fits.getdata('table1.fits'))
+        #print('HLflag after writing/reading temp.fits = ',joined_table['HLflag'][0:10])
         self.table1 = joined_table
         print('METHOD 2: AFTER FIRST MERGE')
         columns=['objname','AGCnr']
@@ -685,9 +744,24 @@ class sample:
             print('checking HL ',n,' name')
             
         ###############################################
+        ## FIX BOOLEAN COLUMNS
+        ###############################################
+        # boolean columns are getting converted weird
+        # when I write and then read the fits table
+
+        #try:
+        #    joined_table['AGCflag'] = (joined_table['AGCflag'] == 84)
+        #    joined_table['HLflag'] = (joined_table['HLflag'] == 84)
+        #except KeyError:
+        #    print('trouble in paradise')
+        #print('HLflag after trying to fix boolean columns = ',joined_table['HLflag'][0:10])
+        self.table1 = joined_table
+            
+        ###############################################
         ## SECOND MATCH NSA TO  AGC+HYPERLEDA
         ###############################################    
         # now repeat - join NSA to HL+AGC table
+        print('MATCH HL+AGC to NSA')
         v1 = joined_table['HL-AGC-VEL']
         v2 = self.nsa['Z']*3.e5
         hlagc_2, hlagc_matchflag, nsa_2, nsa_matchflag = make_new_cats(joined_table, self.nsa, RAkey1='RA-HL-AGC',DECkey1='DEC-HL-AGC',RAkey2='RA',DECkey2='DEC', velocity1=v1, velocity2=v2, maxveloffset = veloffset,maxoffset=maxoffset)
@@ -699,10 +773,33 @@ class sample:
         ra = hlagc_matchflag*joined_table2['RA-HL-AGC'] + ~hlagc_matchflag*joined_table2['RA_2']
         dec = hlagc_matchflag*joined_table2['DEC-HL-AGC'] + ~hlagc_matchflag*joined_table2['DEC_2']
 
-        #c3 = Column(ra,name='RA-HL-AGC-NSA',dtype='f')
-        #c4 = Column(dec,name='DEC-HL-AGC-NSA',dtype='f')
-        c3 = Column(ra,name='RA-COMBINED',dtype='f')
-        c4 = Column(dec,name='DEC-COMBINED',dtype='f')
+        # redo this as
+        # HL if it exists, then NSA, then AGC
+        ra = np.zeros(len(joined_table2),'f')
+        dec = np.zeros(len(joined_table2),'f')
+
+        HLflag = joined_table2['HLflag'] == 1
+        AGCflag = joined_table2['AGCflag'] == 1
+        NSAflag = joined_table2['NSAflag'] == 1
+        print('sum of HL, AGC, and NSA flags = ',sum(HLflag), sum(AGCflag), sum(NSAflag))
+        #print('merged ra at 1 : ',ra[0:10],HLflag[0:10])
+        flag = HLflag
+        ra[flag] = joined_table2['RAdeg'][flag] #HL RA in deg, instead of hrs
+        dec[flag] = joined_table2['de2000'][flag]
+        #print('merged ra at 2 : ',ra[0:10],HLflag[0:10])
+
+        flag = ~HLflag & NSAflag
+        ra[flag] = joined_table2['RA_2'][flag]
+        dec[flag] = joined_table2['DEC_2'][flag]
+        #print('merged ra at 3 : ',ra[0:10],flag[0:10],HLflag[0:10],NSAflag[0:10])
+        flag =~HLflag & ~NSAflag & AGCflag 
+        ra[flag] = joined_table2['radeg'][flag]
+        dec[flag] = joined_table2['decdeg'][flag]
+        #print('merged ra at 4 : ',ra[0:10])        
+        c3 = Column(ra,name='RA-HL-AGC-NSA',dtype='f')
+        c4 = Column(dec,name='DEC-HL-AGC-NSA',dtype='f')
+        #c3 = Column(ra,name='RA-COMBINED',dtype='f')
+        #c4 = Column(dec,name='DEC-COMBINED',dtype='f')
 
         # adding another column to track velocity
         # uses HL velocity for all objects in HL catalog
@@ -710,28 +807,110 @@ class sample:
         vel = hlagc_matchflag*joined_table2['HL-AGC-VEL'] + ~hlagc_matchflag*joined_table2['Z']*3.e5
         c5 = Column(vel,name='HL-AGC-NSA-VEL',dtype='f')
         joined_table2.add_columns([c3,c4,c5])
-
-        ###############################################
-        ## FIX BOOLEAN COLUMNS
-        ###############################################
-        # boolean columns are getting converted weird
-        # when I write and then read the fits table
-
-        try:
-            joined_table2['AGCflag'] = (joined_table2['AGCflag'] == 84)
-            joined_table2['HLflag'] = (joined_table2['HLflag'] == 84)
-        except KeyError:
-            print('trouble in paradise')
-
-        # trying this to see if it avoids KeyError that I am getting
-        #
-        # KeyError was just me being stupid
-        # this does fix the data coercion error though...
-        #
-        # need to figure out how to convert the table to fits format
-        # without writing it out and reading it back in
-        joined_table2.write('smart_kitchen_sink.fits',format='fits',overwrite=True)
+        #print('HLflag after matching to NSA = ',joined_table2['HLflag'][0:10])
+        joined_table2.write('temp.fits',format='fits',overwrite=True)
+        joined_table2 = Table(fits.getdata('temp.fits'))
+        #print('HLflag after reading/writing temp.fits for joined_table2 = ',joined_table2['HLflag'][0:10])
         self.table2 = joined_table2
+        if matchThirdFlag:
+            ###############################################
+            ## THIRD MATCH NSA2 (v_0_1_2_ TO  AGC+HYPERLEDA
+            ###############################################    
+            # now repeat - join NSA to HL+AGC table
+            print('MATCH HL+AGC+NSA to NSA2')        
+            v1 = joined_table2['HL-AGC-NSA-VEL']
+            v2 = self.nsa2['Z']*3.e5
+            hlagc_2, hlnsa2_matchflag, nsa2_2, nsa2_matchflag = make_new_cats(joined_table2, self.nsa2, RAkey1='RA-HL-AGC-NSA',DECkey1='DEC-HL-AGC-NSA',RAkey2='RA',DECkey2='DEC', velocity1=v1, velocity2=v2, maxveloffset = veloffset,maxoffset=maxoffset)
+            # write out joined a100-sdss-nsa catalog
+            joined_table3 = hstack([hlagc_2,nsa2_2])
+            c1 = Column(nsa2_matchflag,name='NSA0flag')
+            joined_table3.add_column(c1)
+            
+            HLflag = joined_table3['HLflag'] == 1
+            AGCflag = joined_table3['AGCflag'] == 1
+            NSAflag = joined_table3['NSAflag'] == 1
+            NSA2flag = joined_table3['NSA0flag'] == 1
+            
+            # HL if it exists, then NSAv1, then NSAv2, then AGC
+            ra = np.zeros(len(joined_table3),'f')
+            dec = np.zeros(len(joined_table3),'f')
+            
+            ra[HLflag] = joined_table3['RAdeg'][HLflag]
+            dec[HLflag] = joined_table3['de2000'][HLflag]
+            # NSA coordinates (v1)
+            ra[~HLflag & NSAflag] = joined_table3['RA_2'][~HLflag & NSAflag]
+            dec[~HLflag & NSAflag] = joined_table3['DEC_2'][~HLflag & NSAflag]
+            # NSA2 coordinates (v0)
+            ra[~HLflag & ~NSAflag & NSA2flag] = joined_table3['RA'][~HLflag & ~NSAflag & NSA2flag]
+            dec[~HLflag & ~NSAflag & NSA2flag] = joined_table3['DEC'][~HLflag & ~NSAflag & NSA2flag]
+            # AGC coordinates
+            ra[~HLflag & ~NSAflag & ~NSA2flag & AGCflag] = joined_table3['radeg'][~HLflag & ~NSAflag & ~NSA2flag & AGCflag]
+            dec[~HLflag & ~NSAflag & ~NSA2flag & AGCflag] = joined_table3['decdeg'][~HLflag & ~NSAflag & ~NSA2flag &  AGCflag]
+            #c3 = Column(ra,name='RA-HL-AGC-NSA',dtype='f')
+            #c4 = Column(dec,name='DEC-HL-AGC-NSA',dtype='f')
+            c3 = Column(ra,name='RA-COMBINED',dtype='f')
+            c4 = Column(dec,name='DEC-COMBINED',dtype='f')
+            
+            # adding another column to track velocity
+            # uses HL velocity for all objects in HL catalog
+            # uses AGC velocity for any objects in AGC but NOT in HL
+            # HL if it exists, then NSAv1, then NSAv2, then AGC
+            
+            vel = np.zeros(len(joined_table3),'f')
+        
+            vel[HLflag] = joined_table3['v'][HLflag]
+            # NSA coordinates (v1)
+            vel[~HLflag & NSAflag] = joined_table3['Z_1'][~HLflag & NSAflag]*3.e5
+            
+            # NSA2 coordinates (v0)
+            vel[~HLflag & ~NSAflag & NSA2flag] = joined_table3['Z_2'][~HLflag & ~NSAflag & NSA2flag]*3.e5
+            
+            # AGC coordinates
+            vel[~HLflag & ~NSAflag & ~NSA2flag & AGCflag] = joined_table3['vhelagc'][~HLflag & ~NSAflag & ~NSA2flag & AGCflag]
+            
+            c5 = Column(vel,name='VEL-COMBINED',dtype='f')
+            joined_table3.add_columns([c3,c4,c5])
+            
+            
+            
+            ###############################################
+            ## FIX BOOLEAN COLUMNS
+            ###############################################
+            # boolean columns are getting converted weird
+            # when I write and then read the fits table
+            
+            #try:
+            #    joined_table3['AGCflag'] = (joined_table3['AGCflag'] == 84)
+            #    joined_table3['HLflag'] = (joined_table3['HLflag'] == 84)
+            #    joined_table3['NSAflag'] = (joined_table3['NSAflag'] == 84)            
+            #except KeyError:
+            #    print('trouble in paradise')
+
+            # fix column names for NSA v1 columns
+            colnames = ['IAUNAME','SUBDIR','ISDSS','INED','ISIXDF','IALFALFA',\
+                        'IZCAT','ITWODF','MAG','Z','ZSRC','SIZE','RUN','CAMCOL',\
+                        'FIELD','RERUN','XPOS','YPOS','NSAID','ZDIST','EXTINCTION',\
+                        'XCEN','YCEN','NPROF','SERSIC_N','SERSIC_BA','SERSIC_PHI',\
+                        'ASYMMETRY','CLUMPY','DFLAGS','SERSIC_TH50','PLATE']
+            for c in colnames:
+                joined_table3.rename_column(c+'_1',c)
+            colnames = ['RA','DEC'] # from NSA v2
+            for c in colnames:
+                joined_table3.rename_column(c,c+'_NSA0')
+            if VERSION == 1:
+                outfile = 'smart_kitchen_sink.fits'
+            elif VERSION == 2:
+                outfile = 'smart_kitchen_sink_v2.fits'
+                joined_table3.write(outfile,format='fits',overwrite=True)
+                self.table3 = joined_table3
+        else:
+            if VERSION == 1:
+                outfile = 'smart_kitchen_sink.fits'
+            elif VERSION == 2:
+                outfile = 'smart_kitchen_sink_v2.fits'
+                joined_table2.write(outfile,format='fits',overwrite=True)
+                self.table2 = joined_table2
+            
         #self.check_duplicates_t1()
         #joined_table2.write('temp.fits',format='fits',overwrite=True)
         #joined_table2 = fits.getdata('temp.fits')
@@ -1080,12 +1259,13 @@ class panel_plots:
         else:
             image_size = imsize
             print('cutout image size is ',image_size)
-        cats = [self.acoord, self.ncoord, self.hcoord,self.glcoord]
-        symbols=['co','b*','r+']
-        edgecolors = ['c','w','r']
-        symbols=['co','r^','yD','gs']
+        cats = [self.acoord, self.ncoord, self.hcoord,self.n2coord,self.glcoord]
+        #symbols=['co','b*','r+']
+        #edgecolors = ['c','w','r']
+        # AGC, NSA, HL, NSA2, GL
+        symbols=['co','r^','yD','k+','gs']
         edgecolors = ['c','b','r','xkcd:goldenrod', 'g']
-        edgecolors = ['c','r','y', 'g']
+        edgecolors = ['c','r','y','k', 'g',]
         #edgecolors = ['c0','c1','c2','c3','c4']
         if agcflag:
             facecolors = ['None','None','None','None','None']
@@ -1134,15 +1314,18 @@ class panel_plots:
 class fulltable(panel_plots):
     def __init__(self,nedflag=False):
         # this file contains all columns from HL, AGC and NSA
-        self.t = fits.getdata('smart_kitchen_sink.fits')
+        self.t = fits.getdata('smart_kitchen_sink_v2.fits')
         #self.t = fits.getdata('smart_kitchen_sink_05feb2020.fits')
         self.hcoord = SkyCoord(self.t['al2000']*u.hr,self.t['de2000']*u.deg,frame='icrs')
         self.ncoord = SkyCoord(self.t['RA_2']*u.deg,self.t['DEC_2']*u.deg,frame='icrs')
         self.acoord = SkyCoord(self.t['RA_1']*u.deg,self.t['DEC_1']*u.deg, frame='icrs')
-
+        self.n2coord = SkyCoord(self.t['RA']*u.deg,self.t['DEC']*u.deg,frame='icrs')
 
         self.hvel = self.t['v'] # mean of optical and radio velocities
-        self.nvel = self.t['Z']*3.e5
+        try:
+            self.nvel = self.t['Z']*3.e5
+        except KeyError:
+            self.nvel = self.t['Z_1']*3.e5
         self.avel = self.t['vhelagc']
 
         
@@ -1377,9 +1560,9 @@ class fulltable(panel_plots):
         #                  'vHL','vAGC','vNSA','vNED','NEDzflag','NEDzpoints'])
         t = Table([galnumber,flag,parent,other_gals,\
                    self.t['objname'],self.t['NSAID'],self.t['AGCnr'],self.t['RA-COMBINED'],self.t['DEC-COMBINED'],\
-                   self.t['v'],self.t['vhelagc'],self.t['Z']*3.e5],
+                   self.t['v'],self.t['vhelagc'],self.t['Z']*3.e5,self.t['Z_2']*3.e5],
                    names=['galnumber','class','parent','objid_in_fov','HL','NSAID','AGC','RA','DEC',\
-                          'vHL','vAGC','vNSA'])
+                          'vHL','vAGC','vNSA','vNSA0'])
         #cols = [galnumber,flag,parent,other_gals,self.t['objname'],self.t['Object Name'],self.t['NSAID'],self.t['AGCnr'],self.t['RA-COMBINED'],self.t['DEC-COMBINED']]
         #for a in cols:
         #    print(len(a))
@@ -1387,7 +1570,7 @@ class fulltable(panel_plots):
         #           self.t['objname'],self.t['Object Name'],self.t['NSAID'],self.t['AGCnr'],self.t['RA-COMBINED'],self.t['DEC-COMBINED']])
                    #names=['galnumber','class','parent','objid_in_fov','HL','NED','NSAID','AGC','RA','DEC'])
         # Create a Pandas Excel writer using XlsxWriter as the engine.
-        writer = pd.ExcelWriter('virgo_check_sample_by_eye.xlsx', engine='xlsxwriter')
+        writer = pd.ExcelWriter('virgo_check_sample_by_eye_v2.xlsx', engine='xlsxwriter')
         gals_per_sheet=1000
         ngal = len(galnumber)
         nsheets = int(ngal/gals_per_sheet)
@@ -1556,7 +1739,7 @@ if __name__ == '__main__':
     #s = sample(max_match_offset=7.)
     print('Welcome!')
     print('')
-    print('To build catalogs, try: \n\n \t s=sample()\n \t s.get_smart() \n \n OR\n\t s.run_it()')
+    print('To build catalogs, try: \n\n \t s=sample()\n \t s.get_smart() \n')# \n OR\n\t s.run_it()')
     print('\n\nTo read table and plot images, try: \n\n \t t=fulltable()\n \t t.agc_only() )')
     ## track NSA and AGC names of matches
 

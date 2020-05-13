@@ -28,6 +28,7 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astroquery.ned import Ned
 
+from matplotlib import pyplot as plt
 homedir = os.getenv("HOME")
 #sys.path.append(homedir+'/github/appss/')
 #from join_catalogs import make_new_cats, join_cats
@@ -124,10 +125,14 @@ class catalog:
             #self.coflag = len(self.co['CO']) > 0
             self.comatchflag = ~self.testtable['VFID'].mask
             print('CO sources with no match in mastertable:')
-            print(self.testtable['NEDname'][~self.comatchflag])
+            print(self.testtable['NEDname','NED_name'][~self.comatchflag])
+        plt.figure()
+        plt.plot(self.testtable['RA_1'][~self.comatchflag],self.testtable['DEC_1'][~self.comatchflag],'bo')
         print('number of galaxies with CO matches = ',sum(self.coflag))
         self.cotable.add_column(Column(self.coflag),name='COFlag')
         self.cotable.write(outdir+'vf_co.fits',format='fits',overwrite=True)
+
+        # print CO sources that are not in the table
         
     def get_2massflag(self,twomassfile=None):
         if twomassfile is None:

@@ -29,8 +29,16 @@ homedir = os.getenv('HOME')
 sys.path.append(homedir+'/github/APPSS/')
 from join_catalogs import make_new_cats, join_cats
 
+## CATALOG VERSION NUMBER
+## V1 = USE NEWER VERSION OF NSA (this is what we used for all of visual classifications)
+## V2 = USE ORIGINAL VERSION OF NSA
+VERSION = 2
+
 ### INPUT FILES
-kitchen_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink.fits'
+if VERSION == 1:
+    kitchen_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink.fits'
+elif VERSION == 2:
+    kitchen_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink_v2.fits'    
 byeye_classifications = '/home/rfinn/research/Virgo/supersample/virgo_check_sample_by_eye.csv'
 
 ## BOUNDARIES OF SURVEY REGION
@@ -43,6 +51,7 @@ vmin = 500.
 
 image_size = 60 # image size to download from legacy survey, in pixels
 default_image_size = image_size
+
 
 class cutouts:
     def densearray(self,ra=None,dec=None,names=None,ra2=None,dec2=None,outfile_string='test',agcflag=False,onlyflag=True,startindex=None,endindex=None):
@@ -218,10 +227,25 @@ class catalog(cutouts):
         #self.remove_agc_only()
         self.get_radec_first()
         self.cut_catalog()
+        # match_a100 writes RA, DEC, and VEL to table
         self.match_a100()
         self.check_new_a100()
         #self.get_NEDname()
-        self.get_NEDname_query()
+
+        # skip for now until other parts are working
+        # if file with NED names already exists from a previous query,
+        # read the file
+        if os.path.exists('ned_names.fits'):
+            print('found file ned_names.fits.\nUsing this instead of querying NED')
+            nednames = fits.getdata('ned_names.fits')
+            c = Column(nednames['NEDname'],name='NEDname')
+            
+            self.clean_a100.add_column(c)
+            self.write_clean()
+        else:
+            #sys.exit() # for testing purposes
+            self.get_NEDname_query()
+
         # this galaxy is not in the A100,
         # so ok to add this after matching with A100
         self.fix_8822()
@@ -244,11 +268,15 @@ class catalog(cutouts):
         HLflag = ~(self.byeye['HL'].mask)
         NSAflag = (self.byeye['NSAID'] != 0)
         AGCflag = self.byeye['AGC'] != 0
-        
+        NSA0flag = self.kitchen['NSA0flag']
         # figure out which survey data we have for 4, and which is in the parent
         HL4 = HLflag[class4]
         NSA4 = NSAflag[class4]
         AGC4 = AGCflag[class4]
+        # none of the NSA v0 sources need to merge
+        # so I don't need to update this part of the code after
+        # adding NSA v0_1_2 as the 4th catalog
+        NSA04 = NSA0flag[class4]
         
         # merge any missing survey information that is associated with 4
         # with parent entry
@@ -269,6 +297,7 @@ class catalog(cutouts):
                 HLp = (~self.byeye['HL'].mask[parentflag])[0]
                 NSAp = (self.byeye['NSAID'][parentflag] != 0)[0]
                 AGCp = (self.byeye['AGC'][parentflag] != 0)[0]
+                NSA0p = (self.kitchen['NSA0flag'][parentflag] != 0)[0]                
                 #print(HLp,HL4[i],parentid,sum(parentflag))
                 if not(HLp) and HL4[i]:
                     self.merge_sources(parentid,galid[i],HL=True,cat=self.kitchen)
@@ -279,8 +308,11 @@ class catalog(cutouts):
                 if not(AGCp) and AGC4[i]:
                     self.merge_sources(parentid,galid[i],AGC=True,cat=self.kitchen)
                     self.kitchen['AGCflag'][parentid] = True
+                if not(NSA0p) and NSA04[i]:
+                    self.merge_sources(parentid,galid[i],NSA0=True,cat=self.kitchen)
+                    self.kitchen['NSAflag'][parentid] = True                    
 
-    def merge_sources(self,parentid,galid,cat=None,HL=False,NSA=False,AGC=False,A100=False):
+    def merge_sources(self,parentid,galid,cat=None,HL=False,NSA=False,AGC=False,A100=False,NSA0=False):
         if cat is None:
             cat = self.kitchen
         else:
@@ -288,23 +320,46 @@ class catalog(cutouts):
             
         colnames = cat.colnames
         if HL:
-            survey_columns = np.arange(0,45)
+            survey_columns = np.arange(0,44)
         if AGC:
             survey_columns = np.arange(44,83)
         if NSA:
             survey_columns = np.arange(90,200)
         if A100:
-            survey_columns = np.arange(205,389)
+            #survey_columns = np.arange(205,389)
+            survey_columns = np.arange(352,536)            
+        if NSA0:
+            survey_columns = np.arange(204,347)
         for i in survey_columns:
             cat[colnames[i]][parentid] = cat[colnames[i]][galid]
 
     def get_radec_first(self):
         # ra is RA HL for those with HL data, then RA NSA 
         # same for DEC and recession velocity
+
+        self.ra = np.zeros(len(self.kitchen),'f')
+        self.dec = np.zeros(len(self.kitchen),'f')
+        self.vel = np.zeros(len(self.kitchen),'f')
+        flag1 = self.kitchen['HLflag']
+        flag2 = ~flag1 & self.kitchen['NSAflag']
         
-        self.ra = self.kitchen['al2000']*15*self.kitchen['HLflag'] + self.kitchen['RA_2']*~self.kitchen['HLflag']
-        self.dec = self.kitchen['de2000']*self.kitchen['HLflag'] + self.kitchen['DEC_2']*~self.kitchen['HLflag']
-        self.vel = self.kitchen['v']*self.kitchen['HLflag'] + self.kitchen['Z']*3.e5*~self.kitchen['HLflag']        
+        flag3 = ~flag1 & ~self.kitchen['NSAflag'] & self.kitchen['NSA0flag']
+        # what about a100 sources???
+        flags = [flag1, flag2, flag3]
+        # for hyperleda sources
+        self.ra[flag1] = self.kitchen['al2000'][flag1]*15
+        self.dec[flag1] = self.kitchen['de2000'][flag1]
+        self.vel[flag1] = self.kitchen['v'][flag1]
+
+        # for NSA v2 sources
+        self.ra[flag2] = self.kitchen['RA_2'][flag2]
+        self.dec[flag2] = self.kitchen['DEC_2'][flag2]
+        self.vel[flag2] = self.kitchen['Z'][flag2]*3.e5
+
+        self.ra[flag3] = self.kitchen['RA_NSA0'][flag3]
+        self.dec[flag3] = self.kitchen['DEC_NSA0'][flag3]
+        self.vel[flag3] = self.kitchen['Z_2'][flag3]*3.e5
+        
         # for galaxies with class=16, use the RA and DEC in by-eye file
         class16 = self.byeye['class'] == 16
         self.ra[class16] = self.byeye['RA'][class16]
@@ -319,7 +374,7 @@ class catalog(cutouts):
         # removing sources with AGC only
         # will match to A100 instead
 
-        self.agconly = ~self.kitchen['HLflag'] & ~self.kitchen['NSAflag'] & self.kitchen['AGCflag']
+        self.agconly = ~self.kitchen['HLflag'] & ~self.kitchen['NSAflag'] & self.kitchen['AGCflag'] & ~self.kitchen['NSA0flag']
 
         self.cutflag = self.cutflag | self.agconly
 
@@ -428,16 +483,19 @@ class catalog(cutouts):
         # delete rows corresponding to children
         keepflag[child] = np.zeros(len(child),'bool')
         self.clean_a100 = self.clean_a100[keepflag]
-    def get_NEDname_query(self):
+    def get_NEDname_query(self,startindex=0):
         ## GOT BLOCKED BY NED FOR TOO MANY QUERIES
         ## TRYING ANOTHER APPROACH - TO MATCH TO CATALOG I DOWNLOADED FROM DEC
         
         # look up NED name for each galaxy
         # https://astroquery.readthedocs.io/en/latest/ned/ned.html
 
+
         # if in HL, look up HL name
         NEDid = []
-        for i in range(len(self.clean_a100['objname'])):
+        NEDra = []
+        NEDdec = []        
+        for i in range(startindex,len(self.clean_a100['objname'])):
             # check if HL id exists, look up NED name
             # if yes, break
             # if no NED comes back
@@ -481,6 +539,8 @@ class catalog(cutouts):
                         #print('AGC'+str(self.clean_a100['AGC'][i]))
                         t = Ned.query_object('AGC'+str(self.clean_a100['AGC'][i]))
                         NEDid.append(t['Object Name'][0])
+                        NEDra.append(t['RA'][0])
+                        NEDdec.append(t['DEC'][0])                        
                         foundit=True
                         continue
                     except IndexError:
@@ -488,16 +548,55 @@ class catalog(cutouts):
                     except:
                         print(i,'2 NED did not like ','AGC'+str(self.clean_a100['AGC'][i]))
                         pass
+            if self.clean_a100['NSA0flag'][i]:
+                if not(foundit):
+                    time.sleep(1)
+                    try:
+                        t = Ned.query_object('NSA '+str(self.clean_a100['NSAID_2'][i]))
+                        NEDid.append(t['Object Name'][0])
+                        NEDra.append(t['RA'][0])
+                        NEDdec.append(t['DEC'][0])                        
+                        foundit=True
+                        continue
+                    except IndexError:
+                        pass
+                    except:
+                        print(i,'2 NED did not like ','NSA '+str(self.clean_a100['NSAID'][i]))
+                        pass
+            if not(foundit):
+                # search by coordinates
+                time.sleep(1)
+                coord = SkyCoord(self.clean_a100['RA'][i],self.clean_a100['DEC'][i],unit=(u.deg,u.deg), frame='icrs')
+                print(i,self.clean_a100['RA'][i],self.clean_a100['DEC'][i])
+
+                try:
+                    t = Ned.query_region(coord,radius=10./3600*u.deg, equinox='J2000')
+                    print(t)
+                    #t = Ned.query_object('NSA '+str(self.clean_a100['NSAID_2'][i]))
+                    NEDid.append(t['Object Name'][0])
+                    NEDra.append(t['RA'][0])
+                    NEDdec.append(t['DEC'][0])                        
+                    foundit=True
+                    continue
+                except IndexError:
+                    pass
+                except:
+                    print(i,'NED did not like search by coordinate for this object')
+
             if not(foundit):
                 print("oh no - could not find NED name! so sorry...",i)
                 NEDid.append('')
-        c = Column(NEDid,name='NEDname')
+                NEDra.append(-999)
+                NEDdec.append(-999)                        
+        c1 = Column(NEDid,name='NEDname')
+        c2 = Column(np.array(NEDra,'f'),name='NEDra')
+        c3 = Column(np.array(NEDdec,'f'),name='NEDdec')        
         try:
-            nedtable = Table([c]).write('ned_names.fits',format='fits',overwrite=True)
+            nedtable = Table([c1,c2,c3]).write('ned_names.fits',format='fits',overwrite=True)
         except:
             print("couldn't write ned names")
             
-        self.clean_a100.add_column(c)
+        self.clean_a100.add_columns([c1,c2,c3])
         self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
     def get_NEDname(self):
         # matching to catalog I downloaded on March 25, 2020
@@ -626,6 +725,11 @@ class catalog(cutouts):
         c2 = Column(self.NEDmultiples,name='NEDmultiples')# check these by hand?
         self.clean_a100.add_columns([c1,c2,c3])
         self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+    def get_GL_NEDname(self):
+        # for galaxies with no NED match, use GL's catalog to match
+        # HL name to NEDname (he did a position match for those that didn't return a NED name
+        # when searching by name
+        ref = fits.getdata(homedir+'/github/Virgo/tables/nsa_HyperLeda_NED_Steer2017dist_Virgo_field_sources_extension_H0_74_0_final_Kim2016corr_inclCOsample.fits')
     def read_ned(self):
         nedfile = homedir+'/research/Virgo/supersample/ned-noprolog-25mar2020.txt'
         self.ned = ascii.read(nedfile,delimiter='|')
