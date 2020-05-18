@@ -244,6 +244,10 @@ class catalog(cutouts):
     def runall(self):
         self.merge_class4()
         #self.remove_agc_only()
+
+        self.fix_bad_HL_name()
+
+        
         self.get_super_radec_vr_name()
 
         ## add a column that has the galid that corresponds to bye-eye cutouts
@@ -272,7 +276,8 @@ class catalog(cutouts):
 
         ## match to CO mastertable
         ## this is the 229 galaxies in the file from Francoise and Pascale
-        self.get_CO_sources()
+        ## moved this to write_subtables.py
+        #self.get_CO_sources()
         
         ## sort catalog by declination
         self.sort_by_dec()
@@ -282,6 +287,14 @@ class catalog(cutouts):
 
         ## write the cleaned table
         self.write_clean()
+    def fix_bad_HL_name(self):
+        # replace HL name for UGC 09348
+        # this has a HL name = NGC 5658, but NED says these are not the same galaxy
+        #
+        # replace NGC5658 with UGC09348
+        flag = self.kitchen['objname'] == 'NGC5658'
+        self.kitchen['objname'][flag] = 'UGC09348'
+        
     def fix_8822(self,cat=None):
         # add blue object, this is one with CO detection
         # the following information is from NED
@@ -300,7 +313,7 @@ class catalog(cutouts):
         for i in range(len(colid)):
             cat[colid[i]][new_index] = colvalues[i]
         self.write_clean()
-
+        
     def sort_by_dec(self):
         # sort catalog by declination
         sort_index = np.argsort(self.clean_a100['DEC'])[::-1]
@@ -606,69 +619,6 @@ class catalog(cutouts):
     def write_clean_cat(self):
         self.cleancat.write('clean_sample.fits',format='fits',overwrite=True)
         self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
-    def get_CO_sources(self,match_by_coords=False,match_by_name=True):
-        # read in CO mastertable
-        # match to main table
-        cofile = homedir+'/github/Virgo/tables/CO-MasterFile-2018Feb16.fits'
-        # this file has a new column with the exact NED names
-        # can use this to match to mastertable NEDname column
-        cofile = homedir+'/research/Virgo/tables/CO-MasterFile-2018Feb16-fixedNEDnames.fits'        
-        self.co = Table(fits.getdata(cofile))
-
-        cocoord = SkyCoord(self.co['RA'],self.co['DEC'],unit='deg',frame='icrs')
-        if match_by_coords:
-            # match co coords to mastertable 
-            idx, d2d, d3d = self.catcoord.match_to_catalog_sky(cocoord)
-            self.d2d = d2d
-            self.idx = idx
-            self.coflag = d2d < 15./3600*u.deg
-            # create a new, blank table with same # of lines as mastertable
-            # but with columns like the co table
-            newco = Table(np.zeros(len(self.basictable),dtype=self.co.dtype))
-            # add co information into the new table for the galaxies with
-            # a match to the CO sample
-            # NOTE: this could match multiple galaxies to the same CO source
-            newco[self.coflag] = self.co[idx[self.coflag]]
-
-            # join basic table and co table
-
-            self.cotable = hstack([self.basictable,newco])
-
-        if match_by_name:
-            #self.co.rename_column('NED_name','NEDname')
-            #np.searchsorted(names1,names2)
-            
-            # match the basictable and the CO table by matching
-            # entries by the NEDname colums
-            self.cotable = join(self.basictable,self.co,keys='NEDname',join_type='left')
-
-            self.coflag = ~self.cotable['CO'].mask
-
-            # also check to see which CO sources were not matched
-            self.testtable = join(self.co,self.basictable,keys='NEDname',join_type='left')
-            #self.coflag = len(self.co['CO']) > 0
-            self.comatchflag = ~self.testtable['VFID'].mask
-            print('CO sources with no match in mastertable:')
-            print(self.testtable['NEDname','NED_name'][~self.comatchflag])
-        ## plot the positions of CO galaxies that weren't matched to mastertable
-        plt.figure()
-        plt.plot(self.testtable['RA_1'][~self.comatchflag],self.testtable['DEC_1'][~self.comatchflag],'bo')
-
-        ## print the CO galaxies with no matches in the mastertable 
-        print('number of galaxies with CO matches = ',sum(self.coflag))
-
-        ## look for CO galaxies that were matched to multiple galaxies in the
-        ## mastertable
-        unique, counts = duplicates(self.cotable,'NED_name')
-        print("CO sources that are matched to multiple galaxies in the mastertable:")
-        print(unique[counts>1])
-        
-        
-        self.cotable.add_column(Column(self.coflag),name='COFlag')
-        self.cotable.write(outdir+'vf_co.fits',format='fits',overwrite=True)
-
-        # print CO sources that are not in the table
-
 
     def catalog_for_z0MGS(self):
         '''

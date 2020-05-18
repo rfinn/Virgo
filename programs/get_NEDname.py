@@ -16,7 +16,7 @@ PROCEDURE:
 
 import os
 import numpy as np
-
+import time
 
 from astropy.io import fits, ascii
 from astropy.table import Table, join, hstack, Column, MaskedColumn 
@@ -44,35 +44,88 @@ class getNED:
     def get_NEDname_from_file(self):
         
         nednames = fits.getdata('/home/rfinn/research/Virgo/supersample/ned_names.fits')
+        self.nednames = nednames
         # do a left join of the input catalog and nednames
         # using column nednames.NEDinput and clean_a100.superName
 
-        self.clean_a100.rename_column('superName','NEDinput')
+        #self.clean_a100.rename_column('superName','NEDinput')
+        self.clean_a100.add_column(self.clean_a100['superName'],name='NEDinput')
+        self.clean_a100.add_column(Column(np.arange(len(self.clean_a100))),name='originalOrder')
+        
 
-        self.newtab = join(self.clean_a100,nednames,keys='NEDinput',join_type='left')
+        temp = join(self.clean_a100,nednames,keys='NEDinput',join_type='left')
 
+        # join returns a table that is sorted by the key columns
+        # the following command gets table back into its original order
+        self.newtab = temp[np.argsort(temp['originalOrder'])]                           
 
         # for those without a match by NEDname, look through the
         # entries with NEDinput = 'byposition'
 
-        no_match_by_name = self.newtab['NEDinput'].mask
-        pos_match_indices = np.arange(len(self.newtab))[no_match_by_name]
+        no_match_by_name = self.newtab['NEDname'].mask
+        pos_match_indices = np.arange(len(self.clean_a100))[no_match_by_name]
 
+        # shorten NED catalog to those that were matched by location
+        # this should make search by location faster
         self.nednames_bypos = nednames[nednames['NEDinput'] == 'bylocation']
-
+        #nedcoord = SkyCoord(self.nednames_bypos['NEDra'],self.nednames_bypos['NEDdec'],unit='deg',frame='icrs')            
+        #self.catcoord = SkyCoord(self.clean_a100['RA'],self.clean_a100['DEC'],unit='deg',frame='icrs')            
         for i in pos_match_indices:
-            d = np.sqrt((self.clean_a100['RA']-self.nednames_bypos['NEDra'])**2 + \
-                        (self.clean_a100['DEC']-self.nednames_bypos['NEDdec'])**2)
+            d = np.sqrt((self.newtab['RA'][i]-self.nednames_bypos['NEDra'])**2 + \
+                        (self.newtab['DEC'][i]-self.nednames_bypos['NEDdec'])**2)
             if (min(d) < 10./3600):
-                print('found a match!')
-                j = np.where(d == min(d))[0][0]
-                self.clean_a100['NEDinput'][i]='bylocation'
-                self.clean_a100['NEDname'][i] = self.nednames_bypos['NEDname'][j]
-                self.clean_a100['NEDra'][i] = self.nednames_bypos['NEDra'][j]
-                self.clean_a100['NEDdec'][i] = self.nednames_bypos['NEDdec'][j]
+                j = np.where(d == min(d))[0][0]                
+                #print(i,j,'found a match!')
+
+                self.newtab['NEDinput'][i]='bylocation'
+                self.newtab['NEDname'][i] = self.nednames_bypos['NEDname'][j]
+                self.newtab['NEDra'][i] = self.nednames_bypos['NEDra'][j]
+                self.newtab['NEDdec'][i] = self.nednames_bypos['NEDdec'][j]
         self.newtab.write('test.fits',format='fits',overwrite=True)
+        
         # for those with no match, query NED
         
+    def query_unmatched(self,startindex=0):
+        ## running query for those that haven't yet been matched to an entry in the catalog
+        ##
+
+        no_match_by_name = self.clean_a100['NEDname'].mask
+        pos_match_indices = np.arange(len(self.clean_a100))[no_match_by_name]
+        
+        
+        for i in pos_match_indices:
+            foundit=False
+            
+            time.sleep(.5)
+            coord = SkyCoord(self.clean_a100['RA'][i],self.clean_a100['DEC'][i],unit=(u.deg,u.deg), frame='icrs')
+            print(i,self.clean_a100['RA'][i],self.clean_a100['DEC'][i])
+            
+            try:
+                t = Ned.query_region(coord,radius=10./3600*u.deg, equinox='J2000')
+                print(t)
+                #t = Ned.query_object('NSA '+str(self.clean_a100['NSAID_2'][i]))
+                self.clean_a100['NEDname'][i] = t['Object Name'][0]
+                self.clean_a100['NEDra'][i] = t['RA'][0]
+                self.clean_a100['NEDdec'][i] = t['DEC'][0]
+                self.clean_a100['NEDinput'][i] = 'bylocation'
+                foundit=True
+                continue
+            except IndexError:
+                print('IndexError')
+                pass
+            except:
+                print(i,'NED did not like search by coordinate for this object')
+
+            if not(foundit):
+                print("oh no - could not find NED name! so sorry...",i)
+                self.clean_a100['NEDname'][i] = ''
+                self.clean_a100['NEDra'][i] = -999
+                self.clean_a100['NEDdec'][i] = -999
+                
+
+    def write_NEDnames(self):
+        nedtable = Table([self.clean_a100['NEDinput'],self.clean_a100['NEDra'],self.clean_a100['NEDdec'],self.clean_a100['NEDname']])
+        nedtable.write('ned_names_v2.fits',format='fits',overwrite=True)            
 
             
     def get_NEDname_query(self,startindex=0):
@@ -88,6 +141,7 @@ class getNED:
         NEDra = []
         NEDdec = []
         NEDinput = []
+        
         for i in range(startindex,len(self.clean_a100['objname'])):
         #for i in range(20):            
             # check if HL id exists, look up NED name
@@ -361,4 +415,8 @@ class getNED:
 if __name__ == '__main__':
     os.chdir('/home/rfinn/research/Virgo/supersample/')
     n = getNED('vf_clean_sample.fits')
-    n.get_NEDname()
+    #n.get_NEDname()
+    #n.query_unmatched()
+    #n.write_NEDnames()
+    #n.write_clean()
+    
