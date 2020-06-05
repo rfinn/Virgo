@@ -27,6 +27,8 @@ from astroquery.ned import Ned
 
 from matplotlib import pyplot as plt
 
+from virgoCommon import *
+
 class getNED:
     def __init__(self,clean_catalog):
         self.clean_a100 = Table(fits.getdata(clean_catalog))
@@ -43,25 +45,61 @@ class getNED:
             self.get_NEDname_query()
     def get_NEDname_from_file(self):
         
-        nednames = fits.getdata('/home/rfinn/research/Virgo/supersample/ned_names.fits')
+        nednames = fits.getdata('/home/rfinn/research/Virgo/supersample/ned_names_v2.fits')
         self.nednames = nednames
         # do a left join of the input catalog and nednames
         # using column nednames.NEDinput and clean_a100.superName
 
         #self.clean_a100.rename_column('superName','NEDinput')
         self.clean_a100.add_column(self.clean_a100['superName'],name='NEDinput')
-        self.clean_a100.add_column(Column(np.arange(len(self.clean_a100))),name='originalOrder')
-        
-
-        temp = join(self.clean_a100,nednames,keys='NEDinput',join_type='left')
 
         # join returns a table that is sorted by the key columns
         # the following command gets table back into its original order
-        self.newtab = temp[np.argsort(temp['originalOrder'])]                           
+        self.newtab = myjoinleft(self.clean_a100,nednames,keys='NEDinput')
 
+        # fix case for UGC09348, until we run the full query again...
+        # this is where HL has the wrong coordinates/association
+        flag = self.newtab['NEDinput'] == 'UGC09348'
+        if (sum(flag) > 0) & self.newtab['NEDra'].mask[flag]: # hasn't been matched
+            # assign ned RA and DEc from NGC 5658
+            flag2 = nednames['NEDname']=='NGC 5658'
+            self.newtab['NEDra'][flag] = nednames['NEDra'][flag2]
+            self.newtab['NEDdec'][flag] = nednames['NEDdec'][flag2]
+            self.newtab['NEDname'][flag] = 'UGC 09348'
+        # fix case for PGC2586382 , until we run the full query again...
+        # NED doesn't recognize 'PGC2586382', but it does know LEDA 2586382
+        # it will also find the NSA ID, so I need to not just use the superName
+        # I need to keep stepping through other name options if it doesn't return
+        # a match to HL or AGC or NSA name
+        flag = self.newtab['NEDinput']==  'PGC2586382'
+        if (sum(flag) > 0) & self.newtab['NEDra'].mask[flag]: # hasn't been matched
+            self.newtab['NEDra'][flag] = 226.398865 
+            self.newtab['NEDdec'][flag] = 59.093766
+            self.newtab['NEDname'][flag] = 'WISEA J150535.77+590537.2'
+
+        # fix case for NGC 2793, until we run the full query again...
+        # The NSA ID from version 1 doesn't get a NED match, but the
+        # NSA ID from version 0 does...
+        flag = self.newtab['NSAID_2']==135797
+        if (sum(flag) > 0) & self.newtab['NEDra'].mask[flag]: # hasn't been matched
+            self.newtab['NEDra'][flag] = 139.197125
+            self.newtab['NEDdec'][flag] = 34.429806
+            self.newtab['NEDname'][flag] = 'NGC 2793'
+            
+
+        # fix case for UGC 08, until we run the full query again...
+        # The NSA ID from version 1 doesn't get a NED match, but the
+        # NSA ID from version 0 does...
+        flag = self.newtab['superName']=='UGC08656 NOTES01'
+        if (sum(flag) > 0) & self.newtab['NEDra'].mask[flag]: # hasn't been matched
+            self.newtab['NEDra'][flag] = 205.129878
+            self.newtab['NEDdec'][flag] = 42.993819
+            self.newtab['NEDname'][flag] = 'UGC 08656 NOTES01'
+            
+            
         # for those without a match by NEDname, look through the
         # entries with NEDinput = 'byposition'
-
+        
         no_match_by_name = self.newtab['NEDname'].mask
         pos_match_indices = np.arange(len(self.clean_a100))[no_match_by_name]
 
@@ -409,14 +447,14 @@ class getNED:
         
 
     def write_clean(self):
-        self.clean_a100.write('vf_clean_sample_wNEDname.fits',format='fits',overwrite=True)
+        self.newtab.write('vf_clean_sample_wNEDname.fits',format='fits',overwrite=True)
 
 
 if __name__ == '__main__':
     os.chdir('/home/rfinn/research/Virgo/supersample/')
     n = getNED('vf_clean_sample.fits')
-    #n.get_NEDname()
+    n.get_NEDname()
     #n.query_unmatched()
     #n.write_NEDnames()
-    #n.write_clean()
+    n.write_clean()
     

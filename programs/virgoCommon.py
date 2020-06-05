@@ -1,5 +1,6 @@
 import os
-
+from astropy.table import Table,join,Column
+import numpy as np
 
 #Get current path so program can tell if this is being run on Kelly's or Rose's computer
 mypath=os.getcwd()
@@ -47,4 +48,17 @@ co_targets = gitpath+'Virgo/tables/nsa_CO-Gianluca.virgo.fits'
 wise_file = gitpath+'Virgo/tables/nsa_wise.virgo.fits'
 halpha_file = gitpath+'Virgo/tables/nsa_Halpha.virgo.fits'
 full_nsa = nsapath + 'nsa_v0_1_2.fits'
+
+
+def myjoinleft(table1,table2,keys=None):
+    table1 = Table(table1)
+    table2 = Table(table2)
+    table1.add_column(Column(np.arange(len(table1))),name='originalOrder')
+    temp = join(table1,table2,keys=keys,join_type='left')
+    table1.remove_column('originalOrder')
+    temp = temp[np.argsort(temp['originalOrder'])]                           
+    temp.remove_column('originalOrder')    
+    # join returns a table that is sorted by the key columns
+    # the following command gets table back into its original order
+    return temp
 

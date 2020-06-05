@@ -21,6 +21,7 @@ GOAL:
 import os
 import numpy as np
 import time
+import argparse
 
 from astropy.io import fits
 from astropy.table import Table, join, hstack, Column, MaskedColumn
@@ -33,17 +34,29 @@ homedir = os.getenv("HOME")
 #sys.path.append(homedir+'/github/appss/')
 #from join_catalogs import make_new_cats, join_cats
 
+from virgoCommon import *
 
-masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample.fits'
-outdir = homedir+'/research/Virgo/tables/'
+parser = argparse.ArgumentParser(description ='write out subtables for virgo filaments catalog')
 
+#parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
+parser.add_argument('--north',dest = 'north', action='store_true',help='keep DEC > -1 galaxies')
+     
+args = parser.parse_args()
+
+
+masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname.fits'
+outdir = homedir+'/research/Virgo/tables/v0/'
+file_root = 'vf_v0'
 
 
 # keep DEC > -1 galaxies only
-NORTH_ONLY = False
+if (args.north):
+    NORTH_ONLY = True
+else:
+    NORTH_ONLY = False
 if NORTH_ONLY:
-    outdir = homedir+'/research/Virgo/tables-north/'
-
+    outdir = homedir+'/research/Virgo/tables-north/v0/'
+    file_root = 'vf_north_v0_'
 
 def duplicates(table,column,flag=None):
     if flag is None:
@@ -61,9 +74,13 @@ class catalog:
         if NORTH_ONLY:
             self.cat, self.keepnorth_flag = self.keep_north()
         self.basictable = self.cat['VFID','RA','DEC','NEDname']
-        self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','AGC','NEDname','HLflag','NSAflag','A100flag']
+        self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
+        self.maintable.rename_column('NSAID_2','NSAIDV0')
+        self.maintable.rename_column('NSA0flag','NSAV0flag')        
         self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],frame='icrs',unit='deg')
-        
+    def get_unwise(self):
+        self.unwise = Table.read(outdir+'vf_north_v0_main_unwise.fits')
+        self.unwiseFlag = (self.unwise['x'] > 0)
     def keep_north(self, cat=None):
         # cut the catalog to keep Dec > -1 only
         if cat is None:
@@ -72,7 +89,44 @@ class catalog:
             cat = cat
         keepnorth = cat['DEC'] > -1.3
         return cat[keepnorth], keepnorth
-    
+    def runall(self):
+        self.get_unwise()
+        self.get_z0MGS_flag()
+        self.get_CO()
+        self.get_halpha()        
+        self.get_steer17()
+        self.main_table()
+        self.print_stats()
+        self.hyperleda_table()
+        self.nsa_table()
+        self.nsa_v0_table()        
+        self.a100_table()
+        self.a100_sdss_table()
+        self.a100_unwise_table()
+        pass
+    def print_stats(self):
+        print('Number in sample = ',len(self.cat))
+        print('Number with CO data = ',sum(self.coflag))
+        print('Number with A100 data = %i (%.3f)'%(sum(self.cat['A100flag']),sum(self.cat['A100flag'])/len(self.cat['A100flag'])))
+        print('Number with z0MGS matches = %i (%.3f)'%(sum(self.z0mgsFlag),sum(self.z0mgsFlag)/len(self.z0mgsFlag)))
+        print('Number with steer17 matches = %i (%.3f)'%(sum(self.steerFlag),sum(self.steerFlag)/len(self.steerFlag)))
+        f = self.unwiseFlag
+        print('Number with unwise matches = %i (%.3f)'%(sum(f),sum(f)/len(f)))        
+        f = self.unwiseFlag & (self.cat['NSAflag'] | self.cat['NSA0flag'])
+        print("Number with unWISE and NSA = %i (%.3f)"%(sum(f),sum(f)/len(f)))
+
+        print("CO SOURCES")
+        nco = sum(self.coflag)
+        f = self.coflag & self.z0mgsFlag
+        print("\tNumber of CO sources in z0MGS = %i (%.2f)"%(sum(f),sum(f)/nco))
+        f = self.coflag & self.steerFlag
+        print("\tNumber of CO sources in Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
+        f = self.coflag & self.z0mgsFlag & self.steerFlag
+        print("\tNumber of CO sources in z0MGS+Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
+        f = self.coflag & self.unwiseFlag & (self.cat['NSAflag'] | self.cat['NSA0flag'])
+        print("\tNumber of CO sources with unWISE and NSA = %i (%.2f)"%(sum(f),sum(f)/nco))
+
+
     def catalog_for_z0MGS(self):
         '''
         need RA, DEC, and search radius
@@ -87,15 +141,25 @@ class catalog:
         # write out
         # ra, dec, velocity, HL, NSA id, A100 id
         # NED name
-        colnames = ['VFID','RA','DEC','vr','objname','NSAID','AGC','NEDname','HLflag','NSAflag','A100flag']
-        self.maintable = self.cat[colnames]
         # make flags to denote if galaxy is in:
         # - CO sample
-        self.get_CO()
+        colnames = ['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
+        #self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
+        
+        self.maintable = self.cat[colnames]
+        self.maintable.rename_column('NSAID_2','NSAIDV0')
+        self.maintable.rename_column('NSA0flag','NSAV0flag')        
+
+
+        c1 = Column(self.coflag,name='COflag')
+        c2 = Column(self.z0mgsFlag,name='Z0MGSflag')
+        c3 = Column(self.steerFlag,name='Steerflag')
+        c4 = Column(self.unwiseFlag,name='unwiseflag')        
+        self.maintable.add_columns([c1,c2,c3,c4])
         # - 2MASS
         # - z0MGS
         # - unWISE
-        self.write_table(colnames,'vf_main.fits',format='fits')
+        self.maintable.write(outdir+file_root+'main.fits',format='fits',overwrite=True)
 
     def get_CO(self,match_by_coords=False,match_by_name=True):
         # read in CO mastertable
@@ -106,7 +170,15 @@ class catalog:
         cofile = homedir+'/research/Virgo/tables/CO-MasterFile-2018Feb16-fixedNEDnames.fits'        
         self.co = Table(fits.getdata(cofile))
 
-
+        # replace NED_name of SHOC206b with NED name for SHOC 206a
+        # this is really the same galaxy, just has less common id in CO file
+        # set to MCG +08-16-005;
+        
+        # fix case for UGC09348, until we run the full query again...
+        flag = self.co['NED_name'] == 'SHOC206b'
+        if sum(flag > 0):
+            self.co['NEDname'][flag] = 'MCG +08-16-005'
+        
         
 
         cocoord = SkyCoord(self.co['RA'],self.co['DEC'],unit='deg',frame='icrs')
@@ -134,20 +206,25 @@ class catalog:
             
             # match the basictable and the CO table by matching
             # entries by the NEDname colums
-            self.cotable = join(self.basictable,self.co,keys='NEDname',join_type='left')
+            self.cotable = myjoinleft(self.basictable,self.co,keys='NEDname')
 
             self.coflag = ~self.cotable['CO'].mask
 
             # also check to see which CO sources were not matched
             self.testtable = join(self.co,self.basictable,keys='NEDname',join_type='left')
             #self.coflag = len(self.co['CO']) > 0
-            self.comatchflag = ~self.testtable['VFID'].mask
-            print('CO sources with no match in mastertable:')
-            print(self.testtable['NEDname','NED_name'][~self.comatchflag])
-        ## plot the positions of CO galaxies that weren't matched to mastertable
-        plt.figure()
-        plt.plot(self.testtable['RA_1'][~self.comatchflag],self.testtable['DEC_1'][~self.comatchflag],'bo')
+            try:
+                self.comatchflag = ~self.testtable['VFID'].mask
+                print('CO sources with no match in mastertable:')
+                print(self.testtable['NEDname','NED_name'][~self.comatchflag])
+                ## plot the positions of CO galaxies that weren't matched to mastertable
+                plt.figure()
+                plt.plot(self.testtable['RA_1'][~self.comatchflag],self.testtable['DEC_1'][~self.comatchflag],'bo')
 
+
+            except AttributeError:
+                print('all CO sources have been matched. CONGRATULATIONS!!!!!!!')
+                self.comatchflag = np.ones(len(self.testtable))
         ## print the CO galaxies with no matches in the mastertable 
         print('number of galaxies with CO matches = ',sum(self.coflag))
 
@@ -158,10 +235,41 @@ class catalog:
         print(unique[counts>1])
         
         
-        self.cotable.add_column(Column(self.coflag),name='COFlag')
-        self.cotable.write(outdir+'vf_co.fits',format='fits',overwrite=True)
+        self.cotable.add_column(Column(self.coflag),name='COflag')
+        self.cotable.write(outdir+file_root+'co.fits',format='fits',overwrite=True)
+            
 
         # print CO sources that are not in the table
+    def get_halpha(self,halphafile=None):
+        # read in Halpha observing summary file
+        if halphafile is None:
+            #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
+            infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'            
+        else:
+            infile = halphafile
+        self.ha = Table.read(infile,format='csv')
+        self.ha.rename_column('NSA ID','NSAIDV0')
+
+        # check for duplicates in the hafile
+        unique, counts = duplicates(self.ha,'NSAIDV0')
+        print("Halpha sources that are listed multiple times in the halpha file:")
+        print(unique[counts>1])
+        
+        
+        # match ha file to the base table using the NSA v0
+        # match the basictable and the CO table by matching
+        # entries by the NEDname colums
+        #print(self.ha.colnames)
+        #print(self.maintable.colnames)
+        # note myjoinleft preserves the original ordering in the tables
+        # rather than having the joined table sorted by according to the match key
+
+        self.hatable = myjoinleft(self.maintable,self.ha,keys='NSAIDV0')
+        print('Halpha table lengths')
+        print(len(self.maintable),len(self.ha),len(self.hatable))        
+        self.haflag = ~self.hatable['Date Obs'].mask
+        self.hatable.add_column(Column(self.haflag),name='haflag')
+        self.hatable.write(outdir+file_root+'ha.fits',format='fits',overwrite=True)
         
     def get_2massflag(self,twomassfile=None):
         if twomassfile is None:
@@ -179,14 +287,19 @@ class catalog:
         # write out north version of file
     def get_z0MGS_flag(self,mgsfile=None):
         # get z0MGS
-
+        #cat = Table.read('/home/rfinn/research/Virgo/tables/vf-z0MGS.tbl',format='ipac')
+        cat = Table.read('/home/rfinn/research/Virgo/tables/vf_z0mgs_30arcsec_051920.tbl',format='ipac')
         # cut on declination
-
+        if NORTH_ONLY:
+            cat = cat[self.keepnorth_flag]
         # create a flag for mastertable
-
+        self.z0mgsFlag = ~cat['pgc_name'].mask
+        self.z0mgs_cat = cat
+        c = Column(self.z0mgsFlag,name='Z0MGSflag')
+        cat.add_column(c)
         # write out north file
-        pass
-    def match_steer17(self):
+        cat.write(outdir+file_root+'z0mgs.fits',format='fits',overwrite=True)
+    def get_steer17(self):
         # match to GL's steer catalog
         steercat = '/home/rfinn/research/Virgo/ancil-tables/Steer2017_cat_Virgo_field_H0_74_0.fits'
         self.steer = Table(fits.getdata(steercat))
@@ -197,18 +310,16 @@ class catalog:
         # for each name in our catalog, look for match in steer catalog
         # probably astropy has a way to do this (topcat certainly does)
 
-        self.basic_with_steer = join(basictable,self.steer,keys='NEDname',join_type='left')
-        self.steerflag = self.basic_with_steer['Dmedian'] > 0.
-        self.basic_with_steer.add_column(Column(self.steerflag),name='steerFlag')
-        if NORTH_ONLY:
-            outfile = outdir+'/vf_steer17_north.fits'
-        else:
-            outfile = outdir+'/vf_steer17.fits'            
+        self.basic_with_steer = myjoinleft(self.basictable,self.steer,keys='NEDname')
+        self.steerFlag = ~self.basic_with_steer['Dmedian'].mask
+        self.basic_with_steer.add_column(Column(self.steerFlag),name='Steerflag')
+        outfile = outdir+file_root+'steer17.fits'            
         self.basic_with_steer.write(outfile, format='fits',overwrite=True)
 
     def hyperleda_table(self):
         colnames = self.cat.colnames[0:43]
-        self.write_table(colnames,'vf_hyperleda.fits',format='fits')
+        
+        self.write_table(colnames,outdir+file_root+'hyperleda.fits',format='fits')
         # write out HL columns in line-matched table
         pass
     def nsa_table(self):
@@ -219,25 +330,38 @@ class catalog:
         newcolnames = colnames.copy()
         newcolnames[2] = 'RA'
         newcolnames[3] = 'DEC'
-        self.write_table(colnames,'vf_nsa.fits',format='fits',names=newcolnames)
+        self.write_table(colnames,outdir+file_root+'nsa.fits',format='fits',names=newcolnames)
+    def nsa_v0_table(self):
+        # write out NSA columns in line-matched table
+        colnames = self.cat.colnames[204:348]
+        # RA and DEC get changed to RA_2, DEC_2 during the matching process
+        # changing them back to native NSA values
+        newcolnames = colnames.copy()
+        for i,n in enumerate(newcolnames):
+            if n.find('_2') > -1:
+                newcolnames[i] = n.strip('_2')
+                
+        newcolnames[2] = 'RA'
+        newcolnames[3] = 'DEC'
+        self.write_table(colnames,outdir+file_root+'nsa_v0.fits',format='fits',names=newcolnames)
     def a100_table(self):
         # write out NSA columns in line-matched table
-        colnames = self.cat.colnames[205:230]
-        self.write_table(colnames,'vf_a100.fits',format='fits')
+        colnames = self.cat.colnames[352:377]
+        self.write_table(colnames,outdir+file_root+'a100.fits',format='fits')
     def a100_sdss_table(self):
         # write out NSA columns in line-matched table
-        colnames = self.cat.colnames[230:324]
-        self.write_table(colnames,'vf_a100_sdssphot.fits',format='fits')
+        colnames = self.cat.colnames[377:472]
+        self.write_table(colnames,outdir+file_root+'a100_sdssphot.fits',format='fits')
     def a100_unwise_table(self):
         # write out NSA columns in line-matched table
-        colnames = self.cat.colnames[324:389]
+        colnames = self.cat.colnames[472:537]
         # RA and DEC get changed to RA_2, DEC_2 during the matching process
         # changing them back to native NSA values
         newcolnames = colnames.copy()
         newcolnames[1] = 'ra'
         newcolnames[2] = 'dec'
         #print(colnames)
-        self.write_table(colnames,'vf_a100_unwise.fits',format='fits',names=newcolnames)
+        self.write_table(colnames,outdir+file_root+'a100_unwise.fits',format='fits',names=newcolnames)
     def write_table(self,colnames,outfile,format=None,names=None):
         if format is None:
             format = 'fits'
@@ -247,10 +371,11 @@ class catalog:
         for c in colnames:
             mycolumns.append(self.cat[c])
         if names is not None:
-            newtable = Table(mycolumns,names=names)
+            subtable = Table(mycolumns,names=names)
         else:
-            newtable = Table(mycolumns)
-        newtable.write(outdir+outfile,format=format,overwrite=True)
+            subtable = Table(mycolumns)
+        newtable = hstack([self.basictable,subtable])
+        newtable.write(outfile,format=format,overwrite=True)
     def write_main_table(self,colnames,outfile,format=None,names=None):
         if format is None:
             format = 'fits'
@@ -265,22 +390,15 @@ class catalog:
         
         # add flag for 2mass
         self.get_2massflag()
-        c = Column(self.twomassflag,name='2MASS')
+        c1 = Column(self.twomassflag,name='2MASS')
         # add flag for z0MGS
 
         # add flag for Steer+17
 
         # add flag for legacy survey
         
-        newtable.write(outdir+outfile,format=format,overwrite=True)
+        newtable.write(outfile,format=format,overwrite=True)
 
 if __name__ == '__main__':
     c = catalog(masterfile)
-    #c.keep_north()
-    #c.catalog_for_z0MGS()
-    #c.main_table()
-    #c.hyperleda_table()
-    #c.nsa_table()
-    #c.a100_table()
-    #c.a100_sdss_table()
-    #c.a100_unwise_table()
+    c.runall()

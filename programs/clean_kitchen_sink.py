@@ -272,8 +272,9 @@ class catalog(cutouts):
         ## this galaxy is not in the A100,
         ## so ok to add this after matching with A100
         ## this is the smaller galaxy that was observed in CO
+        print('length of clean_a100 before adding UGC gal = ',len(self.clean_a100))        
         self.fix_8822()
-
+        print('length of clean_a100 after adding UGC gal = ',len(self.clean_a100))
         ## match to CO mastertable
         ## this is the 229 galaxies in the file from Francoise and Pascale
         ## moved this to write_subtables.py
@@ -303,7 +304,7 @@ class catalog(cutouts):
         else:
             cat = cat
         colid = ['superName', 'RA','DEC','vr']
-        colvalues  = ['UGC8656 NOTES01', 205.129878,42.993819,2899]
+        colvalues  = ['UGC08656 NOTES01', 205.129878,42.993819,2899]
 
         # add an empty row
         cat.add_row()
@@ -312,8 +313,9 @@ class catalog(cutouts):
 
         for i in range(len(colid)):
             cat[colid[i]][new_index] = colvalues[i]
-        self.write_clean()
-        
+
+        self.write_clean(cat=cat)
+        self.clean_a100 = cat
     def sort_by_dec(self):
         # sort catalog by declination
         sort_index = np.argsort(self.clean_a100['DEC'])[::-1]
@@ -403,9 +405,10 @@ class catalog(cutouts):
         self.vel = np.zeros(len(self.kitchen),'f')
         self.objectname = np.zeros(len(self.kitchen),'|S26')        
         flag1 = self.kitchen['HLflag']
-        flag2 = ~flag1 & self.kitchen['NSAflag']
-        
-        flag3 = ~flag1 & ~self.kitchen['NSAflag'] & self.kitchen['NSA0flag']
+        flag2 = ~flag1 & self.kitchen['NSA0flag']
+
+        # use NSA v0 if available
+        flag3 = ~flag1 & self.kitchen['NSAflag'] & ~self.kitchen['NSA0flag']
         # what about a100 sources???
         flags = [flag1, flag2, flag3]
         # for hyperleda sources
@@ -541,8 +544,11 @@ class catalog(cutouts):
         print('number of A100-only after removing duplicates = ',sum(a100flag))
         print('A100-only galaxies are: ',self.clean_a100['AGC'][a100flag])
         self.write_clean()
-    def write_clean(self):
-        self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+    def write_clean(self,cat=None):
+        if cat is None:
+            self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+        else:
+            cat.write('vf_clean_sample.fits',format='fits',overwrite=True)
 
     def check_new_a100(self,plotflag=False):
                            
