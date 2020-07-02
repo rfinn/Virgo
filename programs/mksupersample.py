@@ -841,8 +841,8 @@ class sample:
             ra[~HLflag & NSAflag] = joined_table3['RA_2'][~HLflag & NSAflag]
             dec[~HLflag & NSAflag] = joined_table3['DEC_2'][~HLflag & NSAflag]
             # NSA2 coordinates (v0)
-            ra[~HLflag & ~NSAflag & NSA2flag] = joined_table3['RA'][~HLflag & ~NSAflag & NSA2flag]
-            dec[~HLflag & ~NSAflag & NSA2flag] = joined_table3['DEC'][~HLflag & ~NSAflag & NSA2flag]
+            ra[~HLflag & ~NSAflag & NSA2flag] = joined_table3['RA_NSA0'][~HLflag & ~NSAflag & NSA2flag]
+            dec[~HLflag & ~NSAflag & NSA2flag] = joined_table3['DEC_NSA0'][~HLflag & ~NSAflag & NSA2flag]
             # AGC coordinates
             ra[~HLflag & ~NSAflag & ~NSA2flag & AGCflag] = joined_table3['radeg'][~HLflag & ~NSAflag & ~NSA2flag & AGCflag]
             dec[~HLflag & ~NSAflag & ~NSA2flag & AGCflag] = joined_table3['decdeg'][~HLflag & ~NSAflag & ~NSA2flag &  AGCflag]

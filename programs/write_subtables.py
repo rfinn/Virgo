@@ -36,17 +36,19 @@ homedir = os.getenv("HOME")
 
 from virgoCommon import *
 
+
+
+masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname.fits'
+outdir = homedir+'/research/Virgo/tables/v0/'
+file_root = 'vf_v0'
+
+
 parser = argparse.ArgumentParser(description ='write out subtables for virgo filaments catalog')
 
 #parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
 parser.add_argument('--north',dest = 'north', action='store_true',help='keep DEC > -1 galaxies')
      
 args = parser.parse_args()
-
-
-masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname.fits'
-outdir = homedir+'/research/Virgo/tables/v0/'
-file_root = 'vf_v0'
 
 
 # keep DEC > -1 galaxies only
@@ -95,6 +97,7 @@ class catalog:
         self.get_CO()
         self.get_halpha()        
         self.get_steer17()
+        self.get_radius()
         self.main_table()
         self.print_stats()
         self.hyperleda_table()
@@ -103,6 +106,7 @@ class catalog:
         self.a100_table()
         self.a100_sdss_table()
         self.a100_unwise_table()
+        self.get_size_for_JM()
         pass
     def print_stats(self):
         print('Number in sample = ',len(self.cat))
@@ -137,13 +141,61 @@ class catalog:
         search_radius = 10.*np.ones(len(self.cat)) # units are arcsec
         newtable = Table([self.cat['VFID'],self.cat['RA'],self.cat['DEC'],search_radius],names=['vfid','ra','dec','major'])
         newtable.write(outdir+'coords_for_z0MGS.txt',format='ipac',overwrite=True)
+    def get_radius(self):
+        ## INCLUDE A RADIUS FOR EACH GALAXY
+        ## USE D25 FROM HYPERLEDA IF IT EXISTS
+        ## OTHERWISE USE NSA PETRO 90 IF IT EXISTS
+        ## OTHERWISE USE AGC SDSS PETRO 90
+
+        # galaxy has a valid value for D25 if the error is not equal to zero
+        # and it is not equal to nan
+        d25flag = (self.cat['e_logd25'] != 0) & (self.cat['e_logd25'] == self.cat['e_logd25'])
+        print('number of galaxies with D25 measurement = {:d} ({:.2f}%)'.format(sum(d25flag),sum(d25flag)/len(d25flag)))
+        self.radius = np.zeros(len(self.cat),'f')
+        # convert to arcseconds
+        # logD25 is in units of 0.1 arcmin
+        # so add one, then raise to 10**,
+        # then multiply by 60 to go from arcmin to arcsec
+        # then divide by 2 to get radius
+        self.radius[d25flag] = pow(10,(self.cat['logd25'][d25flag]-1))*60/2
+
+        ## IF GAL DOESN'T HAVE D25
+        ## THEN CHECK NSA V0 - AND USE PETROTH90 IF AVAILABLE
+        ## NSA v1 = PETRO_TH90
+        ## NSA v= = PETROTH90
+        ## scale petro radius by 2 to get something closer to D25
+        flag = ~d25flag & self.cat['NSAflag']
+        self.radius[flag] = self.cat['PETRO_TH90'][flag]*1.3
+        print('number of galaxies using NSA V1 Petro TH90 = {:d} ({:.2f}%)'.format(sum(flag),sum(flag)/len(flag)))
+        flag = ~d25flag & ~self.cat['NSAflag'] & self.cat['NSA0flag']
+        self.radius[flag] = self.cat['PETROTH90'][flag]*1.3
+        print('number of galaxies using NSA V1 Petro TH90 = {:d} ({:.2f}%)'.format(sum(flag),sum(flag)/len(flag)))
+        ## IF NOT IN HL OR NSA OR NSAV0,
+        ## AND IF IN A100, THEN USE PETRO90 SIZE
+        ## petroR90_r
+        ## give an extra boost b/c they seem smaller than 
+        flag = ~d25flag & ~self.cat['NSAflag'] & ~self.cat['NSA0flag'] & self.cat['A100flag'] & (self.cat['parentID'] != 0)& (self.cat['parentID'] != 999999)
+        a100radius_flag = flag
+        self.radius[flag] = self.cat['petroR90_r'][flag]*1.4
+        print('number of galaxies using A100 sdss Petro TH90 = {:d} ({:.2f}%)'.format(sum(flag),sum(flag)/len(flag)))
+        ## IF NONE OF THESE SIZES AVAILABLE, SET RADIUS TO 100 ARCSEC
+        flag = ~d25flag & ~self.cat['NSAflag'] & ~self.cat['NSA0flag'] & ~a100radius_flag
+        self.radius[flag] = 100*np.ones(sum(flag),'f')
+        print('number of galaxies with no size measurement = {:d} ({:.2f}%)'.format(sum(flag),sum(flag)/len(flag)))
+        radius_flag = ~flag
+        c = Column(self.radius,name='radius',unit='arcsec')
+        self.cat.add_column(c)
+        c = Column(radius_flag,name='radius_flag',description='if False, then rad is set to 100 arcsec')
+        self.cat.add_column(c)
+
+        
     def main_table(self):
         # write out
         # ra, dec, velocity, HL, NSA id, A100 id
         # NED name
         # make flags to denote if galaxy is in:
         # - CO sample
-        colnames = ['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
+        colnames = ['VFID','RA','DEC','vr','radius','radius_flag','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
         #self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
         
         self.maintable = self.cat[colnames]
@@ -398,7 +450,18 @@ class catalog:
         # add flag for legacy survey
         
         newtable.write(outfile,format=format,overwrite=True)
+    def get_size_for_JM(self):
+        # need to get John the RA, DEC, and size estimate for each galaxy
+        # so he can run the legacy code.
 
+        # use the hyperleda size if available
+        # but need to convert from kpc to an angular size
+        #
+        # otherwise use the 
+        pass
+    def table_for_halphagui(self):
+        # need RA, DEC, redshift, radius
+        pass
 if __name__ == '__main__':
     c = catalog(masterfile)
     c.runall()

@@ -45,6 +45,7 @@ ic = ImageFileCollection(os.getcwd(),keywords='*',glob_include='r*.fit*')
 # get list of filter, imagetype, and object names
 
 filters = ic.values('wffband')
+#print(filters)
 object_names = ic.values('object')
 
 # create a unique set of object-filter
