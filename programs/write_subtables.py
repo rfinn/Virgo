@@ -24,7 +24,7 @@ import time
 import argparse
 
 from astropy.io import fits
-from astropy.table import Table, join, hstack, Column, MaskedColumn
+from astropy.table import Table, QTable, join, hstack, Column, MaskedColumn
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astroquery.ned import Ned
@@ -78,7 +78,15 @@ class catalog:
         self.basictable = self.cat['VFID','RA','DEC','NEDname']
         self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
         self.maintable.rename_column('NSAID_2','NSAIDV0')
-        self.maintable.rename_column('NSA0flag','NSAV0flag')        
+        self.maintable.rename_column('NSA0flag','NSAV0flag')
+
+
+        nedname=[]
+        for i in range(len(self.maintable)):
+            nedname.append(self.maintable['VFID'][i]+'-'+self.maintable['NEDname'][i].replace(" ","").replace("[","").replace("]","").replace("/",""))
+        
+        c0= Column(nedname,name='prefix')
+        self.maintable.add_column(c0)
         self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],frame='icrs',unit='deg')
     def get_unwise(self):
         self.unwise = Table.read(outdir+'vf_north_v0_main_unwise.fits')
@@ -204,10 +212,12 @@ class catalog:
 
 
         c1 = Column(self.coflag,name='COflag')
+        c1a = Column((self.hatable['HAflag']), name='HAflag')
+        c1b = Column(self.hatable['HAobsflag'],name='HAobsflag')
         c2 = Column(self.z0mgsFlag,name='Z0MGSflag')
         c3 = Column(self.steerFlag,name='Steerflag')
         c4 = Column(self.unwiseFlag,name='unwiseflag')        
-        self.maintable.add_columns([c1,c2,c3,c4])
+        self.maintable.add_columns([c1,c1a,c1b,c2,c3,c4])
         # - 2MASS
         # - z0MGS
         # - unWISE
@@ -292,7 +302,7 @@ class catalog:
             
 
         # print CO sources that are not in the table
-    def get_halpha(self,halphafile=None):
+    def get_halpha_old(self,halphafile=None):
         # read in Halpha observing summary file
         if halphafile is None:
             #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
@@ -322,7 +332,97 @@ class catalog:
         self.haflag = ~self.hatable['Date Obs'].mask
         self.hatable.add_column(Column(self.haflag),name='haflag')
         self.hatable.write(outdir+file_root+'ha.fits',format='fits',overwrite=True)
+
+    def get_halpha(self,halphafile=None):
+        # read in Halpha observing summary file
+        if halphafile is None:
+            #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
+            #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
+            infile = '/home/rfinn/research/Virgo/halpha-tables/halpha-05Jul2020.fits'
+
+        else:
+            infile = halphafile
+        self.ha = Table.read(infile,format='fits')            
+
+
+        unique, counts = duplicates(self.ha,'VFID')
+        print("Halpha sources that are listed multiple times in the halpha file:")
+        print(unique[counts>1])
+
+        ### REMOVE DUPLICATE ROWS FOR NOW
+        ### getting rid of second in each pair for now...
+        VFID = ['VFID2080','VFID2154','VFID2145','VFID2136','VFID2060',\
+                'VFID2157','VFID2076','VFID2089','VFID2095','VFID2095','VFID2141']
+        PID = ['v20p35','v17p12','v17p12','v17p12','v20p35',\
+                'v17p12','v18p54','v20p35','v20p35','v18p54','v17p12']
+        for i in range(len(VFID)):
+            idel = np.where((self.ha['VFID'] == VFID[i]) & (self.ha['POINTING'] == PID[i]))
+            print(idel)
+            self.ha.remove_rows(idel)
+        print('number of lines in ha file after deleting rows = ',len(self.ha))
+
+        ### DELETE SOME UNNECESSARY COLUMNS
+        dcolnames = ['HA_FLAG','GAL_HRA','GAL_HDEC','GAL_2SERSIC','GAL_2SERSIC_ERR',\
+                     'GAL_2SERSIC_ERROR','GAL_2SERSIC_CHISQ',\
+                     'GAL_HXC', 'GAL_HXC_ERR','GAL_HYC', 'GAL_HYC_ERR',\
+                     'GAL_HMAG', 'GAL_HMAG_ERR','GAL_HRE', 'GAL_HRE_ERR',\
+                     'GAL_HN', 'GAL_HN_ERR','GAL_HBA', 'GAL_HBA_ERR',\
+                     'GAL_HPA', 'GAL_HPA_ERR','GAL_HSKY', 'GAL_HCHISQ',\
+                     'GAL_H2SERSIC', 'GAL_H2SERSIC_ERR', \
+                     'GAL_H2SERSIC_ERROR','GAL_H2SERSIC_CHISQ',\
+                     'GAL_HSERSASYM', 'GAL_HSERSASYM_ERR', \
+                     'GAL_HSERSASYM_ERROR','GAL_HSERSASYM_CHISQ',\
+                     'GAL_HSERSASYM_RA','GAL_HSERSASYM_DEC',\
+                     'CONTSUB_FLAG','MERGER_FLAG','SCATLIGHT_FLAG',\
+                     'ASYMR_FLAG','ASYMHA_FLAG','OVERSTAR_FLAG','OVERGAL_FLAG',\
+                     'PARTIAL_FLAG','EDGEON_FLAG','NUC_HA']
+        self.ha.remove_columns(dcolnames)
+        print('number of columns after removing cols = ',len(self.ha[0]))
+        c0 = Column(np.ones(len(self.ha),'bool'),name='HAobsflag',description='observed in halpha')
+        self.ha.add_column(c0)
         
+        # match ha file to the base table using the NSA v0
+        # match the basictable and the CO table by matching
+        # entries by the NEDname colums
+        #print(self.ha.colnames)
+        #print(self.maintable.colnames)
+        # note myjoinleft preserves the original ordering in the tables
+        # rather than having the joined table sorted by according to the match key
+
+        ### MAKE A TABLE - ALL ZEROS, WITH DATA TYPE LIKE HALPHA TABLE
+        ### AND LENGTH OF BASICTABLE
+
+        self.hatable = QTable(np.zeros(len(self.basictable),dtype=self.ha.dtype))
+
+        ### ADD VFID FOR ALL
+        self.hatable['VFID'] = self.basictable['VFID']        
+        ### ADD RA FOR ALL
+        self.hatable['RA'] = self.basictable['RA']
+        ### ADD DEC FOR ALL
+        self.hatable['DEC'] = self.basictable['DEC']        
+
+        ### ADD HALPHA SOURCES TO THEIR CORRESPONDING ROWS
+
+        for i in range(len(self.ha)):
+            #print(i,self.ha['VFID'][i])
+                  
+            flag =(self.hatable['VFID'] == self.ha['VFID'][i])
+            self.hatable[flag] = self.ha[i]
+
+        
+        #self.hatable = join(self.basictable,self.ha,keys='VFID',join_type='left')
+        #print('Halpha table lengths')
+        #rename_cols = ['RA','DEC','vr']
+        #print(len(self.maintable),len(self.ha),len(self.hatable))
+        print('calculating snr')
+        self.haflag = ((self.hatable['HF_R24']/self.hatable['HF_R24_ERR']) > 1.)
+        print('setting HAflag')
+        self.hatable['HAflag'] = self.haflag
+        #self.hatable['HAflag'].description = 'halpha snr > 1'
+        print('writing hafile')
+        #fits.writeto(outdir+file_root+'ha.fits',np.array(self.hatable),overwrite=True)
+        self.hatable.write(outdir+file_root+'ha.fits',format='fits',overwrite=True)
+        print('finished writing hafile')                
     def get_2massflag(self,twomassfile=None):
         if twomassfile is None:
             print('need to provide the twomass file name')
