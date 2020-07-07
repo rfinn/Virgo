@@ -26,6 +26,7 @@ import argparse
 from astropy.io import fits
 from astropy.table import Table, QTable, join, hstack, Column, MaskedColumn
 from astropy.coordinates import SkyCoord
+from astropy import constants
 from astropy import units as u
 from astroquery.ned import Ned
 
@@ -106,6 +107,7 @@ class catalog:
         self.get_halpha()        
         self.get_steer17()
         self.get_radius()
+        self.get_sfr()
         self.main_table()
         self.print_stats()
         self.hyperleda_table()
@@ -195,6 +197,90 @@ class catalog:
         self.cat.add_column(c)
         c = Column(radius_flag,name='radius_flag',description='if False, then rad is set to 100 arcsec')
         self.cat.add_column(c)
+
+    def get_sfr(self):
+        print('CALCULATING SFRS')
+        ### calculate the UV + IR SFR
+
+        # estimate distance from recession velocity
+        distance = self.cat['vr']/70 
+        # NUV is 230 nm, according to Kennicutt & Evans
+        wavelength_NUV = 230.e-9*u.m
+        freq_NUV = constants.c/wavelength_NUV
+        
+        # convert NSA NUV mag to nuLnu_NUV
+        # NSA magnitudes are already corrected for galactic extinction
+        nuv_mag = np.zeros(len(self.cat),'d')
+        fnu_nuv = np.zeros(len(self.cat),'d')*u.Jy
+        flagNUV = self.cat['SERSIC_NMGY'][:,1] > 0.
+        nuv_mag[flagNUV] = 22.5 - np.log10(self.cat['SERSIC_NMGY'][:,1][flagNUV])
+        fnu_nuv[flagNUV] = 3631*10**(-1*nuv_mag[flagNUV]/2.5)*u.Jy
+        nuLnu_NUV = fnu_nuv*4*np.pi*(distance*u.Mpc)**2*freq_NUV
+        self.nuLnu_NUV = nuLnu_NUV
+
+        
+        # GET IR VALUES
+        wavelength_22 = 22*u.micron
+        freq_22 = constants.c/wavelength_22
+        # need to convert W4 flux from vega magnitude to Jansky
+        # AB to Vega conversion is about 6 mag for W4
+        w4_ab_mag = self.cat['w4_mag']+6.620
+
+        flag22 = self.cat['w4_mag'] > 0
+        # flux zp in AB mag is 3630 Jy
+        fluxzp_22_jy = 3631.
+        Fnu22 = np.zeros(len(flag22),'d')*u.Jy
+        Fnu22[flag22] = fluxzp_22_jy*10**(-1*w4_ab_mag[flag22]/2.5)*u.Jy
+
+        # caculate nuFnu22
+        nuFnu22 = Fnu22*freq_22
+        # then calculate nu L_nu, using distance
+        nuLnu22_ZDIST = nuFnu22 * 4 * np.pi * (distance*u.Mpc)**2                
+
+        self.logSFR_IR_KE = np.zeros(len(self.cat),'d')
+        self.logSFR_IR_KE[flag22] = np.log10(nuLnu22_ZDIST.cgs.value[flag22])-42.69
+        print(max(self.logSFR_IR_KE))
+        self.Fnu22 = Fnu22
+        self.nuFnu22 = nuFnu22
+        self.nuLnu22 = nuLnu22_ZDIST                
+        self.distance = distance
+        c0 = Column(self.logSFR_IR_KE,name='logSFR22_KE')
+        c0a = Column(flag22,name='W4flag')        
+
+        
+        # correct NUV luminosity by IR flux
+        myunit = nuLnu_NUV.unit
+        nuLnu_NUV_cor = np.zeros(len(nuLnu_NUV),'d')*myunit
+        flag = self.cat['w4_mag'] > 0.
+        #self.nuLnu_NUV_cor = self.nuLnu_NUV
+
+        nuLnu_NUV_cor = nuLnu_NUV + 2.26*nuLnu22_ZDIST
+        # need relation for calculating SFR from UV only
+        #
+        # eqn 12
+        # log SFR(Msun/yr) = log Lx - log Cx
+        # NUV - log Cx = 43.17
+        # 24um - logCx = 42.69
+        # Halpha - log Cx = 41.27
+
+        ### ZERO OUT MEANINGLESS NUMBERS
+        self.logSFR_NUV_KE = np.zeros(len(self.cat),'d')
+        self.logSFR_NUVIR_KE = np.zeros(len(self.cat),'d')
+        self.logSFR_NUV_KE[flagNUV] = np.log10(nuLnu_NUV.cgs.value[flagNUV]) - 43.17
+        flag = flagNUV & flag22
+        self.logSFR_NUVIR_KE[flag] = np.log10(nuLnu_NUV_cor.cgs.value[flag]) - 43.17
+    
+        # write columns out to table
+        #c0 = MaskedColumn(self.nuLnu_NUV,name='nuLnu_NUV')
+
+
+        c1 = Column(self.logSFR_NUV_KE,name='logSFR_NUV_KE')
+        c2 = Column(self.logSFR_NUVIR_KE,name='logSFR_NUVIR_KE')
+        c2a = Column(flagNUV,name='NUVflag')                
+        sfrtable = Table([c0,c1,c2,c0a,c2a])
+        sfrtab = hstack([self.basictable,sfrtable])
+        ### write out to separate table
+        sfrtab.write(outdir+file_root+'sfr.fits',format='fits',overwrite=True)
 
         
     def main_table(self):

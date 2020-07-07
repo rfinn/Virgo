@@ -21,7 +21,8 @@ def degrees_between(ra1,dec1,ra2,dec2):
     return c1.separation(c2).deg
 
 def build_group_catalog(cat, mfac=2.0, dmax=10.0/60.0):
-    """dmax in arcmin
+    """
+    dmax in arcmin
 
     Group SGA galaxies together where their circular radii would overlap.  Use
     the catalog D25 diameters (in arcmin) multiplied by a scaling factor MFAC.
@@ -32,7 +33,7 @@ def build_group_catalog(cat, mfac=2.0, dmax=10.0/60.0):
     from pydl.pydlutils.spheregroup import spheregroup
 
     ## RAF
-    ## REPLACING ASTRONOMETRY FUNCTION WITH ASTROPY 
+    ## REPLACING ASTROMETRY FUNCTION WITH ASTROPY 
     #from astrometry.util.starutil_numpy import degrees_between
     #print('Starting spheregrouping.')
 
@@ -157,6 +158,7 @@ cat = vfmain['RA','DEC','radius','VFID']
 
 # rename radius to D25
 cat.rename_column('radius','D25')
+cat['D25'] = cat['D25']/60. # convert D25 to arcmin
 cat.rename_column('VFID','GALAXY')
 # run SGA-build-parent.build_group_catalog on catalog
 
