@@ -7,6 +7,7 @@ import os
 
 tabledir = '/Users/grudnick/Work/Virgo_outskirts/Catalogs/v0-03Jul2020/'
 plotdir = '/Users/grudnick/Work/Virgo_outskirts/Plots/'
+tabdir = '/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/Virgo/tables/'
 
 maintab = Table.read(tabledir+'vf_north_v0_main.fits')
 nsav1tab = Table.read(tabledir+'vf_north_v0_nsa.fits')
@@ -56,15 +57,50 @@ Lsunr =  fsunr * 4. * np.pi * (10.0 * pc_cgs)**2
 fgalr_v0 =  10**(-0.4 * (r_absmagv0 + 48.60))
 Lgalr_v0 =  fgalr_v0 * 4. * np.pi * (10.0 * pc_cgs)**2
 Lgalr_v0_Lsun = Lgalr_v0 / Lsunr
+lgLgalr_v0_Lsun = np.log10(Lgalr_v0_Lsun)
 
 fgalr_v1 =  10**(-0.4 * (r_absmagv1 + 48.60))
 Lgalr_v1 =  fgalr_v1 * 4. * np.pi * (10.0 * pc_cgs)**2
 Lgalr_v1_Lsun = Lgalr_v1 / Lsunr
+lgLgalr_v1_Lsun = np.log10(Lgalr_v1_Lsun)
 
 #compute Mstar
 Mstar_v0 = 10**logMLrv0 * Lgalr_v0_Lsun
 Mstar_v1 = 10**logMLrv1 * Lgalr_v1_Lsun
-#print(Mstar_v0)
+lgMstar_v0 = np.log10(10**logMLrv0 * Lgalr_v0_Lsun)
+lgMstar_v1 = np.log10(10**logMLrv1 * Lgalr_v1_Lsun)
+
+#reset bad absolute magnitude values to 0
+ibadmagv0 = np.where((nsav0tab['ABSMAG'][:,rind] > -1) | (nsav0tab['ABSMAG'][:,gind] > -1))
+ibadmagv1 = np.where((nsav1tab['SERSIC_ABSMAG'][:,rind] > -1) | (nsav1tab['SERSIC_ABSMAG'][:,gind] > -1 ))
+g_rv0[ibadmagv0] = -99
+lgMstar_v0[ibadmagv0] = -99
+logMLrv0[ibadmagv0] = -99
+lgLgalr_v0_Lsun[ibadmagv0] = -99
+
+g_rv1[ibadmagv1] = -99
+lgMstar_v1[ibadmagv1] = -99
+logMLrv1[ibadmagv1] = -99
+lgLgalr_v1_Lsun[ibadmagv1] = -99
+
+#make new tables
+nsav0tab.add_column(g_rv0,name = 'g-r')
+nsav0tab.add_column(logMLrv0,name = 'logM_L_r')
+nsav0tab.add_column( lgLgalr_v0_Lsun,name = 'logL_r')
+nsav0tab.add_column( lgMstar_v0,name = 'logMstar')
+newtab_v0 = Table([maintab['VFID'], nsav0tab['g-r'],nsav0tab['logM_L_r'],nsav0tab['logL_r'],nsav0tab['logMstar']])
+#print(newtab_v0['logMstar'])
+newtab_v0.write(tabdir + 'vf_north_v0_nsa_v0_bellmasses.fits', overwrite=True)
+                      
+nsav1tab.add_column(g_rv1,name = 'g-r')
+nsav1tab.add_column(logMLrv1,name = 'logM_L_r')
+nsav1tab.add_column( lgLgalr_v1_Lsun,name = 'logL_r')
+nsav1tab.add_column( lgMstar_v1,name = 'logMstar')
+newtab_v1 = Table([maintab['VFID'],nsav1tab['g-r'],nsav1tab['logM_L_r'],nsav1tab['logL_r'],nsav1tab['logMstar']])
+#print(newtab_v1['logMstar'])
+newtab_v1.write(tabdir + 'vf_north_v0_nsa_bellmasses.fits', overwrite=True)
+                     
+
     
 plt.figure()
 plt.scatter(np.log10(Lgalr_v0_Lsun),np.log10(Mstar_v0),c=g_rv0,vmin=-0.5, vmax=1.5,s=5)
@@ -76,7 +112,6 @@ plt.ylim(7.0,11.5)
 plt.xlabel('log$_{10}~L_r$')
 plt.ylabel('log$_{10}~M_\star$')
 plt.title('NSA v0')
-#plt.show()
 plt.savefig(plotdir + 'l_mstar.v0.png')
 
 plt.figure()
@@ -90,3 +125,4 @@ plt.xlabel('log$_{10}~L_r$')
 plt.ylabel('log$_{10}~M_\star$')
 plt.title('NSA v1')
 plt.savefig(plotdir + 'l_mstar.v1.png')
+
