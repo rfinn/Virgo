@@ -825,7 +825,8 @@ class sample:
             joined_table3 = hstack([hlagc_2,nsa2_2])
             c1 = Column(nsa2_matchflag,name='NSA0flag')
             joined_table3.add_column(c1)
-            
+            print('writing temp file')
+            joined_table3.write('hello.fits',overwrite=True)
             HLflag = joined_table3['HLflag'] == 1
             AGCflag = joined_table3['AGCflag'] == 1
             NSAflag = joined_table3['NSAflag'] == 1
@@ -841,8 +842,9 @@ class sample:
             ra[~HLflag & NSAflag] = joined_table3['RA_2'][~HLflag & NSAflag]
             dec[~HLflag & NSAflag] = joined_table3['DEC_2'][~HLflag & NSAflag]
             # NSA2 coordinates (v0)
-            ra[~HLflag & ~NSAflag & NSA2flag] = joined_table3['RA_NSA0'][~HLflag & ~NSAflag & NSA2flag]
-            dec[~HLflag & ~NSAflag & NSA2flag] = joined_table3['DEC_NSA0'][~HLflag & ~NSAflag & NSA2flag]
+            self.tab3 = joined_table3
+            ra[~HLflag & ~NSAflag & NSA2flag] = joined_table3['RA'][~HLflag & ~NSAflag & NSA2flag]
+            dec[~HLflag & ~NSAflag & NSA2flag] = joined_table3['DEC'][~HLflag & ~NSAflag & NSA2flag]
             # AGC coordinates
             ra[~HLflag & ~NSAflag & ~NSA2flag & AGCflag] = joined_table3['radeg'][~HLflag & ~NSAflag & ~NSA2flag & AGCflag]
             dec[~HLflag & ~NSAflag & ~NSA2flag & AGCflag] = joined_table3['decdeg'][~HLflag & ~NSAflag & ~NSA2flag &  AGCflag]

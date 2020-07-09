@@ -28,6 +28,8 @@ from astropy.table import Table, QTable, join, hstack, Column, MaskedColumn
 from astropy.coordinates import SkyCoord
 from astropy import constants
 from astropy import units as u
+from astropy.cosmology import WMAP9 as cosmo
+
 from astroquery.ned import Ned
 
 from matplotlib import pyplot as plt
@@ -37,7 +39,9 @@ homedir = os.getenv("HOME")
 
 from virgoCommon import *
 
-
+sdsspixelscale=0.396127#conversion for isophotal radii from pixels to arcseconds
+H0 = 70.
+h = H0/100 #H0/100
 
 masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname.fits'
 outdir = homedir+'/research/Virgo/tables/v0/'
@@ -108,11 +112,13 @@ class catalog:
         self.get_steer17()
         self.get_radius()
         self.get_sfr()
+        self.get_HIdef()
         self.main_table()
         self.print_stats()
         self.hyperleda_table()
         self.nsa_table()
-        self.nsa_v0_table()        
+        self.nsa_v0_table()
+        self.agc_table()        
         self.a100_table()
         self.a100_sdss_table()
         self.a100_unwise_table()
@@ -282,7 +288,77 @@ class catalog:
         ### write out to separate table
         sfrtab.write(outdir+file_root+'sfr.fits',format='fits',overwrite=True)
 
+    def get_HIdef(self):
+        '''
+        use relationship from Boselli+Gavazzi 2009
+        https://www.aanda.org/articles/aa/full_html/2009/46/aa12658-09/aa12658-09.html
+
+        HI def = log MHI_ref - log MHI_obs
+        h^2 MHI_ref = c + d log(hdiam)^2
+
+        Type 	c 	d 	Ref.
+        E-S0a 	6.88 	0.89 	HG84
+        Sa-Sab 	7.75 	0.59 	S96
+        Sb 	7.82 	0.62 	S96
+        Sbc 	7.84 	0.61 	S96
+        Sc 	7.16 	0.87 	S96
+        Scd-Im-BCD 	7.45 	0.70 	G10 
         
+        '''
+        # get distance from GL env cata
+        #env = Table.read('temp')
+        #distance = self.env['Vcosmic']/H0
+        distance = self.cat['vr']/cosmo.H0
+        # calculate MHI (even though A100 catalog has this - need to use consistent distance
+        
+        self.logMHI = np.log10(2.36e5*self.cat['HIflux'])+2*np.log10(self.cat['Dist']) #Dist^2
+        
+        # calculate HI deficiency using Toribio et al 2011 results
+        # their relation is
+        # log(M_HI/Msun) = 8.72 + 1.25 log(D_25,r/kpc)
+        # and
+        # log D_25 = log D_25(obs) + beta log(b/a), where beta = 0.35 in r-band
+        # NOTE: SDSS isophotal radii are given in pixels!!!!
+        # convert from arcsec to kpc with self.AngDistance (which is in units of kpc/arcsec)
+        # multiply by 2 to convert from radius to diameter
+        # multiply by sdss pixel scale (0.39) b/c isophotal radii are given in pixels
+
+        # use the radius measurements that I collated for John's group catalog
+        # these should approximate D25
+        # only calculate for galaxies with radiusflag = True
+
+        # returns DA in Mpc/radians
+        DA=cosmo.angular_diameter_distance(self.cat['Vhelio']/3.e5)
+
+        # try using distance in A100
+        vr = self.cat['Dist']*cosmo.H0
+        DA = cosmo.angular_diameter_distance(vr/3.e5)
+        D25obskpc=2.*self.radius/206264*DA.to('kpc')
+
+        
+        # apply correction from toribio et al 2011 
+        logD25kpc=np.log10(D25obskpc.value) + 0.35*np.log10(self.cat['expAB_r'])
+        self.logD25kpc = logD25kpc
+        # use toribio et al relation to predict the expected HI mass,
+        # including factor of 2 correction
+        logHImassExpected = 8.72 + 1.25*(logD25kpc-np.log10(2.))
+
+        # calculate deficiency as log expected - log observed
+        self.HIdef = np.zeros(len(self.cat),'f')
+
+        # report values if a100 flag and radius flag
+        flag = self.cat['A100flag'] & self.cat['radius_flag']
+        self.HIdef[flag] = logHImassExpected[flag] - self.logMHI[flag]
+        self.HIdef_flag = flag
+        # add HIdef to a100 catalog
+
+        # boselli & gavazzi prescription
+        # use value for Sb
+        c = 7.82
+        d = 0.62
+        logh2MHIref = (c + 2*d*logD25kpc)
+        self.HIdef_bos = logh2MHIref - self.logMHI
+        pass
     def main_table(self):
         # write out
         # ra, dec, velocity, HL, NSA id, A100 id
@@ -583,9 +659,23 @@ class catalog:
         newcolnames[3] = 'DEC'
         self.write_table(colnames,outdir+file_root+'nsa_v0.fits',format='fits',names=newcolnames)
     def a100_table(self):
+        '''write out columns from a100 catalog, plus HI deficiency'''
         # write out NSA columns in line-matched table
         colnames = self.cat.colnames[352:377]
-        self.write_table(colnames,outdir+file_root+'a100.fits',format='fits')
+        subtable = Table(self.cat[colnames])
+        newtable = hstack([self.basictable,subtable])
+        c0 = Column(self.HIdef,name='HIdef')
+        c1 = Column(self.HIdef_flag,name='HIdef_flag')        
+        c2 = Column(self.HIdef_bos,name='HIdef_bos')
+
+        newtable.add_columns([c0,c1,c2])
+        newtable.write(outdir+file_root+'a100.fits',format='fits',overwrite=True)
+    def agc_table(self):
+        '''write out columns from agc catalog'''
+        # write out NSA columns in line-matched table
+        colnames = self.cat.colnames[44:83]
+        self.write_table(colnames,outdir+file_root+'agc.fits',format='fits')
+
     def a100_sdss_table(self):
         # write out NSA columns in line-matched table
         colnames = self.cat.colnames[377:472]
@@ -601,6 +691,7 @@ class catalog:
         #print(colnames)
         self.write_table(colnames,outdir+file_root+'a100_unwise.fits',format='fits',names=newcolnames)
     def write_table(self,colnames,outfile,format=None,names=None):
+        '''function for writing out a subset of columns into a new table.'''
         if format is None:
             format = 'fits'
         else:
