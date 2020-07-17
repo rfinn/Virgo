@@ -4,14 +4,17 @@ from astropy.table import Table
 from matplotlib import pyplot as plt
 import numpy as np
 import os
+import matplotlib
+matplotlib.use('MACOSX')
 
-tabledir = '/Users/grudnick/Work/Virgo_outskirts/Catalogs/v0-03Jul2020/'
+tabledir = '/Users/grudnick/Work/Google Drive/VirgoFilamentCollaboration/vf-tables/north-only/v0-03Jul2020/'
 plotdir = '/Users/grudnick/Work/Virgo_outskirts/Plots/'
 tabdir = '/Users/grudnick/Work/Virgo_outskirts/Rfinn_github/Virgo/tables/'
 
 maintab = Table.read(tabledir+'vf_north_v0_main.fits')
 nsav1tab = Table.read(tabledir+'vf_north_v0_nsa.fits')
 nsav0tab = Table.read(tabledir+'vf_north_v0_nsa_v0.fits')
+envtab = Table.read(tabledir+'vf_north_v0_main_env_prop_H0_74_0.fits')
 
 #the indices for bands
 fuvind = 0
@@ -22,15 +25,31 @@ rind = 4
 iind = 5
 zind =6
 
+#use the vcosmic velocity to derive the absolute magnitude from the observed flux
+
+#make observed magnitudes from the catalog nmgy fluxes
+nsav0tab.add_column(22.5 - 2.5 * np.log10(nsav0tab['NMGY'][:,gind]),name = 'mg')
+nsav0tab.add_column(22.5 - 2.5 * np.log10(nsav0tab['NMGY'][:,rind]),name = 'mr')
+nsav1tab.add_column(22.5 - 2.5 * np.log10(nsav1tab['SERSIC_NMGY'][:,gind]),name = 'mg')
+nsav1tab.add_column(22.5 - 2.5 * np.log10(nsav1tab['SERSIC_NMGY'][:,rind]),name = 'mr')
+
 #calculate g-r color for v0 catalog
-g_rv0 = nsav0tab['ABSMAG'][:,gind] - nsav0tab['ABSMAG'][:,rind]
-g_rv1 = nsav1tab['SERSIC_ABSMAG'][:,gind] - nsav1tab['SERSIC_ABSMAG'][:,rind]
+#g_rv0 = nsav0tab['ABSMAG'][:,gind] - nsav0tab['ABSMAG'][:,rind]
+#g_rv1 = nsav1tab['SERSIC_ABSMAG'][:,gind] - nsav1tab['SERSIC_ABSMAG'][:,rind]
+g_rv0 = nsav0tab['mg'] - nsav0tab['mr'] 
+g_rv1 = nsav1tab['mg'] - nsav1tab['mr'] 
+
+#compute absmag in R-band using Vcosmic and H0=74
+h=0.74
+dgal = envtab['Vcosmic'] / (100.0 * h) * 1.e6    #distance in pc
+r_absmagv0 = nsav0tab['mr'] - 5 * np.log10(dgal / 10.0)
+r_absmagv1 = nsav1tab['mr'] - 5 * np.log10(dgal / 10.0)
 
 #correct to H0=70
 #catalog absmag are listed as M - 5 log10 h
-h=0.7
-r_absmagv0 = nsav0tab['ABSMAG'][:,rind] + 5 * np.log10(h)
-r_absmagv1 = nsav1tab['SERSIC_ABSMAG'][:,rind] + 5 * np.log10(h)
+#h=0.7
+#r_absmagv0 = nsav0tab['ABSMAG'][:,rind] + 5 * np.log10(h)
+#r_absmagv1 = nsav1tab['SERSIC_ABSMAG'][:,rind] + 5 * np.log10(h)
 
 #calculate M/L using Bell et al. 2003
 #v0
@@ -44,6 +63,7 @@ logMLrv1 = -0.306 + 1.097 * g_rv1
 logMLrv1 = logMLrv1 - 0.15
 
 #compute L in r-band
+#first compute the luminosity of the sun in the r-band
 Msunr = 4.67 # from Bell+2003, different from http://mips.as.arizona.edu/~cnaw/sun.html value of 4.65
 #compute luminosity of sun in r-band
 #flux of sun in r-band at 10pc in erg/s/cm^2/Hz
@@ -53,14 +73,19 @@ pc_cgs = 3.086e18
 Lsunr =  fsunr * 4. * np.pi * (10.0 * pc_cgs)**2
 
 #measure luminosity of galaxy in units of solar luminosity
-#flux of galaxy at 10pc 
+#flux of galaxy at 10pc in cgs units
 fgalr_v0 =  10**(-0.4 * (r_absmagv0 + 48.60))
+#luminosity in erg/s/Hz
 Lgalr_v0 =  fgalr_v0 * 4. * np.pi * (10.0 * pc_cgs)**2
+#luminosity in units of Lsol
 Lgalr_v0_Lsun = Lgalr_v0 / Lsunr
 lgLgalr_v0_Lsun = np.log10(Lgalr_v0_Lsun)
 
+#flux of galaxy at 10pc in cgs units
 fgalr_v1 =  10**(-0.4 * (r_absmagv1 + 48.60))
+#luminosity in erg/s/Hz
 Lgalr_v1 =  fgalr_v1 * 4. * np.pi * (10.0 * pc_cgs)**2
+#luminosity in units of Lsol
 Lgalr_v1_Lsun = Lgalr_v1 / Lsunr
 lgLgalr_v1_Lsun = np.log10(Lgalr_v1_Lsun)
 
@@ -90,7 +115,7 @@ nsav0tab.add_column( lgLgalr_v0_Lsun,name = 'logL_r')
 nsav0tab.add_column( lgMstar_v0,name = 'logMstar')
 newtab_v0 = Table([maintab['VFID'], nsav0tab['g-r'],nsav0tab['logM_L_r'],nsav0tab['logL_r'],nsav0tab['logMstar']])
 #print(newtab_v0['logMstar'])
-newtab_v0.write(tabdir + 'vf_north_v0_nsa_v0_bellmasses.fits', overwrite=True)
+newtab_v0.write(tabledir + 'vf_north_v0_nsa_v0_bellmasses.fits', overwrite=True)
                       
 nsav1tab.add_column(g_rv1,name = 'g-r')
 nsav1tab.add_column(logMLrv1,name = 'logM_L_r')
@@ -98,7 +123,7 @@ nsav1tab.add_column( lgLgalr_v1_Lsun,name = 'logL_r')
 nsav1tab.add_column( lgMstar_v1,name = 'logMstar')
 newtab_v1 = Table([maintab['VFID'],nsav1tab['g-r'],nsav1tab['logM_L_r'],nsav1tab['logL_r'],nsav1tab['logMstar']])
 #print(newtab_v1['logMstar'])
-newtab_v1.write(tabdir + 'vf_north_v0_nsa_bellmasses.fits', overwrite=True)
+newtab_v1.write(tabledir + 'vf_north_v0_nsa_bellmasses.fits', overwrite=True)
                      
 
     
