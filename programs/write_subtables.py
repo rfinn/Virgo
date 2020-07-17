@@ -86,12 +86,6 @@ class catalog:
         self.maintable.rename_column('NSA0flag','NSAV0flag')
 
 
-        nedname=[]
-        for i in range(len(self.maintable)):
-            nedname.append(self.maintable['VFID'][i]+'-'+self.maintable['NEDname'][i].replace(" ","").replace("[","").replace("]","").replace("/",""))
-        
-        c0= Column(nedname,name='prefix')
-        self.maintable.add_column(c0)
         self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],frame='icrs',unit='deg')
     def get_unwise(self):
         self.unwise = Table.read(outdir+'vf_north_v0_main_unwise.fits')
@@ -380,6 +374,13 @@ class catalog:
         c3 = Column(self.steerFlag,name='Steerflag')
         c4 = Column(self.unwiseFlag,name='unwiseflag')        
         self.maintable.add_columns([c1,c1a,c1b,c2,c3,c4])
+        nedname=[]
+        for i in range(len(self.maintable)):
+            nedname.append(self.maintable['VFID'][i]+'-'+self.maintable['NEDname'][i].replace(" ","").replace("[","").replace("]","").replace("/",""))
+        
+        c0= Column(nedname,name='prefix')
+        self.maintable.add_column(c0)
+        
         # - 2MASS
         # - z0MGS
         # - unWISE

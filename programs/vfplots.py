@@ -22,6 +22,10 @@ plotdir = homedir+'/research/Virgo/plots/'
 virgo_ra,virgo_dec = 187.697083, 12.336944
 virgo_vr = 1079.25
 
+h=.74
+
+# using colors from matplotlib default color cycle
+mycolors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 class vfplots(readfulltables):
     def plotpositions(self):
@@ -114,15 +118,118 @@ class vfplots(readfulltables):
 
         plt.figure()
         plt.plot(dr,dv,'k.',alpha=.1)
-        rmax = 3.6
+        rmax = 3.6*h
         #virgo_flag = (np.abs(self.env['distSGY_Virgo']) < rmax) & (np.abs(self.env['distSGZ_Virgo']) < rmax) & (np.abs(self.env['distSGX_Virgo']) < rmax)
         virgo_flag = (self.env['distSGY_Virgo']**2 + self.env['distSGZ_Virgo']**2+ self.env['distSGX_Virgo']**2) < rmax**2
         plt.axhline(y=0)        
         plt.plot(dr[virgo_flag],dv[virgo_flag],'bo',alpha=.3)
 
 
+    def HIdef_env(self):
+        # histogram of Boselli HIdef
+        rmax = 3.6
+        virgo_flag = (self.env['distSGY_Virgo']**2 + self.env['distSGZ_Virgo']**2+ self.env['distSGX_Virgo']**2) < rmax**2
+        print('number of cluster members = ',sum(virgo_flag))
+        filament_flag = (self.filmemb['filament']!='---') & (~virgo_flag)
+        spiral_flag = (self.hl['t'] > 0)
 
+        plt.figure(figsize=(10,6))
+        nbin=np.linspace(-2,2,20)
+        #t = plt.hist(self.a100['HIdef_bos'][self.a100['HIdef_flag']],bins=nbin,histtype='step',label='all',normed=True,lw=2)
 
+        # virgo
+        flag = self.a100['HIdef_flag'] & (virgo_flag) & spiral_flag
+        t = plt.hist(self.a100['HIdef_bos'][flag],bins=nbin,histtype='step',label='Virgo',normed=True,lw=2)
+        plt.axvline(x=np.median(self.a100['HIdef_bos'][flag]),c=mycolors[0],ls='--')        
+        flag = self.a100['HIdef_flag'] & (filament_flag) & spiral_flag
+        t = plt.hist(self.a100['HIdef_bos'][flag],bins=nbin,histtype='step',label='Filaments',normed=True,lw=2)
+        plt.axvline(x=np.median(self.a100['HIdef_bos'][flag]),c=mycolors[1],ls='--')                
+
+        flag = self.a100['HIdef_flag'] & (~virgo_flag & ~filament_flag) & spiral_flag
+        t = plt.hist(self.a100['HIdef_bos'][flag],bins=nbin,histtype='step', label='Field',normed=True,lw=2)
+        plt.axvline(x=np.median(self.a100['HIdef_bos'][flag]),c=mycolors[2],ls='--')        
+
+        plt.xlabel("HI Deficiency (Boselli & Gavazzi)",fontsize=14)
+        plt.ylabel('Normalized Histogram',fontsize=14)
+        plt.axvline(x=0.3,ls='--',c='k',label='Deficient')
+        plt.axvline(x=0.,ls='-',c='k')
+        plt.legend()
+                
+
+    def compare_velocities(self):
+        '''compare recession velocity with flow-corrected velocities'''
+        plt.figure()
+        plt.plot(self.main['vr'], self.env['Vcosmic'],'k.',alpha=.1,label='Vcosmic')
+        
+        plt.plot(self.main['vr'][self.main['A100flag']], self.a100['Dist'][self.main['A100flag']]*74,'b.',alpha=.1,label='ALFALFA')        
+        xl = np.linspace(500,3500)
+        plt.plot(xl,xl,'r--',label='1:1')
+        plt.xlabel('Our vr (km/s)',fontsize=14)
+        plt.ylabel('Flow-corrected vr (km/s)',fontsize=14)        
+        plt.ylim(-500,4000)
+        leg = plt.legend()
+        for lh in leg.legendHandles:
+            lh.set_alpha(.8)
+    def compare_flow_velocities(self):
+        '''compare recession velocity with flow-corrected velocities'''
+        plt.figure()
+        plt.plot(self.env['Vcosmic'][self.main['A100flag']],self.a100['Dist'][self.main['A100flag']]*74,'k.',alpha=.1,label='Vcosmic')
+        
+        #plt.plot(self.main['vr'][self.main['A100flag']], ,'b.',alpha=.1,label='ALFALFA')        
+        xl = np.linspace(500,3500)
+        plt.plot(xl,xl,'r--',label='1:1')
+        plt.xlabel('Vcosmic (km/s)',fontsize=14)
+        plt.ylabel('ALFALFA flow-corrected vr (km/s)',fontsize=14)        
+        plt.ylim(-500,4000)
+        leg = plt.legend()
+        for lh in leg.legendHandles:
+            lh.set_alpha(.8)
+
+    def compare_a100_distance(self):
+        '''plot a100 distance versus distance from Vcosmic'''
+        plt.figure()
+        flag = self.main['A100flag']
+        plt.plot(self.a100['Dist'][flag], self.env['Vcosmic'][flag]/70,'k.',alpha=.1,label='full sample')
+        x1,x2 = plt.xlim()
+        x1,x2 = 0,60
+        xl = np.linspace(x1,x2,100)
+        plt.plot(xl,xl,'r--',label='1:1')
+        plt.xlabel('ALFALFA Distance (Mpc)',fontsize=14)
+        plt.ylabel('Vcosmic Distance (Mpc)',fontsize=14)        
+        plt.ylim(x1,x2)
+        plt.xlim(x1,x2)        
+        plt.legend()
+
+    def sitelle_sample(self):
+        '''
+        select galaxies with NUV and W3 emission; 
+        identify galaxies with multiple neighbors within r = 10arcmin
+        focus on Virgo 3 and NGC filament
+        '''
+
+        flag = (self.nsa['SERSIC_ABSMAG'][:,1] < 0) &\
+            (self.unwise['W3SNR'] > 5)
+
+    def HIdef_morphology(self):
+        flag = self.main['A100flag'] & (self.mstar['logMstar'] > -99)
+        y = self.a100['HIdef_bos']
+        x = self.hl['t']
+        mycolors = [self.env['n5th_2D'],self.mstar['logMstar']]
+        ylabels = ['5th_2D','logMstar']
+        v1 = [.01,8.]
+        v2 = [40,10.5]
+        plt.figure(figsize=(12,4))
+        plt.subplots_adjust(wspace=0.3)
+        for i,c in enumerate(mycolors):
+            plt.subplot(1,2,i+1)
+            plt.scatter(x[flag],y[flag],c=mycolors[i][flag],alpha=.7,vmin=v1[i],vmax=v2[i],s=10)
+            cb = plt.colorbar()
+            cb.set_label(ylabels[i])
+            plt.ylim(-1.5,2)            
+            plt.ylabel('HI Deficiency')
+            plt.xlabel('T type')
+        plt.savefig(plotdir+'/HIdef_morphology_fullsample.png')
+        pass
         
 class coplots(readCOtables):
     def plotpositions(self):
