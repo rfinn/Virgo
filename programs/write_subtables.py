@@ -116,6 +116,7 @@ class catalog:
         self.a100_table()
         self.a100_sdss_table()
         self.a100_unwise_table()
+        self.catalog_for_z0MGS()        
         self.get_size_for_JM()
         pass
     def print_stats(self):
