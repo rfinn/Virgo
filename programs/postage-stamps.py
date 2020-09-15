@@ -28,7 +28,6 @@ def getlegacyimages(ra,dec):
         galnumber = gra+'-'+gdec
         rootname = 'cutouts/legacy-im-'+str(galnumber)+'-'+str(image_size)
         jpeg_name = rootname+'.jpg'
-
         fits_name = rootname+'.fits'
         # check if images already exist
         # if not download images

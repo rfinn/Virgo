@@ -51,6 +51,7 @@ filters=[]
 object_names=[]
 infiles = glob.glob('r*.fit*')
 for f in infiles:
+    print(f)
     d,h = fits.getdata(f,header=True)
     filters.append(h['FILTER'])
     object_names.append(h['OBJECT'])

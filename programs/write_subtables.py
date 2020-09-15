@@ -189,9 +189,9 @@ class catalog:
         a100radius_flag = flag
         self.radius[flag] = self.cat['petroR90_r'][flag]*1.4
         print('number of galaxies using A100 sdss Petro TH90 = {:d} ({:.2f}%)'.format(sum(flag),sum(flag)/len(flag)))
-        ## IF NONE OF THESE SIZES AVAILABLE, SET RADIUS TO 100 ARCSEC
+        ## IF NONE OF THESE SIZES AVAILABLE, SET RADIUS TO 30 ARCSEC
         flag = ~d25flag & ~self.cat['NSAflag'] & ~self.cat['NSA0flag'] & ~a100radius_flag
-        self.radius[flag] = 100*np.ones(sum(flag),'f')
+        self.radius[flag] = 30*np.ones(sum(flag),'f')
         print('number of galaxies with no size measurement = {:d} ({:.2f}%)'.format(sum(flag),sum(flag)/len(flag)))
         radius_flag = ~flag
         c = Column(self.radius,name='radius',unit='arcsec')
@@ -366,7 +366,7 @@ class catalog:
         self.maintable = self.cat[colnames]
         self.maintable.rename_column('NSAID_2','NSAIDV0')
         self.maintable.rename_column('NSA0flag','NSAV0flag')        
-
+        
 
         c1 = Column(self.coflag,name='COflag')
         c1a = Column((self.hatable['HAflag']), name='HAflag')
@@ -375,17 +375,49 @@ class catalog:
         c3 = Column(self.steerFlag,name='Steerflag')
         c4 = Column(self.unwiseFlag,name='unwiseflag')        
         self.maintable.add_columns([c1,c1a,c1b,c2,c3,c4])
+        
         nedname=[]
         for i in range(len(self.maintable)):
             nedname.append(self.maintable['VFID'][i]+'-'+self.maintable['NEDname'][i].replace(" ","").replace("[","").replace("]","").replace("/",""))
         
         c0= Column(nedname,name='prefix')
         self.maintable.add_column(c0)
+
+        # add a column called "name" for use with the legacy image server
+        # this will be the VFID
+        c0= Column(self.cat['VFID'],name='name')
+        self.maintable.add_column(c0)
+
         
         # - 2MASS
         # - z0MGS
         # - unWISE
         self.maintable.write(outdir+file_root+'main.fits',format='fits',overwrite=True)
+
+        # write out table in csv format
+        self.maintable.write(outdir+file_root+'main.csv',format='ascii',delimiter=',',overwrite=True)
+        
+        # write out sample into smaller tables
+        # 500 lines per table
+        # to use when uploading tables to the legacy imager viewer
+        #
+        # we will use these to inspect our galaxy coordinates
+        nlines = 500
+        ntotal = len(self.maintable)
+        ntables = (ntotal/nlines)
+        if (ntables - np.floor(ntables)) > 0:
+            ntables += 1
+        ntables = int(ntables)
+        fileroot = outdir+file_root+'main_'
+        for i in range(ntables):
+            vfid_min = i*nlines
+            vfid_max = (i+1)*nlines
+            if vfid_max > ntotal:
+                vfid_max = ntotal
+            fname = fileroot+'%04d_%04d.fits'%(vfid_min,vfid_max-1)
+            self.maintable[vfid_min:vfid_max].write(fname,format='fits',overwrite=True)
+
+
 
     def get_CO(self,match_by_coords=False,match_by_name=True):
         # read in CO mastertable
