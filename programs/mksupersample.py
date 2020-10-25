@@ -238,6 +238,14 @@ class sample:
 
         - output as csv, separator is other, ,
 
+        delete header lines at beginning and end
+
+        2020-10-25: downloaded again but removed the vr > 500 km/s cut.
+        we are adding galaxies with redshift-independent distances > 500/H0, and 
+        they should be in this updated catalog
+
+          - will add this functionality in a separate function
+
 
         
         not using Gialuca's catalog b/c I'm not sure if there were other cuts made already
@@ -263,6 +271,28 @@ class sample:
         self.hl = fits.getdata('temp.fits')
 
         os.remove('temp.fits')
+
+        ########################################################################
+        ## GET VR<500 GALAXIES WITH REDSHIFT-INDEPENDENT DISTANCES > 500KM/S/H0
+        ########################################################################
+        hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-24Feb20.csv'        
+
+        hl_no_vmin = Table(ascii.read(hlfile))
+        # read in benedetta's file on missing galaxies
+
+        # match missing galaxies to full HL file
+        
+        self.cull_hl()
+        c1 = Column(self.hl['al2000']*15,name='RAdeg')
+        self.hl.add_column(c1)
+        
+        self.hl.write('temp.fits',format='fits',overwrite=True)
+
+        self.hl = fits.getdata('temp.fits')
+
+        os.remove('temp.fits')
+
+        
 
         ################################################################
         ## READ IN NED CATALOG

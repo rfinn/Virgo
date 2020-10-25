@@ -62,8 +62,8 @@ if (args.north):
 else:
     NORTH_ONLY = False
 if NORTH_ONLY:
-    outdir = homedir+'/research/Virgo/tables-north/v0/'
-    file_root = 'vf_north_v0_'
+    outdir = homedir+'/research/Virgo/tables-north/v1/'
+    file_root = 'vf_north_v2_'
 
 def duplicates(table,column,flag=None):
     if flag is None:
@@ -99,7 +99,8 @@ class catalog:
         keepnorth = cat['DEC'] > -1.3
         return cat[keepnorth], keepnorth
     def runall(self):
-        self.get_unwise()
+        self.main_table()        
+        #self.get_unwise()
         self.get_z0MGS_flag()
         self.get_CO()
         self.get_halpha()        
@@ -107,7 +108,7 @@ class catalog:
         self.get_radius()
         self.get_sfr()
         self.get_HIdef()
-        self.main_table()
+
         self.print_stats()
         self.hyperleda_table()
         self.nsa_table()
@@ -118,6 +119,7 @@ class catalog:
         self.a100_unwise_table()
         self.catalog_for_z0MGS()        
         self.get_size_for_JM()
+        self.ned_table() # NED input, ra, dec, and NEDname
         pass
     def print_stats(self):
         print('Number in sample = ',len(self.cat))
@@ -724,6 +726,14 @@ class catalog:
         newcolnames[2] = 'dec'
         #print(colnames)
         self.write_table(colnames,outdir+file_root+'a100_unwise.fits',format='fits',names=newcolnames)
+    def ned_table(self):
+        '''write out columns from ned query'''
+
+        colnames = ['NEDinput','NEDra','NEDdec','NEDname']
+        subtable = Table(self.cat[colnames])
+        newtable = hstack([self.basictable,subtable])
+        newtable.write(outdir+file_root+'nedquery.fits',format='fits',overwrite=True)
+
     def write_table(self,colnames,outfile,format=None,names=None):
         '''function for writing out a subset of columns into a new table.'''
         if format is None:

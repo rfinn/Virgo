@@ -184,12 +184,15 @@ class getNED:
         #for i in range(20):            
             # check if HL id exists, look up NED name
             # if yes, break
+            #
             # if no NED comes back
             # check if NSA ID exists for that galaxy. if yes, look up NED name
             # if NED name is found, break
+            #
             # if no NED name comes back
             # check if A100 ID exists for that galaxy. if yes, look up NED name
             # if no Ned name comes back, then no NED name!
+            #
             foundit=False
             if self.clean_a100['HLflag'][i]:
                 time.sleep(1)
@@ -278,12 +281,23 @@ class getNED:
                     t = Ned.query_region(coord,radius=10./3600*u.deg, equinox='J2000')
                     print(t)
                     #t = Ned.query_object('NSA '+str(self.clean_a100['NSAID_2'][i]))
-                    NEDid.append(t['Object Name'][0])
-                    NEDra.append(t['RA'][0])
-                    NEDdec.append(t['DEC'][0])
-                    NEDinput.append('bylocation')
-                    foundit=True
-                    continue
+
+                    # should check if NED name already points to another galaxy
+                    # and remove it if it does
+                    if np.sum(np.array(NEDid) == t['Object Name'][0]) > 0:
+                        # galaxy is already in the list, so position match is wrong
+                        print('galaxy ', t['Object Name'][0],' is already in the list')
+                    else:
+                    
+                        NEDid.append(t['Object Name'][0])
+                        NEDra.append(t['RA'][0])
+                        NEDdec.append(t['DEC'][0])
+                        NEDinput.append('bylocation')
+
+                    
+                    
+                        foundit=True
+                        continue
                 except IndexError:
                     pass
                 except:
@@ -294,7 +308,14 @@ class getNED:
                 NEDid.append('')
                 NEDra.append(-999)
                 NEDdec.append(-999)
-                NEDinput.append(-999)                                        
+                NEDinput.append(-999)
+
+        # ANOTHER CHECK TO ADD
+        # find any remaining duplicates
+        # if only one has NEDinput == 'bylocation', 
+        # then remove the ned name for the duplicate that has 'bylocation'
+
+        
         c1 = Column(NEDid,name='NEDname')
         c2 = Column(np.array(NEDra,'f'),name='NEDra')
         c3 = Column(np.array(NEDdec,'f'),name='NEDdec')

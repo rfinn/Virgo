@@ -8,6 +8,8 @@ GOAL:
   - remove bad sources
   - merge shredded galaxies
 
+OUTPUT:
+* 
 '''
 import numpy as np
 import sys
@@ -252,12 +254,15 @@ class catalog(cutouts):
 
         ## add a column that has the galid that corresponds to bye-eye cutouts
         self.add_byeye_galid()
+        
         ## remove sources that were flagged in bye-eye classifications
+        ## creates clean_kitchen table
         self.cut_catalogs_byeye()
         
         ## match the catalog to the a100 catalog
+        ## joined table in clean_a100
         self.match_a100()
-
+        
         ## remove AGC galaxies with multiple entries in table
         self.remove_a100_duplicates()
 
