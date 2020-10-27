@@ -10,12 +10,19 @@ GOAL:
   - AGC
   - A100
   - unWISE
-  
+
+ARGS:
+
+OUTPUT:
 - write out several different views
   - one for matching with Leroy+2019 sample
   - one for Dustin Lang to get unWISE photometry
   - one for catalog paper
 
+NOTES:
+* when making new version, need to download z0mgs
+
+* when making new version, need to rematch to unwise
 
 '''
 import os
@@ -43,18 +50,28 @@ sdsspixelscale=0.396127#conversion for isophotal radii from pixels to arcseconds
 H0 = 70.
 h = H0/100 #H0/100
 
+###################################################################
 #### SET VERSION NUMBER
+###################################################################
 version = 'v1'
-masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname.fits'
+
+###################################################################
+#### INPUT FILES
+###################################################################
+masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'.fits'
+
+###################################################################
+#### SET UP DIRECTORIES
+###################################################################
 outdir = homedir+'/research/Virgo/tables/'+version+'/'
 file_root = 'vf_'+version+'_'
 
 
+#### ADD OPTION FOR NORTH ONLY WHEN MAKING TABLES
+#### (NO GUARANTEE THAT THIS WORKS FOR THE FULL TABLES ANYMORE!)
 parser = argparse.ArgumentParser(description ='write out subtables for virgo filaments catalog')
-
 #parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
 parser.add_argument('--north',dest = 'north', action='store_true',help='keep DEC > -1 galaxies')
-     
 args = parser.parse_args()
 
 
@@ -67,6 +84,9 @@ if NORTH_ONLY:
     outdir = homedir+'/research/Virgo/tables-north/'+version+'/'
     file_root = 'vf_north_'+version+'_'
 
+###################################################################
+#### FUNCTIONS
+###################################################################
 def duplicates(table,column,flag=None):
     if flag is None:
         unique, counts = np.unique(table[column], return_counts=True)
@@ -76,6 +96,9 @@ def duplicates(table,column,flag=None):
     #print('duplicates = ',unique[counts > 1])
     return unique, counts
 
+###################################################################
+#### CLASSES
+###################################################################
 class catalog:
     def __init__(self,catalog):
         self.cat = Table(fits.getdata(catalog))
@@ -109,6 +132,7 @@ class catalog:
         self.get_radius()
         self.get_sfr()
         self.get_HIdef()
+        self.get_z0MGS_flag()        
         self.main_table()
         self.print_stats()
         self.hyperleda_table()
@@ -122,7 +146,7 @@ class catalog:
         self.get_size_for_JM()
         self.ned_table() # NED input, ra, dec, and NEDname
         self.get_unwise()
-        self.get_z0MGS_flag()
+
         pass
     def print_stats(self):
         print('Number in sample = ',len(self.cat))
@@ -216,22 +240,34 @@ class catalog:
             matchflag=False
             newradius = vfsheet['radius_new'][i]
             # match to objname if found
-            gmatch = (vfsheet['objname'][i] == self.cat['objname'])
-            if sum(gmatch) == 1:
-                matchflag = True
-                matchindex = catindex[gmatch]
-            else:                    
-                # match to NSAID if found
-                gmatch = (vfsheet['NSAID'][i] == self.cat['NSAID'])
+            # ran into some trouble with empty values - they are "masked"
+            # but the whole column isn't masked.  had to cluge together a solution
+            #print(i)
+            try:
+                t = len(vfsheet['objname'][i])
+                gmatch = (vfsheet['objname'][i] == self.cat['objname'])
+                #print(i,vfsheet['objname'][i],gmatch)
                 if sum(gmatch) == 1:
                     matchflag = True
                     matchindex = catindex[gmatch]
-                elif sum(gmatch) == 0:
-                    # match to NSAIDV0 if found
-                    gmatch = (vfsheet['NSAIDV0'][i] == self.cat['NSAIDV0'])
+            except TypeError: # will go here if there is no value for objname
+                try:
+                    t=len(vfsheet['NSAID'][i])
+                    # match to NSAID if found
+                    gmatch = (vfsheet['NSAID'][i] == self.cat['NSAID'])
                     if sum(gmatch) == 1:
                         matchflag = True
                         matchindex = catindex[gmatch]
+                except TypeError: # go here for NSAIDV0
+                    try:
+                        t = len(vfsheet['NSAIDV0'][i])
+                        # match to NSAIDV0 if found
+                        gmatch = (vfsheet['NSAIDV0'][i] == self.cat['NSAIDV0'])
+                        if sum(gmatch) == 1:
+                            matchflag = True
+                            matchindex = catindex[gmatch]
+                    except TypeError: # will do here if NSAIDV0 name is zero
+                        pass
             if matchflag:
                 self.radius[matchindex] = newradius
             else:
@@ -681,6 +717,7 @@ class catalog:
         # get z0MGS
         #cat = Table.read('/home/rfinn/research/Virgo/tables/vf-z0MGS.tbl',format='ipac')
         cat = Table.read('/home/rfinn/research/Virgo/tables/vf_z0mgs_30arcsec_051920.tbl',format='ipac')
+        cat = Table.read('/home/rfinn/research/Virgo/tables/vf_v1_z0mgs_10arcsec_102620.tbl',format='ipac')
         # cut on declination
         if NORTH_ONLY:
             cat = cat[self.keepnorth_flag]

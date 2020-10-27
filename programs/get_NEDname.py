@@ -468,12 +468,18 @@ class getNED:
         
 
     def write_clean(self):
-        self.newtab.write('vf_clean_sample_wNEDname.fits',format='fits',overwrite=True)
+        #self.newtab.write('vf_clean_sample_wNEDname.fits',format='fits',overwrite=True)
+        # updating for v1
+        self.newtab.write('vf_clean_sample_wNEDname_v1.fits',format='fits',overwrite=True)
 
 
 if __name__ == '__main__':
     os.chdir('/home/rfinn/research/Virgo/supersample/')
-    n = getNED('vf_clean_sample.fits')
+    ###################################################################
+    #### INPUT FILES
+    ###################################################################
+    #n = getNED('vf_clean_sample.fits') # for v0
+    n = getNED('vf_clean_sample_v1.fits') # for v1    
     n.get_NEDname()
     #n.query_unmatched()
     #n.write_NEDnames()

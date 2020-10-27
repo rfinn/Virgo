@@ -307,7 +307,9 @@ class catalog(cutouts):
 
         ## write the cleaned table
         self.write_clean()
-        
+
+        ## write out ipac catalog
+        self.catalog_for_z0MGS()
         
     def fix_bad_HL_name(self):
         # replace HL name for UGC 09348
@@ -661,15 +663,19 @@ class catalog(cutouts):
         self.cleancat.write(output_clean,format='fits',overwrite=True)
         self.clean_a100.write(output_catalog,format='fits',overwrite=True)
 
-    def catalog_for_z0MGS(self):
+    def catalog_for_z0MGS(self,cat=None):
         '''
         need RA, DEC, and search radius
         in IPAC format table
         for matching with leroy+2019 Galaxy Synthesis WISE+GALEX
         table is served by IRSA
         '''
-        search_radius = 10.*np.ones(len(self.cleancat)) # units are arcsec
-        newtable = Table([self.cleancat['galnumber'],self.cleancat['RA'],self.cleancat['DEC'],search_radius],names=['galid','ra','dec','major'])
+        if cat is None:
+            cat = self.clean_a100
+        else:
+            cat = cat
+        search_radius = 10.*np.ones(len(cat)) # units are arcsec
+        newtable = Table([cat['galnumber'],cat['RA'],cat['DEC'],search_radius],names=['galid','ra','dec','major'])
         newtable.write(ipac_table,format='ipac',overwrite=True)
         
 if __name__ == '__main__':
