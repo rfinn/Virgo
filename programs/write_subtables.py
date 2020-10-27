@@ -43,9 +43,11 @@ sdsspixelscale=0.396127#conversion for isophotal radii from pixels to arcseconds
 H0 = 70.
 h = H0/100 #H0/100
 
+#### SET VERSION NUMBER
+version = 'v1'
 masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname.fits'
-outdir = homedir+'/research/Virgo/tables/v0/'
-file_root = 'vf_v0'
+outdir = homedir+'/research/Virgo/tables/'+version+'/'
+file_root = 'vf_'+version+'_'
 
 
 parser = argparse.ArgumentParser(description ='write out subtables for virgo filaments catalog')
@@ -62,8 +64,8 @@ if (args.north):
 else:
     NORTH_ONLY = False
 if NORTH_ONLY:
-    outdir = homedir+'/research/Virgo/tables-north/v1/'
-    file_root = 'vf_north_v2_'
+    outdir = homedir+'/research/Virgo/tables-north/'+version+'/'
+    file_root = 'vf_north_'+version+'_'
 
 def duplicates(table,column,flag=None):
     if flag is None:
@@ -99,16 +101,15 @@ class catalog:
         keepnorth = cat['DEC'] > -1.3
         return cat[keepnorth], keepnorth
     def runall(self):
-        self.main_table()        
-        #self.get_unwise()
-        self.get_z0MGS_flag()
+        #self.catalog_for_z0MGS()
+        self.catalog_for_z0MGS()                
         self.get_CO()
         self.get_halpha()        
         self.get_steer17()
         self.get_radius()
         self.get_sfr()
         self.get_HIdef()
-
+        self.main_table()
         self.print_stats()
         self.hyperleda_table()
         self.nsa_table()
@@ -117,9 +118,11 @@ class catalog:
         self.a100_table()
         self.a100_sdss_table()
         self.a100_unwise_table()
-        self.catalog_for_z0MGS()        
+
         self.get_size_for_JM()
         self.ned_table() # NED input, ra, dec, and NEDname
+        self.get_unwise()
+        self.get_z0MGS_flag()
         pass
     def print_stats(self):
         print('Number in sample = ',len(self.cat))
@@ -196,6 +199,45 @@ class catalog:
         self.radius[flag] = 30*np.ones(sum(flag),'f')
         print('number of galaxies with no size measurement = {:d} ({:.2f}%)'.format(sum(flag),sum(flag)/len(flag)))
         radius_flag = ~flag
+
+        ## READ IN SPREADSHEET FROM MATCHING VF CATALOG WITH JM'S SMA CATALOG
+        ## CHECK TO SEE IF GALAXY HAS A FIX_RAD=1
+        ## IF SO, UPDATE self.radius AND radius_flag
+
+        vfsheet = Table.read(homedir+'/research/Virgo/google-tables/VF-notin-SGA-10arcsecmatch-bestmatch-symmetric.csv',format='ascii')
+        fixrad_flag = (vfsheet['fix_rad'] == 1) & (vfsheet['keep?'] == 1)
+        print('adjusting radius for ',sum(fixrad_flag),' galaxies based on legacy images')
+        
+        vfsheet = vfsheet[fixrad_flag]
+
+        # FIND MATCHING GALAXY BASED ON objname or NSAID or NSAIDV0
+        catindex = np.arange(len(self.cat))
+        for i in range(len(vfsheet)):
+            matchflag=False
+            newradius = vfsheet['radius_new'][i]
+            # match to objname if found
+            gmatch = (vfsheet['objname'][i] == self.cat['objname'])
+            if sum(gmatch) == 1:
+                matchflag = True
+                matchindex = catindex[gmatch]
+            else:                    
+                # match to NSAID if found
+                gmatch = (vfsheet['NSAID'][i] == self.cat['NSAID'])
+                if sum(gmatch) == 1:
+                    matchflag = True
+                    matchindex = catindex[gmatch]
+                elif sum(gmatch) == 0:
+                    # match to NSAIDV0 if found
+                    gmatch = (vfsheet['NSAIDV0'][i] == self.cat['NSAIDV0'])
+                    if sum(gmatch) == 1:
+                        matchflag = True
+                        matchindex = catindex[gmatch]
+            if matchflag:
+                self.radius[matchindex] = newradius
+            else:
+                print('could not match galaxy ')
+                print(vfsheet[i])
+        
         c = Column(self.radius,name='radius',unit='arcsec')
         self.cat.add_column(c)
         c = Column(radius_flag,name='radius_flag',description='if False, then rad is set to 100 arcsec')

@@ -8,8 +8,15 @@ GOAL:
   - remove bad sources
   - merge shredded galaxies
 
-OUTPUT:
+INPUT:
+* smart_kitchen_sink_v2.fits
 * 
+
+OUTPUT:
+* output_catalog, as specified below (e.g. vf_clean_sample.v2.fits)
+  - this should be updated for new version releases
+* ipac table suitable for matching on irsa
+  - specified below (e.g. clean_sample.v2.txt)
 '''
 import numpy as np
 import sys
@@ -22,9 +29,7 @@ from astropy.coordinates import SkyCoord
 import astropy.units as u
 
 from astroquery.ned import Ned
-
 from matplotlib import pyplot as plt
-
 from mksupersample import getlegacy, getlegacyimages
 
 homedir = os.getenv('HOME')
@@ -41,8 +46,12 @@ if VERSION == 1:
     kitchen_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink.fits'
 elif VERSION == 2:
     kitchen_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink_v2.fits'    
-byeye_classifications = '/home/rfinn/research/Virgo/supersample/virgo_check_sample_by_eye.csv'
+byeye_classifications = '/home/rfinn/research/Virgo/google-tables/virgo_check_sample_by_eye_v1.csv'
 
+### OUTPUT FILE
+output_catalog = 'vf_clean_sample_v1.fits'
+output_clean = 'clean_sample_v1.fits' # I'm not sure why I have two output files, just a holdover I think
+ipac_table = 'clean_sample_v1.txt'
 ## BOUNDARIES OF SURVEY REGION
 decmin = -35
 decmax = 75 
@@ -64,7 +73,7 @@ def duplicates(table,column,flag=None):
     return unique, counts
 
 class cutouts:
-    def densearray(self,ra=None,dec=None,names=None,ra2=None,dec2=None,outfile_string='test',agcflag=False,onlyflag=True,startindex=None,endindex=None,indices=None):
+    def densearray(self,ra=None,dec=None,names=None,ra2=None,dec2=None,outfile_string='test',agcflag=False,onlyflag=True,startindex=None,endindex=None,indices=None,image_size=60):
         plt.figure(figsize=(12,7))
         plt.subplots_adjust(bottom=.05,left=.05,top=.9,right=.95,hspace=.01,wspace=.01)
         if ra is None:
@@ -146,14 +155,14 @@ class cutouts:
                 plt.yticks([],[])
 
             #print('jpegflag = ',jpgflag)
-            gfov = self.addgals(w,ra,dec,ra2,dec2,jpegflag=jpgflag)
+            gfov = self.addgals(w,ra,dec,ra2,dec2,jpegflag=jpgflag,image_size=image_size)
             if indices is not None:
                 print(indices[i],'AGC ',names[i],': ',gfov)
             else:
                 print(i,'AGC ',names[i],': ',gfov)
             i = i + 1
             nsubplot += 1
-    def addgals(self,w,ra1,dec1,ra2,dec2,jpegflag=True):
+    def addgals(self,w,ra1,dec1,ra2,dec2,jpegflag=True,image_size=60):
         c1 = SkyCoord(ra1*u.deg,dec1*u.deg,frame='icrs')
         c2 = SkyCoord(ra2*u.deg,dec2*u.deg,frame='icrs')
         cats = [c1,c2]
@@ -164,7 +173,8 @@ class cutouts:
         edgecolors = ['c','r','y', 'g']
         facecolors = ['None','None','None','None','None']
         sizes = [14,14,14,16,18]
-        text_offsets = [(10,14),(10,7),(10,0),(10,-7),(10,-14)]
+        # this is for labeling different sources in the FOV from parent catalog
+        text_offsets = [(0,0),(5,0),(5,0),(5,0),(5,0)]
         allgals = []
         for i,c in enumerate(cats):
             px,py = w.wcs_world2pix(c.ra.deg,c.dec.deg,1)
@@ -185,12 +195,15 @@ class cutouts:
                 y = py[keepflag]
 
                 for j in range(len(gnumbers)):
-                    plt.text(x[j]+text_offsets[j][0],y[j]+text_offsets[j][1],gnumbers[j],color=edgecolors[j],fontsize=8)
+                    # added image_size - y on 10/26/2020
+                    # figured this out in mksupersample but didn't propagate fix to this program
+                    plt.text(x[j]+text_offsets[0][0],image_size-y[j]+text_offsets[0][0],gnumbers[j],color=edgecolors[i],fontsize=8)
+                    print('%i, %i, x=%.1f, y=%.1f, gnumb=%i'%(i,j,x[j],y[j],gnumbers[j]))
         #print(allgals)
         allgals = gnumbers.tolist()
         return allgals
 
-    def plot_all(self,ra=None,dec=None,flag=None,names=None,startgal=None,ra2=None,dec2=None):
+    def plot_all(self,ra=None,dec=None,flag=None,names=None,startgal=None,ra2=None,dec2=None,image_size=60):
         plt.close('all')
 
         #print('LENGTH OF GALIDS IN FOV = ',len(self.galids_in_fov))
@@ -222,17 +235,17 @@ class cutouts:
             startindex = i*ngalperplot
             s1 = '%04d'%(startindex)
             n2 = startindex+49
-            if n2 > (ngal-1):
-                n2 = ngal-1
+            if (n2 > (ngal)):
+                n2 = ngal
                 endindex=n2
                 print('MAKING LAST PLOT')
             s2 = '%04d'%(n2)
             print(s1,s2)
 
-            self.densearray(ra=ra,dec=dec,names=names,outfile_string='All-Galaxies',agcflag=False,onlyflag=True,startindex = startindex, endindex=endindex,ra2=ra2,dec2=dec2,indices=indices )
+            self.densearray(ra=ra,dec=dec,names=names,outfile_string='All-Galaxies',agcflag=False,onlyflag=True,startindex = startindex, endindex=endindex,ra2=ra2,dec2=dec2,indices=indices,image_size=image_size )
 
-            plt.savefig('plots/gcutouts-'+s1+'-'+s2+'.pdf')
-            plt.savefig('plots/gcutouts-'+s1+'-'+s2+'.png')
+            plt.savefig('plots/gcutouts-'+s1+'-'+s2+'-'+str(image_size)+'.pdf')
+            plt.savefig('plots/gcutouts-'+s1+'-'+s2+'-'+str(image_size)+'.png')
 
 ###  CATALOG CLASS
 ###  This is the main class
@@ -270,6 +283,7 @@ class catalog(cutouts):
         ## entry in the table
         #self.check_new_a100(plotflag=True)
 
+        
         ## remove/merge bad/offset AGC sources
         self.clean_new_a100()
 
@@ -293,6 +307,8 @@ class catalog(cutouts):
 
         ## write the cleaned table
         self.write_clean()
+        
+        
     def fix_bad_HL_name(self):
         # replace HL name for UGC 09348
         # this has a HL name = NGC 5658, but NED says these are not the same galaxy
@@ -551,15 +567,16 @@ class catalog(cutouts):
         self.write_clean()
     def write_clean(self,cat=None):
         if cat is None:
-            self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+            self.clean_a100.write(output_catalog,format='fits',overwrite=True)
         else:
-            cat.write('vf_clean_sample.fits',format='fits',overwrite=True)
+            cat.write(output_catalog,format='fits',overwrite=True)
 
     def check_new_a100(self,plotflag=False):
                            
-        a100flag = ~self.clean_a100['HLflag'] & ~self.clean_a100['NSAflag'] & self.clean_a100['A100flag']        
+        a100flag = ~self.clean_a100['HLflag'] & ~self.clean_a100['NSAflag'] & self.clean_a100['A100flag']
+        print('inside check_new_a100: ',sum(a100flag))
         if plotflag:
-            self.plot_all(ra=self.clean_a100['RAdeg_Use'],dec=self.clean_a100['DECdeg_Use'],flag=a100flag,names=self.clean_a100['AGC'],ra2=self.clean_a100['RA'],dec2=self.clean_a100['DEC'])
+            self.plot_all(ra=self.clean_a100['RAdeg_Use'],dec=self.clean_a100['DECdeg_Use'],flag=a100flag,names=self.clean_a100['AGC'],ra2=self.clean_a100['RA'],dec2=self.clean_a100['DEC'],image_size=90)
         else:
             pass
         # results from visual inspection
@@ -569,10 +586,21 @@ class catalog(cutouts):
         a100flag = ~self.clean_a100['HLflag'] & ~self.clean_a100['NSAflag'] & self.clean_a100['A100flag']        
         keepflag = np.ones(len(self.clean_a100['RA']),'bool')
 
+        # decided to delete AGC 258535 after visual inspection - didn't match with SGA, nothing visible in legacy images, deleting from v1
+        
+        # AGC 223361 is crosslisted on NED with NSA 170605, PGC 039340, NED name is SDSS J121639.61+085004.4
+
+        # AGC 208736
+        
         #child = np.array([9206, 9207, 9209, 9213],'i')
         #parent = np.array([7423, 6575, 6638, 8949],'i')
         child = np.array([7423, 9207, 9209, 8952],'i')
         parent = np.array([9206, 6575, 6638, 9213],'i')
+
+        # for version 1 tables
+        child = np.array([7331, 9032, 9034, 8851],'i')
+        parent = np.array([9031, 6483, 6546, 9038],'i')
+        
         for i in range(len(child)):
             print('merging {} with {}'.format(child[i],parent[i]))
             self.merge_sources(parent[i],child[i],cat=self.clean_a100,HL=False,NSA=False,AGC=False,A100=True)
@@ -580,6 +608,10 @@ class catalog(cutouts):
         # for 8949, 9151 pair, AGC 208736, use AGC coordinates
         # delete rows corresponding to children
         keepflag[child] = np.zeros(len(child),'bool')
+        # remove AGC 258535        
+        delflag = self.clean_a100['AGC'] == 258535
+        keepflag[delflag] = False
+
         self.clean_a100 = self.clean_a100[keepflag]
     def read_ned(self):
         nedfile = homedir+'/research/Virgo/supersample/ned-noprolog-25mar2020.txt'
@@ -623,13 +655,11 @@ class catalog(cutouts):
         else:
             return cat
     def read_clean_a100(self):
-        self.clean_a100 = Table(fits.getdata('vf_clean_sample.fits'))
+        self.clean_a100 = Table(fits.getdata(output_catalog))
     
-
-
     def write_clean_cat(self):
-        self.cleancat.write('clean_sample.fits',format='fits',overwrite=True)
-        self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+        self.cleancat.write(output_clean,format='fits',overwrite=True)
+        self.clean_a100.write(output_catalog,format='fits',overwrite=True)
 
     def catalog_for_z0MGS(self):
         '''
@@ -640,7 +670,7 @@ class catalog(cutouts):
         '''
         search_radius = 10.*np.ones(len(self.cleancat)) # units are arcsec
         newtable = Table([self.cleancat['galnumber'],self.cleancat['RA'],self.cleancat['DEC'],search_radius],names=['galid','ra','dec','major'])
-        newtable.write('clean_sample.txt',format='ipac',overwrite=True)
+        newtable.write(ipac_table,format='ipac',overwrite=True)
         
 if __name__ == '__main__':
     c = catalog(kitchen_sink,byeye_classifications)

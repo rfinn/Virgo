@@ -6,11 +6,11 @@ GOAL:
 * read in excel sheets
 * combine into one csv/fits table
 * write out table
-
+  - called virgo_check_sample_by_eye.csv
 
 USAGE:
 * first download latest version of virgo_check_by_eye from google spreadsheet, save as excel file
-* move to ~/research/Virgo/supersample
+* move to ~/research/Virgo/google-tables
 
 mv ~/Downloads/virgo_check_sample_by_eye.xlsx virgo_check_sample_by_eye.finished.xlsx
 
@@ -21,7 +21,7 @@ python ~/github/Virgo/programs/collate_check_by_eye_results.py
 
 or from within ipython -pylab
 
-python ~/github/Virgo/programs/collate_check_by_eye_results.py
+run ~/github/Virgo/programs/collate_check_by_eye_results.py
 
 '''
 
@@ -33,8 +33,8 @@ import numpy as np
 
 homedir = os.getenv("HOME")
 # download spreadsheet from google, save as excel
-tablepath =  homedir+'/research/Virgo/supersample/'
-results_spreadsheet = tablepath+'virgo_check_sample_by_eye.finished.xlsx'
+tablepath =  homedir+'/research/Virgo/google-tables/'
+results_spreadsheet = tablepath+'virgo_check_sample_by_eye_v1.finished.xlsx'
 # read in excel sheets
 
 # combine into one csv file
