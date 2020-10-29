@@ -55,6 +55,10 @@ parser.add_argument('--version',dest = 'version', default='v1',help='version of 
 parser.add_argument('--evcc',dest = 'evcc', default=False,action='store_true',help='run for evcc catalog containing galaxies not in our original table')
         
 args = parser.parse_args()
+if args.evcc:
+    outfile_suffix = '_'+args.version+'_evcc'
+else:
+    outfile_suffix = '_'+args.version
 
 
 ###################################################################

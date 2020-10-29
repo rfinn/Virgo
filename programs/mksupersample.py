@@ -58,7 +58,9 @@ if args.evcc:
     outfile_suffix = '_'+args.version+'_evcc'
 else:
     outfile_suffix = '_'+args.version
-## CATALOG VERSION NUMBER
+
+
+    ## CATALOG VERSION NUMBER
 ## V1 = USE NEWER VERSION OF NSA (this is what we used for all of visual classifications)
 ## V2 = USE ORIGINAL VERSION OF NSA
 VERSION = 2

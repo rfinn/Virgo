@@ -24,7 +24,7 @@ import os
 import time
 
 from astropy.io import fits, ascii
-from astropy.table import Table, join, hstack, Column, MaskedColumn 
+from astropy.table import Table, join, hstack, vstack, Column, MaskedColumn 
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
@@ -36,6 +36,24 @@ homedir = os.getenv('HOME')
 sys.path.append(homedir+'/github/APPSS/')
 from join_catalogs import make_new_cats, join_cats
 
+
+###################################################################
+#### SET UP ARGPARSE
+###################################################################
+import argparse
+parser = argparse.ArgumentParser(description ='Create a crazy big catalog from HL, AGC, NSA')
+parser.add_argument('--version',dest = 'version', default='v1',help='version of tables. default is v1')
+parser.add_argument('--evcc',dest = 'evcc', default=False,action='store_true',help='run for evcc catalog containing galaxies not in our original table')
+        
+args = parser.parse_args()
+if args.evcc:
+    outfile_suffix = '_'+args.version+'_evcc'
+else:
+    outfile_suffix = '_'+args.version
+
+###################################################################
+#### SELECT VERSION OF NSA
+###################################################################
 ## CATALOG VERSION NUMBER
 ## V1 = USE NEWER VERSION OF NSA (this is what we used for all of visual classifications)
 ## V2 = USE ORIGINAL VERSION OF NSA
@@ -45,7 +63,9 @@ VERSION = 2
 if VERSION == 1:
     kitchen_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink.fits'
 elif VERSION == 2:
-    kitchen_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink_v2.fits'    
+    kitchen_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink_v2.fits'
+if args.evcc:
+    evcc_sink = '/home/rfinn/research/Virgo/supersample/smart_kitchen_sink_v2'+outfile_suffix+'.fits'
 byeye_classifications = '/home/rfinn/research/Virgo/google-tables/virgo_check_sample_by_eye_v1.csv'
 
 ### OUTPUT FILE
@@ -256,21 +276,31 @@ class catalog(cutouts):
         self.kitchen = Table(self.kitchen)
         self.byeye = ascii.read(byeye_classifications, delimiter=',')
         #self.byeye['parent'] = np.array(self.byeye['parent'],'i')
+
+        if args.evcc:
+            self.evcc = Table(fits.getdata(evcc_sink))
+            
     def runall(self):
         self.merge_class4()
         #self.remove_agc_only()
 
         self.fix_bad_HL_name()
 
-        
-        self.get_super_radec_vr_name()
-
         ## add a column that has the galid that corresponds to bye-eye cutouts
         self.add_byeye_galid()
         
+        if args.evcc:
+            self.add_byeye_galid_evcc()
         ## remove sources that were flagged in bye-eye classifications
         ## creates clean_kitchen table
         self.cut_catalogs_byeye()
+
+        
+        # stack with evcc
+        if args.evcc:
+            self.stack_cleankitchen_evcc() # hereafter, array is clean_kitchen
+
+        self.get_super_radec_vr_name()        
         
         ## match the catalog to the a100 catalog
         ## joined table in clean_a100
@@ -423,43 +453,46 @@ class catalog(cutouts):
         # same for DEC and recession velocity
         # for class 16 objects, RA and DEC are overwritten by by-eye values
 
-        self.ra = np.zeros(len(self.kitchen),'f')
-        self.dec = np.zeros(len(self.kitchen),'f')
-        self.vel = np.zeros(len(self.kitchen),'f')
-        self.objectname = np.zeros(len(self.kitchen),'|S26')        
-        flag1 = self.kitchen['HLflag']
-        flag2 = ~flag1 & self.kitchen['NSA0flag']
+        cat = self.clean_kitchen
+        self.ra = np.zeros(len(cat),'f')
+        self.dec = np.zeros(len(cat),'f')
+        self.vel = np.zeros(len(cat),'f')
+        self.objectname = np.zeros(len(cat),'|S26')        
+        flag1 = cat['HLflag']
+        flag2 = ~flag1 & cat['NSA0flag']
 
         # use NSA v0 if available
-        flag3 = ~flag1 & self.kitchen['NSAflag'] & ~self.kitchen['NSA0flag']
+        flag3 = ~flag1 & cat['NSAflag'] & ~cat['NSA0flag']
         # what about a100 sources???
         flags = [flag1, flag2, flag3]
         # for hyperleda sources
-        self.ra[flag1] = self.kitchen['al2000'][flag1]*15
-        self.dec[flag1] = self.kitchen['de2000'][flag1]
-        self.vel[flag1] = self.kitchen['v'][flag1]
-        self.objectname[flag1] = self.kitchen['objname'][flag1]        
+        self.ra[flag1] =  cat['al2000'][flag1]*15
+        self.dec[flag1] = cat['de2000'][flag1]
+        self.vel[flag1] = cat['v'][flag1]
+        self.objectname[flag1] = cat['objname'][flag1]        
 
         # for NSA v2 sources
-        self.ra[flag2] = self.kitchen['RA_2'][flag2]
-        self.dec[flag2] = self.kitchen['DEC_2'][flag2]
-        self.vel[flag2] = self.kitchen['Z'][flag2]*3.e5
+        self.ra[flag2] =  cat['RA_2'][flag2]
+        self.dec[flag2] = cat['DEC_2'][flag2]
+        self.vel[flag2] = cat['Z'][flag2]*3.e5
         matchindices = np.arange(len(flag2))[flag2]
         for i in matchindices:
-            self.objectname[i] = 'NSA '+str(self.kitchen['NSAID'][i])
+            self.objectname[i] = 'NSA '+str(cat['NSAID'][i])
         
-        self.ra[flag3] = self.kitchen['RA_NSA0'][flag3]
-        self.dec[flag3] = self.kitchen['DEC_NSA0'][flag3]
-        self.vel[flag3] = self.kitchen['Z_2'][flag3]*3.e5
+        self.ra[flag3] =  cat['RA_NSA0'][flag3]
+        self.dec[flag3] = cat['DEC_NSA0'][flag3]
+        self.vel[flag3] = cat['Z_2'][flag3]*3.e5
         matchindices = np.arange(len(flag3))[flag3]
         for i in matchindices:
-            self.objectname[i] = 'NSA '+str(self.kitchen['NSAID_2'][i])
+            self.objectname[i] = 'NSA '+str(cat['NSAID_2'][i])
 
         
         # for galaxies with class=16, use the RA and DEC in by-eye file
-        class16 = self.byeye['class'] == 16
-        self.ra[class16] = self.byeye['RA'][class16]
-        self.dec[class16] = self.byeye['DEC'][class16]
+
+        class16 = self.cleancat['class'] == 16
+        aindex = np.arange(len(self.cleancat))[class16]        
+        self.ra[aindex] = self.cleancat['RA'][class16]
+        self.dec[aindex] = self.cleancat['DEC'][class16]
         
         # if galaxy is class = 4, use the RA, DEC of parent
         # didn't implement this yet
@@ -469,12 +502,18 @@ class catalog(cutouts):
         c2 = Column(self.dec,'DECtemp')
         c3 = Column(self.vel,'vrtemp')
         c4 = Column(self.objectname,'superName')        
-        self.kitchen.add_columns([c1,c2,c3,c4])
+        self.clean_kitchen.add_columns([c1,c2,c3,c4])
         
     def add_byeye_galid(self):
         # append original galaxy id to new kitchen sink file
-        c = Column(self.byeye['galnumber'],name='galnumber')
+        galnumber = self.byeye['galnumber']
+        c = Column(galnumber,name='galnumber')
         self.kitchen.add_column(c)
+    def add_byeye_galid_evcc(self):
+        # append original galaxy id to new kitchen sink file
+        galnumber = -999*np.ones(len(self.evcc))
+        c = Column(galnumber,name='galnumber')
+        self.evcc.add_column(c)
 
     def cut_catalogs_byeye(self):
         self.cutflag = (self.byeye['class'] == 2) | (self.byeye['class'] == 4) | (self.byeye['class'] == 0)
@@ -491,6 +530,8 @@ class catalog(cutouts):
         n = self.cleancat.colnames
         self.cleancat.remove_column(n[0])
         self.clean_kitchen = self.kitchen[~self.cutflag]
+    def stack_cleankitchen_evcc(self):
+        self.clean_kitchen = vstack([self.clean_kitchen,self.evcc])
     def remove_agc_columns(self):
         pass
     def match_a100(self):
@@ -602,7 +643,11 @@ class catalog(cutouts):
         # for version 1 tables
         child = np.array([7331, 9032, 9034, 8851],'i')
         parent = np.array([9031, 6483, 6546, 9038],'i')
-        
+
+        # for version 1 tables, after adding evcc galaxies
+        child = np.array([7331, 9149, 9151, 8851],'i')
+        parent = np.array([9148, 6483, 6546, 9155],'i')
+
         for i in range(len(child)):
             print('merging {} with {}'.format(child[i],parent[i]))
             self.merge_sources(parent[i],child[i],cat=self.clean_a100,HL=False,NSA=False,AGC=False,A100=True)
