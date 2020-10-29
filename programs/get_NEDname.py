@@ -29,6 +29,20 @@ from matplotlib import pyplot as plt
 
 from virgoCommon import *
 
+
+import argparse
+parser = argparse.ArgumentParser(description ='Create a crazy big catalog from HL, AGC, NSA')
+parser.add_argument('--version',dest = 'version', default='v1',help='version of tables. default is v1')
+parser.add_argument('--evcc',dest = 'evcc', default=False,action='store_true',help='run for evcc catalog containing galaxies not in our original table')
+        
+args = parser.parse_args()
+
+if args.evcc:
+    outfile_suffix = '_'+args.version+'_evcc'
+else:
+    outfile_suffix = '_'+args.version
+
+
 class getNED:
     def __init__(self,clean_catalog):
         self.clean_a100 = Table(fits.getdata(clean_catalog))
@@ -37,15 +51,21 @@ class getNED:
         # skip for now until other parts are working
         # if file with NED names already exists from a previous query,
         # read the file
-        if os.path.exists('ned_names.fits'):
-            print('found file ned_names.fits.\nUsing this instead of querying NED')
+        if args.evcc:
+            self.nedfile = 'ned_names'+outfile_suffix+'.fits'
+        else:
+            self.nedfile = 'ned_names'+outfile_suffix+'.fits'
+        if os.path.exists(self.nedfile):
+            print('found file '+self.nedfile+'\nUsing this instead of querying NED')
             self.get_NEDname_from_file()
+            self.write_clean()            
         else:
             #sys.exit() # for testing purposes
+            print('querying NED names from database')
             self.get_NEDname_query()
     def get_NEDname_from_file(self):
         
-        nednames = fits.getdata('/home/rfinn/research/Virgo/supersample/ned_names_v2.fits')
+        nednames = fits.getdata(self.nedfile)#'/home/rfinn/research/Virgo/supersample/ned_names_v2.fits')
         self.nednames = nednames
         # do a left join of the input catalog and nednames
         # using column nednames.NEDinput and clean_a100.superName
@@ -163,7 +183,7 @@ class getNED:
 
     def write_NEDnames(self):
         nedtable = Table([self.clean_a100['NEDinput'],self.clean_a100['NEDra'],self.clean_a100['NEDdec'],self.clean_a100['NEDname']])
-        nedtable.write('ned_names_v2.fits',format='fits',overwrite=True)            
+        nedtable.write(self.nedfile,format='fits',overwrite=True)            
 
             
     def get_NEDname_query(self,startindex=0):
@@ -309,6 +329,8 @@ class getNED:
                 NEDra.append(-999)
                 NEDdec.append(-999)
                 NEDinput.append(-999)
+            else:
+                print(i,'found NED name')
 
         # ANOTHER CHECK TO ADD
         # find any remaining duplicates
@@ -326,139 +348,12 @@ class getNED:
         try:
             #nedtable = Table([c1,c2,c3,c4]).write('ned_names.tbl',format='ipac',overwrite=True)
 
-            nedtable = Table([c1,c2,c3,c4]).write('ned_names.fits',format='fits',overwrite=True)            
+            self.nedtable = Table([c1,c2,c3,c4]).write('ned_names'+outfile_suffix+'.fits',format='fits',overwrite=True)            
         except:
             print("couldn't write ned names")
             
         self.clean_a100.add_columns([c1,c2,c3,c4])
-        self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
-    def get_NEDname_orig(self):
-        # matching to catalog I downloaded on March 25, 2020
-        # read in NED file
-        '''
-        Search by by Parameters
-        decmin = -35  ** this is different from first download
-        decmax = 75
-        ramax = 280.
-        ramin = 100.
-        vmax = 3300. (units km/s)
-        vmin = 500.
-        object = Galaxy
-        
-        RA has to be in hours
-        ramin = 6.6666666667
-        ramax = 18.666666667
-
-        output = text, ascii, bar separated
-        velocity lower limit = -99
-
-        Had to run this on virgo b/c I got locked out of NED.
-        can't access the website from any machine in my house!
-
-        Dowloaded text file - there was garbage at top of file (unnecessary info) that I deleted.
-
-        Saved as
-
-        /Users/rfinn/github/Virgo/tables/ned-noprolog-25mar2020.txt
-        '''
-        
-        self.read_ned()
-        self.cull_ned()
-
-        # create empty array of names
-        NEDid = np.zeros(len(self.clean_a100['RA']),dtype='|S25')
-
-        
-        # set up SkyCoord for clean cat and NED
-        n = SkyCoord(self.ned['RA'],self.ned['DEC'],frame='icrs',unit='deg')
-        c = SkyCoord(self.clean_a100['RA'],self.clean_a100['DEC'],frame='icrs',unit='deg')        
-        # find matches
-        idn, d2d, d3d = c.match_to_catalog_sky(n) # matches NED to VF catalog
-        #print(d2d)
-
-        nedmatchflag = (d2d < 10.*u.arcsec) # keep matches within 15arcsec
-
-        indices = np.arange(len(idn))
-        #print(indices[0:50])
-        #print(len(indices),len(NEDid),len(idn))
-        #NEDid[indices[nedmatchflag]] = self.ned['Object Name'][idn[nedmatchflag]]
-        # transpose matched NED names into clean_a100
-        
-        # for each galaxy in cleaned catalog, find ned sources within 10 arcsec
-        self.NEDmultiples = np.zeros(len(self.clean_a100),'bool')
-
-        multiples = 0
-        '''
-        procedure:
-        - calc offset between VF galaxy and NED galaxies
-        - keep those w/in 15" offset
-        - if only one source, assign VF galaxy this NED id
-        - if multiples
-          - try to match the HL name to the matching NED sources, if HL name exists
-            - set multiple flag to False if match is found
-          - look for source with name starting with NGC, UGC, IC.  use this if found
-          - otherwise set to first NED source in the list
-        '''
-        
-        for i in range(len(self.clean_a100)):
-            d = np.sqrt((self.clean_a100['RA'][i] - self.ned['RA'])**2 \
-                        + (self.clean_a100['DEC'][i] - self.ned['DEC'])**2)
-            matchflag = d < 15./3600
-            if np.sum(matchflag) > 1:
-                self.NEDmultiples[i] = True
-                #if multiples < 30:
-                #    print('number of matches = ',np.sum(matchflag),multiples)
-                #    print(self.ned['Object Name', 'Redshift Flag','Redshift Points'][matchflag],'\nHLname = ',self.clean_a100['objname'][i],'\n')
-                multiples += 1
-
-                
-                # if we get multiple matches, then look at names and find one with
-                # closest match to objname if it exist.
-                indexmultiples = np.arange(len(self.ned))[matchflag]
-                if len(self.clean_a100['objname'][i]) > 1: # has a HL name
-                    n1 = self.clean_a100['objname'][i] # HL name
-                    foundmatch = False
-                    # look for match with HL name
-                    for j in indexmultiples:
-                        n2 = self.ned['Object Name'][j] # NED name
-                        if (n2[0:2] == n1[0:2]) & (n2[-2:] == n1[-2:]):
-                            # start and end of names match
-                            # so this is the correct NED name
-                            NEDid[i] = n2
-                            foundmatch = True
-                            self.NEDmultiples[i] = False
-                            print('found HL name: ',n1,n2)
-                            break
-                if (foundmatch == False): # continue looking for the best match
-                    # if not, look for more common names like NGC, UGC, IC
-                    for j in indexmultiples:
-                        if (self.ned['Object Name'][j].startswith('NGC')) | \
-                           (self.ned['Object Name'][j].startswith('UGC')) | \
-                           (self.ned['Object Name'][j].startswith('IC')):
-                            # NED name
-                            # start and end of names match
-                            NEDid[i] = self.ned['Object Name'][j]
-                            foundmatch = True
-                            print('found a nice name: ',self.clean_a100['objname'][i],NEDid[i])
-                            break
-                if (foundmatch == False):
-                    # assign closest match
-                    # set nedquery flag to true, and query these objects individually
-                    closest_match = np.arange(len(self.clean_a100))[np.where(d == min(d))[0][0]]
-                    NEDid[i] = self.ned['Object Name'][closest_match]
-                    print('taking closest match',self.clean_a100['objname'][i],NEDid[i])
-                    # could also look at number of redshifts
-            elif np.sum(matchflag) == 1:
-                NEDid[i] = self.ned['Object Name'][np.where(matchflag)[0][0]]
-                
-                        
-        print('number with multiple NED matches = ',multiples)
-        print('number of NED matches = {}/{}'.format(sum(nedmatchflag),len(nedmatchflag)))
-        
-        c1 = Column(NEDid,name='NEDname')
-        c2 = Column(self.NEDmultiples,name='NEDmultiples')# check these by hand?
-        self.clean_a100.add_columns([c1,c2,c3])
-        self.clean_a100.write('vf_clean_sample.fits',format='fits',overwrite=True)
+        self.clean_a100.write('vf_clean_sample_wNEDname'+outfile_suffix+'.fits',format='fits',overwrite=True)
     def get_GL_NEDname(self):
         # for galaxies with no NED match, use GL's catalog to match
         # HL name to NEDname (he did a position match for those that didn't return a NED name
@@ -470,7 +365,7 @@ class getNED:
     def write_clean(self):
         #self.newtab.write('vf_clean_sample_wNEDname.fits',format='fits',overwrite=True)
         # updating for v1
-        self.newtab.write('vf_clean_sample_wNEDname_v1.fits',format='fits',overwrite=True)
+        self.newtab.write('vf_clean_sample_wNEDname'+outfile_suffix+'.fits',format='fits',overwrite=True)
 
 
 if __name__ == '__main__':
@@ -479,9 +374,12 @@ if __name__ == '__main__':
     #### INPUT FILES
     ###################################################################
     #n = getNED('vf_clean_sample.fits') # for v0
-    n = getNED('vf_clean_sample_v1.fits') # for v1    
+    if args.evcc:
+        n = getNED('smart_kitchen_sink_v2_v1_evcc.fits') # for v1
+    else:
+        n = getNED('vf_clean_sample_v1.fits') # for v1    
     n.get_NEDname()
     #n.query_unmatched()
     #n.write_NEDnames()
-    n.write_clean()
+    
     

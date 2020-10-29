@@ -2,7 +2,7 @@
 
 '''
 GOAL:
-- create a super list of all galaxies in
+- create a super list of all galaxies in hyperleda, agc, NSAv1, NSAv0
 
 USAGE:
 - example will print out when you run
@@ -47,16 +47,17 @@ sys.path.append(homedir+'/github/APPSS/')
 from join_catalogs import make_new_cats, join_cats
 
 
-## import argparse
-
-## parser = argparse.ArgumentParser(description ='Match the Halpha observations with Virgo NSA catalog')
-
-## parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
-## parser.add_argument('--write-fits',dest = 'writefits', action='store_true',help='write out fits version of observing summary file?')
-## parser.add_argument('--input',dest = 'input', default='Observing-Summary-Halpha-good-latest.csv',help='write out fits version of observing summary file?')
+import argparse
+parser = argparse.ArgumentParser(description ='Create a crazy big catalog from HL, AGC, NSA')
+parser.add_argument('--version',dest = 'version', default='v1',help='version of tables. default is v1')
+parser.add_argument('--evcc',dest = 'evcc', default=False,action='store_true',help='run for evcc catalog containing galaxies not in our original table')
         
-## args = parser.parse_args()
+args = parser.parse_args()
 
+if args.evcc:
+    outfile_suffix = '_'+args.version+'_evcc'
+else:
+    outfile_suffix = '_'+args.version
 ## CATALOG VERSION NUMBER
 ## V1 = USE NEWER VERSION OF NSA (this is what we used for all of visual classifications)
 ## V2 = USE ORIGINAL VERSION OF NSA
@@ -255,34 +256,18 @@ class sample:
         self.max_match_offset = max_match_offset
 
         ################################################################
-        ## READ IN HYPERLEDA CATALO
+        ## READ IN HYPERLEDA CATALOG
         ################################################################
-        hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-09dec2019-full.csv'
-        hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-05Feb20.csv'
-        hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-24Feb20.csv'        
-        self.hl = ascii.read(hlfile)
-        self.hl = Table(self.hl)
-        self.cull_hl()
-        c1 = Column(self.hl['al2000']*15,name='RAdeg')
-        self.hl.add_column(c1)
-        
-        self.hl.write('temp.fits',format='fits',overwrite=True)
-
-        self.hl = fits.getdata('temp.fits')
-
-        os.remove('temp.fits')
-
-        ########################################################################
-        ## GET VR<500 GALAXIES WITH REDSHIFT-INDEPENDENT DISTANCES > 500KM/S/H0
-        ########################################################################
-        hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-24Feb20.csv'        
-
-        hl_no_vmin = Table(ascii.read(hlfile))
-        # read in benedetta's file on missing galaxies
-
-        # match missing galaxies to full HL file
-        
-        self.cull_hl()
+        if not(args.evcc):
+            hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-09dec2019-full.csv'
+            hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-05Feb20.csv'
+            hlfile = homedir+'/github/Virgo/tables/hyperleda-finn-24Feb20.csv'        
+            self.hl = ascii.read(hlfile)
+            self.hl = Table(self.hl)
+            self.cull_hl()
+        else:
+            hlfile = homedir+'/research/Virgo/ancil-tables/Steer_EVCC_toadd_HL_cols.fits'
+            self.hl = Table.read(hlfile)
         c1 = Column(self.hl['al2000']*15,name='RAdeg')
         self.hl.add_column(c1)
         
@@ -400,6 +385,12 @@ class sample:
         self.nsa2 = fits.getdata(nfile)
         self.cull_nsa2()
         #self.nsa = Table(self.nsa)
+
+
+        ########################################################################
+        ## SET UP FLAGS FOR MATCHING BETWEEN CATALOGS
+        ########################################################################
+        
         
         # flags to track nsa matches to HL and AGC
         self.hl_2_nsa_matchflag = np.zeros(len(self.hl['al2000']),'bool')
@@ -930,17 +921,25 @@ class sample:
             for c in colnames:
                 joined_table3.rename_column(c,c+'_NSA0')
             if VERSION == 1:
-                outfile = 'smart_kitchen_sink.fits'
+                outfile = 'smart_kitchen_sink'+outfile_suffix+'.fits'
             elif VERSION == 2:
-                outfile = 'smart_kitchen_sink_v2.fits'
-                joined_table3.write(outfile,format='fits',overwrite=True)
+                outfile = 'smart_kitchen_sink_v2'+outfile_suffix+'.fits'
+                if args.evcc:
+                    flag = joined_table3['HLflag']
+                    joined_table3[flag].write(outfile,format='fits',overwrite=True)
+                else:
+                    joined_table3.write(outfile,format='fits',overwrite=True)
                 self.table3 = joined_table3
         else:
             if VERSION == 1:
-                outfile = 'smart_kitchen_sink.fits'
+                outfile = 'smart_kitchen_sink'+outfile_suffix+'.fits'
             elif VERSION == 2:
-                outfile = 'smart_kitchen_sink_v2.fits'
-                joined_table2.write(outfile,format='fits',overwrite=True)
+                outfile = 'smart_kitchen_sink_v2'+outfile_suffix+'.fits'
+                if args.evcc:
+                    flag = joined_table2['HLflag']
+                    joined_table2[flag].write(outfile,format='fits',overwrite=True)
+                else:
+                    joined_table2.write(outfile,format='fits',overwrite=True)
                 self.table2 = joined_table2
             
         #self.check_duplicates_t1()

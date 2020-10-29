@@ -31,7 +31,7 @@ import time
 import argparse
 
 from astropy.io import fits
-from astropy.table import Table, QTable, join, hstack, Column, MaskedColumn
+from astropy.table import Table, QTable, join, hstack, vstack, Column, MaskedColumn
 from astropy.coordinates import SkyCoord
 from astropy import constants
 from astropy import units as u
@@ -46,6 +46,20 @@ homedir = os.getenv("HOME")
 
 from virgoCommon import *
 
+###################################################################
+#### SET UP ARGPARSE
+###################################################################
+import argparse
+parser = argparse.ArgumentParser(description ='Create a crazy big catalog from HL, AGC, NSA')
+parser.add_argument('--version',dest = 'version', default='v1',help='version of tables. default is v1')
+parser.add_argument('--evcc',dest = 'evcc', default=False,action='store_true',help='run for evcc catalog containing galaxies not in our original table')
+        
+args = parser.parse_args()
+
+
+###################################################################
+#### CONSTANTS
+###################################################################
 sdsspixelscale=0.396127#conversion for isophotal radii from pixels to arcseconds
 H0 = 70.
 h = H0/100 #H0/100
@@ -53,12 +67,13 @@ h = H0/100 #H0/100
 ###################################################################
 #### SET VERSION NUMBER
 ###################################################################
-version = 'v1'
+version = args.version
 
 ###################################################################
 #### INPUT FILES
 ###################################################################
 masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'.fits'
+evccfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'_evcc.fits'
 
 ###################################################################
 #### SET UP DIRECTORIES
@@ -864,4 +879,4 @@ class catalog:
         pass
 if __name__ == '__main__':
     c = catalog(masterfile)
-    c.runall()
+    #c.runall()
