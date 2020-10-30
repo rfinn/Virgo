@@ -48,17 +48,17 @@ from virgoCommon import *
 
 ###################################################################
 #### SET UP ARGPARSE
+#### ADD OPTION FOR NORTH ONLY WHEN MAKING TABLES
+#### (NO GUARANTEE THAT THIS WORKS FOR THE FULL TABLES ANYMORE!)
 ###################################################################
-import argparse
-parser = argparse.ArgumentParser(description ='Create a crazy big catalog from HL, AGC, NSA')
+
+parser = argparse.ArgumentParser(description ='write out subtables for virgo filaments catalog')
 parser.add_argument('--version',dest = 'version', default='v1',help='version of tables. default is v1')
-parser.add_argument('--evcc',dest = 'evcc', default=False,action='store_true',help='run for evcc catalog containing galaxies not in our original table')
-        
+#parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
+parser.add_argument('--north',dest = 'north', action='store_true',help='keep DEC > -1 galaxies')
+
 args = parser.parse_args()
-if args.evcc:
-    outfile_suffix = '_'+args.version+'_evcc'
-else:
-    outfile_suffix = '_'+args.version
+outfile_suffix = '_'+args.version
 
 
 ###################################################################
@@ -77,7 +77,7 @@ version = args.version
 #### INPUT FILES
 ###################################################################
 masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'.fits'
-evccfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'_evcc.fits'
+masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'_evcc.fits'
 
 ###################################################################
 #### SET UP DIRECTORIES
@@ -86,12 +86,6 @@ outdir = homedir+'/research/Virgo/tables/'+version+'/'
 file_root = 'vf_'+version+'_'
 
 
-#### ADD OPTION FOR NORTH ONLY WHEN MAKING TABLES
-#### (NO GUARANTEE THAT THIS WORKS FOR THE FULL TABLES ANYMORE!)
-parser = argparse.ArgumentParser(description ='write out subtables for virgo filaments catalog')
-#parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
-parser.add_argument('--north',dest = 'north', action='store_true',help='keep DEC > -1 galaxies')
-args = parser.parse_args()
 
 
 # keep DEC > -1 galaxies only
@@ -132,6 +126,7 @@ class catalog:
 
         self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],frame='icrs',unit='deg')
     def get_unwise(self):
+        
         self.unwise = Table.read(outdir+'vf_north_v0_main_unwise.fits')
         self.unwiseFlag = (self.unwise['x'] > 0)
     def keep_north(self, cat=None):
@@ -153,7 +148,7 @@ class catalog:
         self.get_HIdef()
         self.get_z0MGS_flag()        
         self.main_table()
-        self.print_stats()
+
         self.hyperleda_table()
         self.nsa_table()
         self.nsa_v0_table()
@@ -164,6 +159,7 @@ class catalog:
 
         self.get_size_for_JM()
         self.ned_table() # NED input, ra, dec, and NEDname
+        self.print_stats()        
         self.get_unwise()
 
         pass
@@ -173,11 +169,13 @@ class catalog:
         print('Number with A100 data = %i (%.3f)'%(sum(self.cat['A100flag']),sum(self.cat['A100flag'])/len(self.cat['A100flag'])))
         print('Number with z0MGS matches = %i (%.3f)'%(sum(self.z0mgsFlag),sum(self.z0mgsFlag)/len(self.z0mgsFlag)))
         print('Number with steer17 matches = %i (%.3f)'%(sum(self.steerFlag),sum(self.steerFlag)/len(self.steerFlag)))
-        f = self.unwiseFlag
-        print('Number with unwise matches = %i (%.3f)'%(sum(f),sum(f)/len(f)))        
-        f = self.unwiseFlag & (self.cat['NSAflag'] | self.cat['NSA0flag'])
-        print("Number with unWISE and NSA = %i (%.3f)"%(sum(f),sum(f)/len(f)))
-
+        try:
+            f = self.unwiseFlag
+            print('Number with unwise matches = %i (%.3f)'%(sum(f),sum(f)/len(f)))        
+            f = self.unwiseFlag & (self.cat['NSAflag'] | self.cat['NSA0flag'])
+            print("Number with unWISE and NSA = %i (%.3f)"%(sum(f),sum(f)/len(f)))
+        except AttributeError:
+            pass
         print("CO SOURCES")
         nco = sum(self.coflag)
         f = self.coflag & self.z0mgsFlag
@@ -186,8 +184,11 @@ class catalog:
         print("\tNumber of CO sources in Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
         f = self.coflag & self.z0mgsFlag & self.steerFlag
         print("\tNumber of CO sources in z0MGS+Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
-        f = self.coflag & self.unwiseFlag & (self.cat['NSAflag'] | self.cat['NSA0flag'])
-        print("\tNumber of CO sources with unWISE and NSA = %i (%.2f)"%(sum(f),sum(f)/nco))
+        try:
+            f = self.coflag & self.unwiseFlag & (self.cat['NSAflag'] | self.cat['NSA0flag'])
+            print("\tNumber of CO sources with unWISE and NSA = %i (%.2f)"%(sum(f),sum(f)/nco))
+        except AttributeError:
+            print('FYI: no unwise flag')
 
 
     def catalog_for_z0MGS(self):
@@ -252,7 +253,7 @@ class catalog:
         print('adjusting radius for ',sum(fixrad_flag),' galaxies based on legacy images')
         
         vfsheet = vfsheet[fixrad_flag]
-
+        print('number of galaxies with updated values of radius = ',len(vfsheet))
         # FIND MATCHING GALAXY BASED ON objname or NSAID or NSAIDV0
         catindex = np.arange(len(self.cat))
         for i in range(len(vfsheet)):
@@ -285,10 +286,18 @@ class catalog:
                         if sum(gmatch) == 1:
                             matchflag = True
                             matchindex = catindex[gmatch]
+
                     except TypeError: # will do here if NSAIDV0 name is zero
+                        # try matching by RA and DEC
+                        d = np.sqrt((self.cat['RA']-vfsheet['RA'][i])**2+(self.cat['DEC']-vfsheet['DEC'][i])**2)
+                        if min(d) < 3./3600.: # require match to be within 3 arcsec
+                            gmatch = d == min(d)
+                            matchindex = catindex[gmatch]
+                            matchflag=True
                         pass
             if matchflag:
                 self.radius[matchindex] = newradius
+                #print('matched a galaxy to update radius!')
             else:
                 print('could not match galaxy ')
                 print(vfsheet[i])
@@ -472,8 +481,12 @@ class catalog:
         c1b = Column(self.hatable['HAobsflag'],name='HAobsflag')
         c2 = Column(self.z0mgsFlag,name='Z0MGSflag')
         c3 = Column(self.steerFlag,name='Steerflag')
-        c4 = Column(self.unwiseFlag,name='unwiseflag')        
-        self.maintable.add_columns([c1,c1a,c1b,c2,c3,c4])
+
+        # removing unwise for now - need to update code
+        #c4 = Column(self.unwiseFlag,name='unwiseflag')        
+        #self.maintable.add_columns([c1,c1a,c1b,c2,c3,c4])
+
+        self.maintable.add_columns([c1,c1a,c1b,c2,c3])
         
         nedname=[]
         for i in range(len(self.maintable)):
@@ -501,6 +514,8 @@ class catalog:
         # to use when uploading tables to the legacy imager viewer
         #
         # we will use these to inspect our galaxy coordinates
+
+        '''
         nlines = 500
         ntotal = len(self.maintable)
         ntables = (ntotal/nlines)
@@ -515,7 +530,7 @@ class catalog:
                 vfid_max = ntotal
             fname = fileroot+'%04d_%04d.fits'%(vfid_min,vfid_max-1)
             self.maintable[vfid_min:vfid_max].write(fname,format='fits',overwrite=True)
-
+        '''
 
 
     def get_CO(self,match_by_coords=False,match_by_name=True):
@@ -524,7 +539,12 @@ class catalog:
         cofile = homedir+'/github/Virgo/tables/CO-MasterFile-2018Feb16.fits'
         # this file has a new column with the exact NED names
         # can use this to match to mastertable NEDname column
-        cofile = homedir+'/research/Virgo/tables/CO-MasterFile-2018Feb16-fixedNEDnames.fits'        
+        cofile = homedir+'/research/Virgo/tables/CO-MasterFile-2018Feb16-fixedNEDnames.fits'
+        ned_column = 'NED_name'
+        # CO file 245 sources
+        # from June 2019
+        cofile = homedir+'/research/Virgo/tables/All-virgo_Master_file_19Jun2019.fits'
+        ned_column='NEDname'
         self.co = Table(fits.getdata(cofile))
 
         # replace NED_name of SHOC206b with NED name for SHOC 206a
@@ -532,9 +552,9 @@ class catalog:
         # set to MCG +08-16-005;
         
         # fix case for UGC09348, until we run the full query again...
-        flag = self.co['NED_name'] == 'SHOC206b'
+        flag = self.co[ned_column] == 'SHOC206b'
         if sum(flag > 0):
-            self.co['NEDname'][flag] = 'MCG +08-16-005'
+            self.co[ned_column][flag] = 'MCG +08-16-005'
         
         
 
@@ -573,7 +593,7 @@ class catalog:
             try:
                 self.comatchflag = ~self.testtable['VFID'].mask
                 print('CO sources with no match in mastertable:')
-                print(self.testtable['NEDname','NED_name'][~self.comatchflag])
+                print(self.testtable['NEDname','source_name'][~self.comatchflag])
                 ## plot the positions of CO galaxies that weren't matched to mastertable
                 plt.figure()
                 plt.plot(self.testtable['RA_1'][~self.comatchflag],self.testtable['DEC_1'][~self.comatchflag],'bo')
@@ -587,7 +607,7 @@ class catalog:
 
         ## look for CO galaxies that were matched to multiple galaxies in the
         ## mastertable
-        unique, counts = duplicates(self.cotable,'NED_name')
+        unique, counts = duplicates(self.cotable,'NEDname')
         print("CO sources that are matched to multiple galaxies in the mastertable:")
         print(unique[counts>1])
         
@@ -623,7 +643,7 @@ class catalog:
 
         self.hatable = myjoinleft(self.maintable,self.ha,keys='NSAIDV0')
         print('Halpha table lengths')
-        print(len(self.maintable),len(self.ha),len(self.hatable))        
+        #print(len(self.maintable),len(self.ha),len(self.hatable))        
         self.haflag = ~self.hatable['Date Obs'].mask
         self.hatable.add_column(Column(self.haflag),name='haflag')
         self.hatable.write(outdir+file_root+'ha.fits',format='fits',overwrite=True)
@@ -652,7 +672,7 @@ class catalog:
                 'v17p12','v18p54','v20p35','v20p35','v18p54','v17p12']
         for i in range(len(VFID)):
             idel = np.where((self.ha['VFID'] == VFID[i]) & (self.ha['POINTING'] == PID[i]))
-            print(idel)
+            #print(idel)
             self.ha.remove_rows(idel)
         print('number of lines in ha file after deleting rows = ',len(self.ha))
 
@@ -735,8 +755,11 @@ class catalog:
     def get_z0MGS_flag(self,mgsfile=None):
         # get z0MGS
         #cat = Table.read('/home/rfinn/research/Virgo/tables/vf-z0MGS.tbl',format='ipac')
-        cat = Table.read('/home/rfinn/research/Virgo/tables/vf_z0mgs_30arcsec_051920.tbl',format='ipac')
-        cat = Table.read('/home/rfinn/research/Virgo/tables/vf_v1_z0mgs_10arcsec_102620.tbl',format='ipac')
+        #cat = Table.read('/home/rfinn/research/Virgo/tables/vf_z0mgs_30arcsec_051920.tbl',format='ipac')
+        cat = Table.read('/home/rfinn/research/Virgo/tables/vf_v1_z0mgs_10arcsec_102920_9153gal.tbl',format='ipac')
+        #cat = Table.read('/home/rfinn/research/Virgo/tables/vf_v1_z0mgs_30arcsec_102820.tbl',format='ipac')
+        print('number of lines in z0MGS cat = ',len(cat))
+        print('length of keepnorth_flag = ',len(self.keepnorth_flag))
         # cut on declination
         if NORTH_ONLY:
             cat = cat[self.keepnorth_flag]
@@ -827,9 +850,17 @@ class catalog:
     def ned_table(self):
         '''write out columns from ned query'''
 
+
+        # make a column with NEDname, but no spaces in the name
+        NEDname_nospace = []
+        for i in range(len(self.cat)):
+            NEDname_nospace.append(self.cat['NEDname'][i].replace(' ',''))
+        
         colnames = ['NEDinput','NEDra','NEDdec','NEDname']
         subtable = Table(self.cat[colnames])
         newtable = hstack([self.basictable,subtable])
+        c1 = Column(NEDname_nospace,name='NEDname_nospace')
+        newtable.add_column(c1)
         newtable.write(outdir+file_root+'nedquery.fits',format='fits',overwrite=True)
 
     def write_table(self,colnames,outfile,format=None,names=None):

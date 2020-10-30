@@ -19,7 +19,7 @@ import numpy as np
 import time
 
 from astropy.io import fits, ascii
-from astropy.table import Table, join, hstack, Column, MaskedColumn 
+from astropy.table import Table, join, hstack, vstack, Column, MaskedColumn 
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
@@ -51,10 +51,8 @@ class getNED:
         # skip for now until other parts are working
         # if file with NED names already exists from a previous query,
         # read the file
-        if args.evcc:
-            self.nedfile = 'ned_names'+outfile_suffix+'.fits'
-        else:
-            self.nedfile = 'ned_names'+outfile_suffix+'.fits'
+
+        self.nedfile = 'ned_names'+outfile_suffix+'.fits'
         if os.path.exists(self.nedfile):
             print('found file '+self.nedfile+'\nUsing this instead of querying NED')
             self.get_NEDname_from_file()
@@ -65,7 +63,7 @@ class getNED:
             self.get_NEDname_query()
     def get_NEDname_from_file(self):
         
-        nednames = fits.getdata(self.nedfile)#'/home/rfinn/research/Virgo/supersample/ned_names_v2.fits')
+        nednames = Table(fits.getdata(self.nedfile))
         self.nednames = nednames
         # do a left join of the input catalog and nednames
         # using column nednames.NEDinput and clean_a100.superName
@@ -77,15 +75,19 @@ class getNED:
         # the following command gets table back into its original order
         self.newtab = myjoinleft(self.clean_a100,nednames,keys='NEDinput')
 
+        
         # fix case for UGC09348, until we run the full query again...
         # this is where HL has the wrong coordinates/association
         flag = self.newtab['NEDinput'] == 'UGC09348'
         if (sum(flag) > 0) & self.newtab['NEDra'].mask[flag]: # hasn't been matched
             # assign ned RA and DEc from NGC 5658
             flag2 = nednames['NEDname']=='NGC 5658'
-            self.newtab['NEDra'][flag] = nednames['NEDra'][flag2]
-            self.newtab['NEDdec'][flag] = nednames['NEDdec'][flag2]
-            self.newtab['NEDname'][flag] = 'UGC 09348'
+            if sum(flag2) > 0:
+                self.newtab['NEDra'][flag] = nednames['NEDra'][flag2]
+                self.newtab['NEDdec'][flag] = nednames['NEDdec'][flag2]
+                self.newtab['NEDname'][flag] = 'UGC 09348'
+            else:
+                print('ruh roh')
         # fix case for PGC2586382 , until we run the full query again...
         # NED doesn't recognize 'PGC2586382', but it does know LEDA 2586382
         # it will also find the NSA ID, so I need to not just use the superName
@@ -121,6 +123,7 @@ class getNED:
         # entries with NEDinput = 'byposition'
         
         no_match_by_name = self.newtab['NEDname'].mask
+        print(no_match_by_name)
         pos_match_indices = np.arange(len(self.clean_a100))[no_match_by_name]
 
         # shorten NED catalog to those that were matched by location
@@ -374,10 +377,7 @@ if __name__ == '__main__':
     #### INPUT FILES
     ###################################################################
     #n = getNED('vf_clean_sample.fits') # for v0
-    if args.evcc:
-        n = getNED('smart_kitchen_sink_v2_v1_evcc.fits') # for v1
-    else:
-        n = getNED('vf_clean_sample_v1.fits') # for v1    
+    n = getNED('vf_clean_sample_v1.fits') # for v1    
     n.get_NEDname()
     #n.query_unmatched()
     #n.write_NEDnames()

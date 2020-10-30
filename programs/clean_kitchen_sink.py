@@ -43,7 +43,7 @@ from join_catalogs import make_new_cats, join_cats
 import argparse
 parser = argparse.ArgumentParser(description ='Create a crazy big catalog from HL, AGC, NSA')
 parser.add_argument('--version',dest = 'version', default='v1',help='version of tables. default is v1')
-parser.add_argument('--evcc',dest = 'evcc', default=False,action='store_true',help='run for evcc catalog containing galaxies not in our original table')
+parser.add_argument('--evcc',dest = 'evcc', default=False,action='store_true',help='include evcc catalog containing galaxies not in our original table')
         
 args = parser.parse_args()
 if args.evcc:
@@ -69,9 +69,9 @@ if args.evcc:
 byeye_classifications = '/home/rfinn/research/Virgo/google-tables/virgo_check_sample_by_eye_v1.csv'
 
 ### OUTPUT FILE
-output_catalog = 'vf_clean_sample_v1.fits'
-output_clean = 'clean_sample_v1.fits' # I'm not sure why I have two output files, just a holdover I think
-ipac_table = 'clean_sample_v1.txt'
+output_catalog = 'vf_clean_sample_'+args.version+'.fits'
+output_clean = 'clean_sample_'+args.version+'.fits' # I'm not sure why I have two output files, just a holdover I think
+ipac_table = 'clean_sample_'+args.version+'.txt'
 ## BOUNDARIES OF SURVEY REGION
 decmin = -35
 decmax = 75 
@@ -300,8 +300,8 @@ class catalog(cutouts):
         if args.evcc:
             self.stack_cleankitchen_evcc() # hereafter, array is clean_kitchen
 
-        self.get_super_radec_vr_name()        
-        
+
+        self.get_super_radec_vr_name()                
         ## match the catalog to the a100 catalog
         ## joined table in clean_a100
         self.match_a100()
@@ -311,11 +311,13 @@ class catalog(cutouts):
 
         ## check the a100 sources that weren't matched to an existing
         ## entry in the table
-        #self.check_new_a100(plotflag=True)
+        self.check_new_a100(plotflag=True)
 
-        
         ## remove/merge bad/offset AGC sources
         self.clean_new_a100()
+        
+
+        
 
 
         ## this galaxy is not in the A100,
@@ -328,6 +330,9 @@ class catalog(cutouts):
         ## this is the 229 galaxies in the file from Francoise and Pascale
         ## moved this to write_subtables.py
         #self.get_CO_sources()
+
+
+        
         
         ## sort catalog by declination
         self.sort_by_dec()
@@ -457,11 +462,15 @@ class catalog(cutouts):
         self.ra = np.zeros(len(cat),'f')
         self.dec = np.zeros(len(cat),'f')
         self.vel = np.zeros(len(cat),'f')
-        self.objectname = np.zeros(len(cat),'|S26')        
+        self.objectname = np.zeros(len(cat),'|S26')
+
+        # use HL if it's available
         flag1 = cat['HLflag']
+
+        # if HL not available, next choice is NSA v0 if available
         flag2 = ~flag1 & cat['NSA0flag']
 
-        # use NSA v0 if available
+
         flag3 = ~flag1 & cat['NSAflag'] & ~cat['NSA0flag']
         # what about a100 sources???
         flags = [flag1, flag2, flag3]
@@ -471,20 +480,23 @@ class catalog(cutouts):
         self.vel[flag1] = cat['v'][flag1]
         self.objectname[flag1] = cat['objname'][flag1]        
 
-        # for NSA v2 sources
-        self.ra[flag2] =  cat['RA_2'][flag2]
-        self.dec[flag2] = cat['DEC_2'][flag2]
-        self.vel[flag2] = cat['Z'][flag2]*3.e5
-        matchindices = np.arange(len(flag2))[flag2]
-        for i in matchindices:
-            self.objectname[i] = 'NSA '+str(cat['NSAID'][i])
-        
-        self.ra[flag3] =  cat['RA_NSA0'][flag3]
-        self.dec[flag3] = cat['DEC_NSA0'][flag3]
-        self.vel[flag3] = cat['Z_2'][flag3]*3.e5
-        matchindices = np.arange(len(flag3))[flag3]
+        # for NSA v0 sources
+        self.ra[flag2] =  cat['RA_NSA0'][flag2]
+        self.dec[flag2] = cat['DEC_NSA0'][flag2]
+        self.vel[flag2] = cat['Z_2'][flag2]*3.e5
+        matchindices = np.arange(len(flag2))[flag3]
         for i in matchindices:
             self.objectname[i] = 'NSA '+str(cat['NSAID_2'][i])
+
+
+        # for objects not in HL and NSA v0, use NSA v1 sources
+        self.ra[flag3] =  cat['RA_2'][flag3]
+        self.dec[flag3] = cat['DEC_2'][flag3]
+        self.vel[flag3] = cat['Z'][flag3]*3.e5
+        matchindices = np.arange(len(flag3))[flag3]
+        for i in matchindices:
+            self.objectname[i] = 'NSA '+str(cat['NSAID'][i])
+            
 
         
         # for galaxies with class=16, use the RA and DEC in by-eye file
@@ -635,6 +647,9 @@ class catalog(cutouts):
 
         # AGC 208736
         
+        # for 8949, 9151 pair, AGC 208736, use AGC coordinates
+        # delete rows corresponding to children
+        
         #child = np.array([9206, 9207, 9209, 9213],'i')
         #parent = np.array([7423, 6575, 6638, 8949],'i')
         child = np.array([7423, 9207, 9209, 8952],'i')
@@ -645,15 +660,13 @@ class catalog(cutouts):
         parent = np.array([9031, 6483, 6546, 9038],'i')
 
         # for version 1 tables, after adding evcc galaxies
-        child = np.array([7331, 9149, 9151, 8851],'i')
-        parent = np.array([9148, 6483, 6546, 9155],'i')
+        child = np.array([7331, 9146, 9148, 8851],'i')
+        parent = np.array([9145, 6483, 6546, 9152],'i')
 
         for i in range(len(child)):
             print('merging {} with {}'.format(child[i],parent[i]))
             self.merge_sources(parent[i],child[i],cat=self.clean_a100,HL=False,NSA=False,AGC=False,A100=True)
             self.clean_a100['A100flag'][parent[i]] = True
-        # for 8949, 9151 pair, AGC 208736, use AGC coordinates
-        # delete rows corresponding to children
         keepflag[child] = np.zeros(len(child),'bool')
         # remove AGC 258535        
         delflag = self.clean_a100['AGC'] == 258535
