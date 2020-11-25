@@ -160,7 +160,7 @@ class catalog:
         self.get_size_for_JM()
         self.ned_table() # NED input, ra, dec, and NEDname
         self.print_stats()        
-        self.get_unwise()
+        #self.get_unwise()
 
         pass
     def print_stats(self):
@@ -543,7 +543,8 @@ class catalog:
         ned_column = 'NED_name'
         # CO file 245 sources
         # from June 2019
-        cofile = homedir+'/research/Virgo/tables/All-virgo_Master_file_19Jun2019.fits'
+        cofile = homedir+'/research/Virgo/tables/All-virgo_Master_file_19Jun2019-fixedNEDnames.fits'
+        cofile = homedir+'/research/Virgo/tables/galaxy_sample_prop_general_2020Oct28-fixedNEDnames.fits'
         ned_column='NEDname'
         self.co = Table(fits.getdata(cofile))
 
@@ -585,7 +586,7 @@ class catalog:
             # entries by the NEDname colums
             self.cotable = myjoinleft(self.basictable,self.co,keys='NEDname')
 
-            self.coflag = ~self.cotable['CO'].mask
+            self.coflag = self.cotable['alphaCO'] == 4.3
 
             # also check to see which CO sources were not matched
             self.testtable = join(self.co,self.basictable,keys='NEDname',join_type='left')
@@ -593,7 +594,7 @@ class catalog:
             try:
                 self.comatchflag = ~self.testtable['VFID'].mask
                 print('CO sources with no match in mastertable:')
-                print(self.testtable['NEDname','source_name'][~self.comatchflag])
+                print(self.testtable['NEDname','source_name','VH'][~self.comatchflag])
                 ## plot the positions of CO galaxies that weren't matched to mastertable
                 plt.figure()
                 plt.plot(self.testtable['RA_1'][~self.comatchflag],self.testtable['DEC_1'][~self.comatchflag],'bo')

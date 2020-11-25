@@ -18,6 +18,16 @@ homedir = os.getenv("HOME")
 
 cofile = homedir+'/github/Virgo/tables/CO-MasterFile-2018Feb16.fits'
 outfile = homedir+'/research/Virgo/tables/CO-MasterFile-2018Feb16-fixedNEDnames.fits'
+nedname_field='NED_name'
+
+cofile = homedir+'/research/Virgo/tables/All-virgo_Master_file_19Jun2019.fits'
+outfile = homedir+'/research/Virgo/tables/All-virgo_Master_file_19Jun2019-fixedNEDnames.fits'
+nedname_field='NEDname'
+
+# updated catalog
+cofile = homedir+'/research/Virgo/tables/galaxy_sample_prop_general_2020Oct28.fits'
+outfile = homedir+'/research/Virgo/tables/galaxy_sample_prop_general_2020Oct28-fixedNEDnames.fits'
+nedname_field='NEDname'
 co = Table(fits.getdata(cofile))
 
 realNEDname = np.zeros(len(co),dtype='|S30')
@@ -31,18 +41,23 @@ for i in range(len(co)):
 
     try:
         time.sleep(1)
-        if co['NED_name'][i] == 'UGC8656':
+        if co[nedname_field][i] == 'UGC8656':
             t = Ned.query_object('UGC8656 NOTES01')
+        elif co[nedname_field][i] == 'SHOC 206b':
+            print('cheating on SHOC206b')
+            t = Ned.query_object('SHOC 206a')                
         else:
-            t = Ned.query_object(co['NED_name'][i])               
+            t = Ned.query_object(co[nedname_field][i])               
         realNEDname[i] = (t['Object Name'][0])
 
                         
     except IndexError:
-        print(i,'2 NED did not like ',+str(co['NED_name'][i]))
+        print(i,'2 NED did not like ',+str(co[nedname_field][i]))
     except:
-        print(i,'2 NED did not like ',+str(co['NED_name'][i]))
+        print(i,'2 NED did not like ',+str(co[nedname_field][i]))
 # append realNEDname to co table
+
+co.rename_column(nedname_field,'NEDnameCO')
 c = Column(realNEDname)
 co.add_column(c,name='NEDname')                        
 co.write(outfile,format='fits',overwrite=True)
