@@ -32,6 +32,7 @@ class vtables:
         self.read_a100()
         self.read_agc()
         self.read_co()
+        self.read_unwise()        
         self.read_halpha()                
     def read_main(self):
         ''' read in main table; store as self.main  '''
@@ -83,6 +84,10 @@ class vtables:
     def read_co(self):
         ''' read in CO table; store as self.co  '''
         self.co = Table.read(self.tabledir+self.tableprefix+'co.fits')                               
+        pass
+    def read_unwise(self):
+        ''' read in unWISE table; store as self.unwise  '''
+        self.unwise = Table.read(self.tabledir+self.tableprefix+'unwise.fits')                               
         pass
     def read_halpha(self):
         ''' read in halpha observations table; store as self.ha  '''

@@ -78,7 +78,8 @@ version = args.version
 ###################################################################
 masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'.fits'
 masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'_evcc.fits'
-
+z0mgs_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_v1_z0mgs_30arcsec_120220.tbl'
+unwise_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_north_v1_unwise_dl_30arcsec_20201205.fits'
 ###################################################################
 #### SET UP DIRECTORIES
 ###################################################################
@@ -125,10 +126,13 @@ class catalog:
 
 
         self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],frame='icrs',unit='deg')
-    def get_unwise(self):
-        
-        self.unwise = Table.read(outdir+'vf_north_v0_main_unwise.fits')
+    def get_unwise(self):        
+        self.unwise = Table.read(unwise_cat)
         self.unwiseFlag = (self.unwise['x'] > 0)
+        # clean catalog
+        unwise_keepcols = self.unwise.colnames[22:75]
+        self.unwise = self.unwise[unwise_keepcols]
+        self.unwise.write(outdir+file_root+'unwise.fits',format='fits',overwrite=True)
     def keep_north(self, cat=None):
         # cut the catalog to keep Dec > -1 only
         if cat is None:
@@ -139,7 +143,8 @@ class catalog:
         return cat[keepnorth], keepnorth
     def runall(self):
         #self.catalog_for_z0MGS()
-        self.catalog_for_z0MGS()                
+        self.catalog_for_z0MGS()
+        self.get_unwise()        
         self.get_CO()
         self.get_halpha()        
         self.get_steer17()
@@ -160,7 +165,7 @@ class catalog:
         self.get_size_for_JM()
         self.ned_table() # NED input, ra, dec, and NEDname
         self.print_stats()        
-        #self.get_unwise()
+        
 
         pass
     def print_stats(self):
@@ -202,6 +207,7 @@ class catalog:
         newtable = Table([self.cat['VFID'],self.cat['RA'],self.cat['DEC'],search_radius],names=['vfid','ra','dec','major'])
         newtable.write(outdir+'coords_for_z0MGS.txt',format='ipac',overwrite=True)
     def get_radius(self):
+        ''' get estimate of radius of objects, using D25 or a scaling from another radius measurement '''
         ## INCLUDE A RADIUS FOR EACH GALAXY
         ## USE D25 FROM HYPERLEDA IF IT EXISTS
         ## OTHERWISE USE NSA PETRO 90 IF IT EXISTS
@@ -225,6 +231,14 @@ class catalog:
         ## NSA v= = PETROTH90
         ## scale petro radius by 2 to get something closer to D25
         flag = ~d25flag & self.cat['NSAflag']
+
+        # use scaling relation from
+        ## https://www.aanda.org/articles/aa/full_html/2013/12/aa21326-13/T1.html
+        ## M. Argudo-Fernández1, 2013, A&A, 560, A9
+        ## Answers vary between 1.23 and 1.58 depending on sample
+        ##
+        ## 1.58 for isolated galaxies
+        ## 
         self.radius[flag] = self.cat['PETRO_TH90'][flag]*1.3
         print('number of galaxies using NSA V1 Petro TH90 = {:d} ({:.2f}%)'.format(sum(flag),sum(flag)/len(flag)))
         flag = ~d25flag & ~self.cat['NSAflag'] & self.cat['NSA0flag']
@@ -246,7 +260,7 @@ class catalog:
 
         ## READ IN SPREADSHEET FROM MATCHING VF CATALOG WITH JM'S SMA CATALOG
         ## CHECK TO SEE IF GALAXY HAS A FIX_RAD=1
-        ## IF SO, UPDATE self.radius AND radius_flag
+        ## IF SO, UPDATE self.radius but DON'T update radius_flag b/c this will be used to calculate HI def
 
         vfsheet = Table.read(homedir+'/research/Virgo/google-tables/VF-notin-SGA-10arcsecmatch-bestmatch-symmetric.csv',format='ascii')
         fixrad_flag = (vfsheet['fix_rad'] == 1) & (vfsheet['keep?'] == 1)
@@ -304,7 +318,7 @@ class catalog:
         
         c = Column(self.radius,name='radius',unit='arcsec')
         self.cat.add_column(c)
-        c = Column(radius_flag,name='radius_flag',description='if False, then rad is set to 100 arcsec')
+        c = Column(radius_flag,name='radius_flag',description='if False, then rad is set to 30 arcsec')
         self.cat.add_column(c)
 
     def get_sfr(self):
@@ -406,6 +420,28 @@ class catalog:
         Sbc 	7.84 	0.61 	S96
         Sc 	7.16 	0.87 	S96
         Scd-Im-BCD 	7.45 	0.70 	G10 
+
+        email from Martha:
+
+        First, Carmen Toribio looked at a subset of isolated galaxies in
+        a40 to derive scaling relations
+        https://ui.adsabs.harvard.edu/abs/2011ApJ...732...93T
+        https://ui.adsabs.harvard.edu/abs/2015ApJ...802...72T/     (erratum to
+        above)
+        
+        More recently, Mike led an effort to establish relations for the AMIGA
+        sample (of isolated galaxies):
+        https://ui.adsabs.harvard.edu/abs/2018A%26A...609A..17J
+        
+        They use isophotal radii, and refer to a discussion of deriving D25 from
+        SDSS in the
+        earlier paper by Argudo-Fernandez 2013:
+        https://ui.adsabs.harvard.edu/abs/2013A%26A...560A...9A
+        
+        I think there are some others too, but these are what I am most familiar
+        with.
+        
+        Martha
         
         '''
         # get distance from GL env cata
@@ -414,7 +450,7 @@ class catalog:
         distance = self.cat['vr']/cosmo.H0
         # calculate MHI (even though A100 catalog has this - need to use consistent distance
         
-        self.logMHI = np.log10(2.36e5*self.cat['HIflux'])+2*np.log10(self.cat['Dist']) #Dist^2
+        self.logMHI = np.log10(2.3566e5*self.cat['HIflux'])+2*np.log10(self.cat['Dist']) #Dist^2
         
         # calculate HI deficiency using Toribio et al 2011 results
         # their relation is
@@ -445,14 +481,39 @@ class catalog:
         # use toribio et al relation to predict the expected HI mass,
         # including factor of 2 correction
         logHImassExpected = 8.72 + 1.25*(logD25kpc-np.log10(2.))
+        
+        # use jones+2018, A&A, 609, A17 (AMIGA sample
+        # relation to predict the expected HI mass
+        # using Maximum Liklihood Estimator for Detections
+        logHImassExpected_jones = 7.32 + 0.86*(2*logD25kpc)
+        # relation for ALL galaxies is similar
+        # intrinsic scatter is 0.21
+        #
+        # fits by morphological type
+        # <3 	1.04 ± 0.21 	6.44 ± 0.59 	0.27 ± 0.08 	0.67
+        # 3–5 	0.93 ± 0.06 	7.14 ± 0.18 	0.16 ± 0.02 	0.74
+        # >5 	0.81 ± 0.09 	7.53 ± 0.24 	0.17 ± 0.03 	0.73
 
         # calculate deficiency as log expected - log observed
         self.HIdef = np.zeros(len(self.cat),'f')
+        self.HIdef_jones = np.zeros(len(self.cat),'f')
+        self.HIdef_jones_bytype = np.zeros(len(self.cat),'f')        
 
-        # report values if a100 flag and radius flag
+        # report values if a100 flag and radius flag, meaning there was some measurement of radius
         flag = self.cat['A100flag'] & self.cat['radius_flag']
         self.HIdef[flag] = logHImassExpected[flag] - self.logMHI[flag]
+        self.HIdef_jones[flag] = logHImassExpected_jones[flag] - self.logMHI[flag]        
         self.HIdef_flag = flag
+
+        flag = ~np.isnan(self.cat['t']) & (self.cat['t'] < 3)
+        self.HIdef_jones_bytype[flag] = 6.44 + 1.04*(2*logD25kpc[flag])- self.logMHI[flag]        
+        flag = ~np.isnan(self.cat['t']) & (self.cat['t'] > 5)
+        self.HIdef_jones_bytype[flag] = 7.53 + .81*(2*logD25kpc[flag]) - self.logMHI[flag]        
+        flag = ~np.isnan(self.cat['t']) & (self.cat['t'] <= 5) & (self.cat['t'] >= 3)
+        self.HIdef_jones_bytype[flag] = 7.14 + .93*(2*logD25kpc[flag]) - self.logMHI[flag]        
+
+        # calculate HI def by type for hyperleda galaxies with Ttype
+        
         # add HIdef to a100 catalog
 
         # boselli & gavazzi prescription
@@ -483,10 +544,11 @@ class catalog:
         c3 = Column(self.steerFlag,name='Steerflag')
 
         # removing unwise for now - need to update code
-        #c4 = Column(self.unwiseFlag,name='unwiseflag')        
-        #self.maintable.add_columns([c1,c1a,c1b,c2,c3,c4])
+        
+        c4 = Column(self.unwiseFlag,name='unwiseflag')        
+        self.maintable.add_columns([c1,c1a,c1b,c2,c3,c4])
+        #self.maintable.add_columns([c1,c1a,c1b,c2,c3])
 
-        self.maintable.add_columns([c1,c1a,c1b,c2,c3])
         
         nedname=[]
         for i in range(len(self.maintable)):
@@ -586,7 +648,11 @@ class catalog:
             # entries by the NEDname colums
             self.cotable = myjoinleft(self.basictable,self.co,keys='NEDname')
 
-            self.coflag = self.cotable['alphaCO'] == 4.3
+            self.coflag = self.cotable['alphaCO'] > .1
+            # having issues with this being a masked array, so
+            # saving mask as the flag...
+            self.coflag = ~self.coflag.mask
+            #self.coflag = self.cotable['COflag']
 
             # also check to see which CO sources were not matched
             self.testtable = join(self.co,self.basictable,keys='NEDname',join_type='left')
@@ -757,8 +823,9 @@ class catalog:
         # get z0MGS
         #cat = Table.read('/home/rfinn/research/Virgo/tables/vf-z0MGS.tbl',format='ipac')
         #cat = Table.read('/home/rfinn/research/Virgo/tables/vf_z0mgs_30arcsec_051920.tbl',format='ipac')
-        cat = Table.read('/home/rfinn/research/Virgo/tables/vf_v1_z0mgs_10arcsec_102920_9153gal.tbl',format='ipac')
         #cat = Table.read('/home/rfinn/research/Virgo/tables/vf_v1_z0mgs_30arcsec_102820.tbl',format='ipac')
+        #cat = Table.read('/home/rfinn/research/Virgo/tables/vf_v1_z0mgs_10arcsec_102920_9153gal.tbl',format='ipac')
+        cat = Table.read(z0mgs_cat,format='ipac')
         print('number of lines in z0MGS cat = ',len(cat))
         print('length of keepnorth_flag = ',len(self.keepnorth_flag))
         # cut on declination
@@ -781,9 +848,32 @@ class catalog:
         # I might otherwise do a loop
         # for each name in our catalog, look for match in steer catalog
         # probably astropy has a way to do this (topcat certainly does)
+        
+        # need to change this to match by coordinates
+        #self.basic_with_steer = myjoinleft(self.basictable,self.steer,keys='NEDname')
 
-        self.basic_with_steer = myjoinleft(self.basictable,self.steer,keys='NEDname')
-        self.steerFlag = ~self.basic_with_steer['Dmedian'].mask
+        # create a Skycoord for each galaxy
+        # self.catcoord is the main table
+        scat =  SkyCoord(self.steer['raNED'],self.steer['decNED'],frame='icrs',unit='deg')
+        # match steer to vf catalog
+        idx, d2d, d3d = self.catcoord.match_to_catalog_sky(scat)
+
+        # consider as matches any galaxies within 30 arcsec
+        matchflag = d2d < 30./3600*u.deg
+
+        
+        # create null table with datatype like steer but length of vf
+        self.temp = Table(np.empty_like(self.steer,dtype=self.steer.dtype,shape=(len(self.basictable))))
+
+        self.temp[matchflag] = self.steer[idx[matchflag]]
+
+        # join with basic
+
+        self.basic_with_steer = hstack([self.basictable,self.temp])
+
+        # some of the NED names change over time, so that's not a reliable way to match
+        # all of the galaxies from Benedetta's low vr catalog should 
+        self.steerFlag = self.basic_with_steer['Num. D Measures'] > 0
         self.basic_with_steer.add_column(Column(self.steerFlag),name='Steerflag')
         outfile = outdir+file_root+'steer17.fits'            
         self.basic_with_steer.write(outfile, format='fits',overwrite=True)
@@ -825,8 +915,10 @@ class catalog:
         c0 = Column(self.HIdef,name='HIdef')
         c1 = Column(self.HIdef_flag,name='HIdef_flag')        
         c2 = Column(self.HIdef_bos,name='HIdef_bos')
+        c3 = Column(self.HIdef_jones,name='HIdef_jon')
+        c4 = Column(self.HIdef_jones_bytype,name='HIdef_bytype')        
 
-        newtable.add_columns([c0,c1,c2])
+        newtable.add_columns([c0,c1,c2,c3,c4])
         newtable.write(outdir+file_root+'a100.fits',format='fits',overwrite=True)
     def agc_table(self):
         '''write out columns from agc catalog'''

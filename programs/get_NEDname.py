@@ -342,8 +342,8 @@ class getNED:
 
         
         c1 = Column(NEDid,name='NEDname')
-        c2 = Column(np.array(NEDra,'f'),name='NEDra')
-        c3 = Column(np.array(NEDdec,'f'),name='NEDdec')
+        c2 = Column(np.array(NEDra,'f8'),name='NEDra')
+        c3 = Column(np.array(NEDdec,'f8'),name='NEDdec')
         c4 = Column(NEDinput,name='NEDinput')        
         self.NEDid = NEDid
         self.NEDra = NEDra
@@ -368,6 +368,7 @@ class getNED:
     def write_clean(self):
         #self.newtab.write('vf_clean_sample_wNEDname.fits',format='fits',overwrite=True)
         # updating for v1
+        # this is where RA and DEC are converted to 
         self.newtab.write('vf_clean_sample_wNEDname'+outfile_suffix+'.fits',format='fits',overwrite=True)
 
 
@@ -381,5 +382,4 @@ if __name__ == '__main__':
     n.get_NEDname()
     #n.query_unmatched()
     #n.write_NEDnames()
-    
-    
+

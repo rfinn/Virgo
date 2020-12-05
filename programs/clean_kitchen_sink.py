@@ -290,6 +290,7 @@ class catalog(cutouts):
         self.add_byeye_galid()
         
         if args.evcc:
+            # do the same for the evcc table, but fill with void numbers
             self.add_byeye_galid_evcc()
         ## remove sources that were flagged in bye-eye classifications
         ## creates clean_kitchen table
@@ -311,7 +312,7 @@ class catalog(cutouts):
 
         ## check the a100 sources that weren't matched to an existing
         ## entry in the table
-        self.check_new_a100(plotflag=True)
+        #self.check_new_a100(plotflag=True)
 
         ## remove/merge bad/offset AGC sources
         self.clean_new_a100()
@@ -459,9 +460,9 @@ class catalog(cutouts):
         # for class 16 objects, RA and DEC are overwritten by by-eye values
 
         cat = self.clean_kitchen
-        self.ra = np.zeros(len(cat),'f')
-        self.dec = np.zeros(len(cat),'f')
-        self.vel = np.zeros(len(cat),'f')
+        self.ra = np.zeros(len(cat),'f8')
+        self.dec = np.zeros(len(cat),'f8')
+        self.vel = np.zeros(len(cat),'f8')
         self.objectname = np.zeros(len(cat),'|S26')
 
         # use HL if it's available
@@ -510,8 +511,8 @@ class catalog(cutouts):
         # didn't implement this yet
         
         # cut ra,dec,vel
-        c1 = Column(self.ra,'RAtemp')
-        c2 = Column(self.dec,'DECtemp')
+        c1 = Column(self.ra,'RAtemp',dtype=np.float64)
+        c2 = Column(self.dec,'DECtemp',dtype=np.float64)
         c3 = Column(self.vel,'vrtemp')
         c4 = Column(self.objectname,'superName')        
         self.clean_kitchen.add_columns([c1,c2,c3,c4])
@@ -581,9 +582,9 @@ class catalog(cutouts):
         superNames[~hlnsa_matchflag] = agcnames
         
         joined_table2.remove_columns(['RAtemp','DECtemp','vrtemp','superName'])
-        c3 = Column(ra,name='RA',dtype='f')
-        c4 = Column(dec,name='DEC',dtype='f')
-        c5 = Column(vel,name='vr',dtype='f')
+        c3 = Column(ra,name='RA',dtype=np.float64)
+        c4 = Column(dec,name='DEC',dtype=np.float64)
+        c5 = Column(vel,name='vr',dtype='f8')
         c6 = Column(superNames,name='superName',dtype='S26')        
 
         joined_table2.add_columns([c3,c4,c5,c6])
@@ -662,6 +663,10 @@ class catalog(cutouts):
         # for version 1 tables, after adding evcc galaxies
         child = np.array([7331, 9146, 9148, 8851],'i')
         parent = np.array([9145, 6483, 6546, 9152],'i')
+        
+        # for version 1 tables, after adding evcc galaxies and removing two duplicates
+        child = np.array([7330, 9144, 9146, 8850],'i')
+        parent = np.array([9143, 6482, 6545, 9150],'i')
 
         for i in range(len(child)):
             print('merging {} with {}'.format(child[i],parent[i]))

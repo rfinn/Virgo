@@ -702,11 +702,14 @@ class sample:
             duplicates(self.sample_table,n+'_name',flag=self.sample_table[n+'flag'])
         
         
-    def get_smart(self,maxoffset=10,veloffset=300.,matchThirdFlag=False):
+    def get_smart(self,maxoffset=10,veloffset=300.,matchThirdFlag=True):
         '''
         matching offset in arcsec
 
         veloffset in km/s
+
+        set matchThirdFlag to false for backward compatability maybe?  
+        actually, I'm not sure why this is there...
         '''
         # use code I already wrote to match catalogs for A100+SDSS!!!
         self.max_match_offset = maxoffset
