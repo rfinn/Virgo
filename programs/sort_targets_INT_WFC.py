@@ -83,13 +83,14 @@ dirnames = set(filefilterlist)
 
 # make subdirectory for each object-filter combination
 for d in dirnames:
+    print(d)
     if d.find('--') > -1:
         continue
-    if os.path.exists(d):
+    if os.path.exists('../'+d):
         continue
     else:
         os.mkdir('../'+d)
-
+        os.mkdir('../'+d+'/MASK_IMAGES')
 # move files to appropriate subdirectory
 for f,d in zip(infiles,filefilterlist):
     try:
@@ -98,7 +99,6 @@ for f,d in zip(infiles,filefilterlist):
         print("Error moving file {} to directory {}".format(f,d))
 
         
-
 
 
 

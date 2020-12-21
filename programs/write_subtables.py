@@ -787,7 +787,10 @@ class catalog:
 
         for i in range(len(self.ha)):
             #print(i,self.ha['VFID'][i])
-                  
+
+            ### RAF, 12/14/20
+            # will need to update this to use V1 tables, or else
+            # I will have to redo all of the Halpha analysis, which would be painful
             flag =(self.hatable['VFID'] == self.ha['VFID'][i])
             self.hatable[flag] = self.ha[i]
 

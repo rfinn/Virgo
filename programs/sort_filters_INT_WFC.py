@@ -62,6 +62,9 @@ for i,d in enumerate(filefilterlist):
     if d.find('Skybackground') > -1:
         print('found it')
         filefilterlist[i] = filefilterlist[i].replace("Skybackground", "SKYFLAT")
+    if d.find('Sky background') > -1:
+        print('found it')
+        filefilterlist[i] = filefilterlist[i].replace("Sky background", "SKYFLAT")
 
 # make directory for BIAS
 # make directory for each flat/filter combination
