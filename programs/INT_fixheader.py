@@ -43,6 +43,7 @@ if args.fixall:
     goodh = set(href)
     badh = set(h)
     fields = list(goodh.difference(badh))
+    print('fields to update: ',fields)
 else:
     fields = args.fields
 
