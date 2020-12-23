@@ -31,13 +31,18 @@ if args.mef:
     args.fields = ['RA','DEC','EQUINOX']
 
 
-#d,h = fits.getdata(args.image,header=True)
+
 
 href = fits.getheader(args.ref)
 
 if args.fixall:
-    # copy entire header
-    fields = href
+    h = fits.getheader(args.image)
+    # find fields in reference header that are not in bad header
+    # for INT data, the telescope telemetry fields are missing (rather than empty)
+    # this may not work for other datasets...
+    goodh = set(href)
+    badh = set(h)
+    fields = list(badh.difference(goodh))
 else:
     fields = args.fields
 
