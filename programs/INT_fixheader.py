@@ -42,7 +42,7 @@ if args.fixall:
     # this may not work for other datasets...
     goodh = set(href)
     badh = set(h)
-    fields = list(badh.difference(goodh))
+    fields = list(goodh.difference(badh))
 else:
     fields = args.fields
 
