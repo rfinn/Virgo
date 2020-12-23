@@ -41,7 +41,7 @@ After basic calibration, we can sort science objects, make directory for each un
 import os
 import glob
 from astropy.io import fits
-
+import sys
 # this is not working
 # seems like something is wrong with DATE-OBS card, but don't know what
 
@@ -50,6 +50,11 @@ from astropy.io import fits
 filters=[]
 object_names=[]
 infiles = glob.glob('r*.fit*')
+if len(infiles) ==0:
+    infiles = glob.glob('WFC*.fits')
+    if len(infiles) == 0:
+        print("no files found that match r*.fit* or WFC*.fits")
+        sys.exit()
 for f in infiles:
     print(f)
     d,h = fits.getdata(f,header=True)

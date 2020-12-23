@@ -8,6 +8,11 @@ the most important fields are CRVAL1 and CRVAL2
 going to write this so you can enter a ref image and then update the header of the
 broken image using the coordinates in the ref image.
 
+
+USAGE:
+
+python ~/github/Virgo/programs/INT_fixheader.py --ref r1442821.fit --image r1442823.fit --fixall
+
 '''
 
 
