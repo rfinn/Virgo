@@ -17,7 +17,7 @@ python ~/github/Virgo/programs/INT_fixheader.py --ref r1442821.fit --image r1442
 
 
 from astropy.io import fits
-
+from astropy import wcs
 import argparse
 import os
 
@@ -36,17 +36,23 @@ if args.mef:
     args.fields = ['RA','DEC','EQUINOX']
 
 
+# read in image and header for the image that needs to be updated
+hdu = fits.open(args.image)
 
+## adding these two statements to try to get around FITS card error with CD1_1
+w = wcs.WCS(hdu[0].header)
+#h.verify()
 
-href = fits.getheader(args.ref)
+# get header from reference image
+hdu_ref = fits.open(args.ref)
+href = hdu_ref[0].header
 
 if args.fixall:
-    h = fits.getheader(args.image)
     # find fields in reference header that are not in bad header
     # for INT data, the telescope telemetry fields are missing (rather than empty)
     # this may not work for other datasets...
     goodh = set(href)
-    badh = set(h)
+    badh = set(hdu[0].header)
     fields = list(goodh.difference(badh))
     print('fields to update: ',fields)
 else:
@@ -64,9 +70,20 @@ for f in fields:
     # getting an error when trying to write out the fits header for INT images
     # Card 'CD1_1' is not FITS standard (invalid value string: '-9.19444e-5').
     # so using sethead instead
+
+    # trying again after implementing two commands that might fix the issue with CD1_1
+    hdu[0].header.set(f,newval)
+
+    ## the following commands are an alternate way to update the header using sethead
+    ## however, when I ran this on the virgo vms, it creates a new image *.fit,1
+    ## and neither image seemed to have the updated header values
+    ## not sure what's going on with that, so I chose to try to fix the issue with CD1_1
+    ## because astropy has more documentation than wcstools
+    '''
     try:
         os.system('sethead '+args.image+' '+f+'='+str(newval))
     except KeyError:
         os.system('sethead -k '+args.image+' '+f+'='+str(newval))
-
+    '''
+hdu.writeto(args.image,overwrite=True)
 
