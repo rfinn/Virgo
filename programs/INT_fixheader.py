@@ -85,7 +85,4 @@ for f in fields:
     except KeyError:
         os.system('sethead -k '+args.image+' '+f+'='+str(newval))
     '''
-try:
-    hdu.writeto(args.image,overwrite=True,output_verify='ignore')
-except:
-    # try removing 'CAT-DEC'
+hdu.writeto(args.image,overwrite=True,output_verify='ignore')
