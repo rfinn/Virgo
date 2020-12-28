@@ -38,7 +38,7 @@ if args.mef:
 
 # read in image and header for the image that needs to be updated
 hdu = fits.open(args.image)
-
+hdu.verify()
 ## adding these two statements to try to get around FITS card error with CD1_1
 w = wcs.WCS(hdu[0].header)
 #h.verify()
@@ -85,5 +85,7 @@ for f in fields:
     except KeyError:
         os.system('sethead -k '+args.image+' '+f+'='+str(newval))
     '''
-hdu.writeto(args.image,overwrite=True)
-
+try:
+    hdu.writeto(args.image,overwrite=True,output_verify='ignore')
+except:
+    # try removing 'CAT-DEC'
