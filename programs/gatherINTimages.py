@@ -36,6 +36,7 @@ for f1 in flist1:
     print('checking ',f1)
     if os.path.isdir(f1) & (f1.find('pointing') > -1):
         flist2 = glob.glob(f1+'/WFC*.fits')
+        print(flist2)
         for f2 in flist2:
             imfile = os.path.join(working_dir,f2)
             outfile = os.path.join(output_dir_coadds,f2)
