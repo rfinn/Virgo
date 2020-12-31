@@ -35,7 +35,7 @@ for f1 in flist1:
     # save dir name as the date
     if os.path.isdir(f1) & (f1.find('pointing') > -1):
         flist2 = glob.glob('WFC*.fits')
-        for f2 in flist:
+        for f2 in flist2:
             imfile = os.path.join(working_dir,f2)
             outfile = os.path.join(output_dir_coadds,f2)
             if (not os.path.exists(outfile)) or overwrite:
