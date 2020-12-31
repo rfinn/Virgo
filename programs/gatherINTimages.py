@@ -36,8 +36,9 @@ for f1 in flist1:
 
     if os.path.isdir(f1) & (f1.find('pointing') > -1):
         print('checking ',f1)
-        flist2 = (f1+'/WFC*.fits')
-        print(flist2)
+        flist2 = glob.glob(f1+'/WFC*.fits')
+
+        #print(flist2)
         for f2 in flist2:
             print(f2,os.path.basename(f2))
             fname = os.path.basename(f2)
