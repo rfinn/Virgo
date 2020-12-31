@@ -33,6 +33,7 @@ flist1.sort()
 for f1 in flist1:
     # if item is a directory and starts with 20, then assume it is the date
     # save dir name as the date
+    print('checking ',f1)
     if os.path.isdir(f1) & (f1.find('pointing') > -1):
         flist2 = glob.glob('WFC*.fits')
         for f2 in flist2:
