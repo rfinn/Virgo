@@ -36,11 +36,13 @@ for f1 in flist1:
 
     if os.path.isdir(f1) & (f1.find('pointing') > -1):
         print('checking ',f1)
-        flist2 = glob.glob(f1+'/WFC*.fits')
+        flist2 = (f1+'/WFC*.fits')
         print(flist2)
         for f2 in flist2:
+            print(f2,os.path.basename(f2))
+            fname = os.path.basename(f2)
             imfile = os.path.join(working_dir,f2)
-            outfile = os.path.join(output_dir_coadds,f2)
+            outfile = os.path.join(output_dir_coadds,fname)
             if (not os.path.exists(outfile)) or overwrite:
                 print('\t   copy ',imfile,' -> ',outfile)
                 shutil.copyfile(imfile,outfile)
