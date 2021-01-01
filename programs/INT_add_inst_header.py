@@ -22,7 +22,7 @@ for i in range(len(matchstrings)):
     files = glob.glob(matchstrings[i])
     for f in files:
         # read in image and header for the image that needs to be updated
-        hdu = fits.open(args.image)
+        hdu = fits.open(f)
         hdu.verify()
 
         # trying again after implementing two commands that might fix the issue with CD1_1
