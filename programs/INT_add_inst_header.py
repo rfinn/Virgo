@@ -36,7 +36,7 @@ for i in range(len(matchstrings)):
         print(j)
         # read in image and header for the image that needs to be updated
         hdu = fits.open(f)
-        hdu.verify()
+        #hdu.verify()
 
         # trying again after implementing two commands that might fix the issue with CD1_1
         hdu[0].header.set('INSTRMNT',instruments[i])
