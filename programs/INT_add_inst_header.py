@@ -26,6 +26,6 @@ for i in range(len(matchstrings)):
         hdu.verify()
 
         # trying again after implementing two commands that might fix the issue with CD1_1
-        hdu[0].header.set('INSTRUMENT',instruments[i])
+        hdu[0].header.set('INSTRMNT',instruments[i])
 
         hdu.writeto(f,overwrite=True,output_verify='ignore')
