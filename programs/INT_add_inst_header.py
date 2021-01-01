@@ -42,4 +42,4 @@ for i in range(len(matchstrings)):
         hdu[0].header.set('INSTRMNT',instruments[i])
 
         hdu.writeto(f,overwrite=True,output_verify='ignore')
-        j++
+        j+= 1
