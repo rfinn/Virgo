@@ -33,8 +33,9 @@ for i in range(len(matchstrings)):
     print('chip ',i+1,' updating ',len(files),' files')
     j=0
     for f in files:
-        print(j)
+        #print(j)
         # read in image and header for the image that needs to be updated
+        
         hdu = fits.open(f)
         #hdu.verify()
 
