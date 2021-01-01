@@ -20,6 +20,7 @@ instruments = ['INTWFC1','INTWFC2','INTWFC3','INTWFC4']
 
 for i in range(len(matchstrings)):
     files = glob.glob(matchstrings[i])
+    print('chip ',i+1,' updating ',len(files),' files')
     for f in files:
         # read in image and header for the image that needs to be updated
         hdu = fits.open(f)
