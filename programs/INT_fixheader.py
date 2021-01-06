@@ -27,20 +27,21 @@ parser.add_argument('--ref',dest = 'ref', default=None,help='reference image, to
 parser.add_argument('--fields',dest = 'fields', nargs='+',default=['CRVAL1','CRVAL2','AIRMASS'],help='list of header fields to update. default is CRVAL1 and CRVAL2')
 
 # even for MEF files, the main header is 0, and this is what comes in 
-parser.add_argument('--mef',dest = 'mef', action='store_true', default=False, help='set this if input is a multi-extension fits file')
+parser.add_argument('--wcs',dest = 'wcs', action='store_true', default=False, help='set this if you need to update basic wcs fields (ra,dec,equinox,crval1,crval2,cd1_1,cd2_2)')
 parser.add_argument('--fixall',dest = 'fixall', action='store_true', default=False, help='set this to copy the entire header')
+#parser.add_argument('--postsplit',dest = 'postsplit', action='store_true', default=False, help='set this if you are fixing headers after the mef fits file was split into 4 separate files.')
 
 args = parser.parse_args()
 
-if args.mef:
-    args.fields = ['RA','DEC','EQUINOX']
+if args.wcs:
+    args.fields = ['CRVAL1','CRVAL2','CD1_1','CD2_2','AIRMASS','CRPIX1','CRPIX2','RADESYS']
 
 
 # read in image and header for the image that needs to be updated
 hdu = fits.open(args.image)
 hdu.verify()
 ## adding these two statements to try to get around FITS card error with CD1_1
-w = wcs.WCS(hdu[0].header)
+#w = wcs.WCS(hdu[0].header)
 #h.verify()
 
 # get header from reference image

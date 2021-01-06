@@ -100,6 +100,10 @@ for d in dirnames:
 for f,d in zip(infiles,filefilterlist):
     try:
         os.rename(f,'../'+d+'/'+f)
+        # move SE cat if it exists
+        secat = f.split('.fits')[0]+'.cat'
+        os.rename(secat,'../'+d+'/'+secat)
+            
     except:
         print("Error moving file {} to directory {}".format(f,d))
 
