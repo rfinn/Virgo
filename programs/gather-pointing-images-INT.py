@@ -15,29 +15,33 @@ import shutil
 from astropy.io import fits
 import glob
 
-homedir = os.getenv("HOME")
-# define directory for all coadds
-telescope = 'INT'
 # get list of current directory
 flist1 = os.listdir()
-working_dir = os.getcwd()
-output_dir_coadds = os.path.join(working_dir,output_dir_coadds)
-# overwrite output files if they exist
-overwrite = True
 flist1.sort()
+
 # get list of pointings - cut off filter from dir name
 pointings = []
 for f in flist1:
-    if f.find('pointing') > -1:
+    if (f.find('pointing') > -1) & (f.find('-') > -1):
         pointings.append(f.split('-')[0])
 
 # pointings will now have two listing for each filter b/c of r and Halpha
 upointings = set(pointings) # unique pointings
 
 for p in upointings:
-    os.mkdir(p)
-    os.system('cp '+p+'-r/* '+p+'/.')
-    os.system('cp '+p+'-Halpha/* '+p+'/.')
-    os.system('cp '+p+'-Ha6657/* '+p+'/.')    
+    print(p)
+    if not(os.path.exists(p)):
+        os.mkdir(p)
+    if os.path.exists(p+'-r'):
+        os.system('mv '+p+'-r/* '+p+'/.')
+        os.system('rmdir '+p+'-r')
+    if os.path.exists(p+'-Halpha'):
+        os.system('mv '+p+'-Halpha/* '+p+'/.')
+        os.system('rmdir '+p+'-Halpha')
+    if os.path.exists(p+'-Ha6657'):
+        os.system('mv '+p+'-Ha6657/* '+p+'/.')
+        os.system('rmdir '+p+'-Ha6657')
+
+
 
 
