@@ -95,14 +95,22 @@ for d in dirnames:
         continue
     else:
         os.mkdir('../'+d)
-        os.mkdir('../'+d+'/MASK_IMAGES')
+        #os.mkdir('../'+d+'/MASK_IMAGES')
 # move files to appropriate subdirectory
 for f,d in zip(infiles,filefilterlist):
     try:
         os.rename(f,'../'+d+'/'+f)
         # move SE cat if it exists
         secat = f.split('.fits')[0]+'.cat'
-        os.rename(secat,'../'+d+'/'+secat)
+        try:
+            os.rename(secat,'../'+d+'/'+secat)
+        except:
+            pass
+        scampfile = f.split('.fits')[0]+'.head'
+        try:
+            os.rename(scampfile,'../'+d+'/'+scampfile)
+        except:
+            pass
             
     except:
         print("Error moving file {} to directory {}".format(f,d))

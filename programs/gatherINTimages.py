@@ -34,7 +34,7 @@ for f1 in flist1:
     # if item is a directory and starts with 20, then assume it is the date
     # save dir name as the date
 
-    if os.path.isdir(f1) & (f1.find('pointing') > -1):
+    if os.path.isdir(f1) & (f1.find('pointing') > -1) & (f1.find('-') > -1):
         print('checking ',f1)
         flist2 = glob.glob(f1+'/WFC*.fits')
 
@@ -45,8 +45,8 @@ for f1 in flist1:
             imfile = os.path.join(working_dir,f2)
             outfile = os.path.join(output_dir_coadds,fname)
             if (not os.path.exists(outfile)) or overwrite:
-                print('\t   copy ',imfile,' -> ',outfile)
-                shutil.copyfile(imfile,outfile)
+                print('\t   mv ',imfile,' -> ',outfile)
+                shutil.move(imfile,outfile)
             else:
                 print('\t   '+outfile,' already exists. set overwrite if you want to copy anyway.')
 

@@ -42,7 +42,7 @@ for f1 in flist1:
         for f2 in flist2:
             subdir = os.path.join(f1,f2) # e.g. 20190204/pointing001-r
             # if item is a directory and the name contains pointing, then assume it is a target
-            if os.path.isdir(subdir) & (subdir.find('pointing') > -1):
+            if os.path.isdir(subdir) & (subdir.starts('pointing') ) & (subdir.find('-') > -1):
 
                 # store pointing and filter
                 long_pointing,filter = f2.split('-')
@@ -51,6 +51,8 @@ for f1 in flist1:
                 #print('\t found a pointing',pointing,filter)
                 # look for subdirectory named "coadd_"+filter
                 coadd_path = os.path.join(subdir,'coadd_'+filter)
+                # this is directory structure setup by theli
+                # when I processed them myself, the coadds are in the main directory
                 if os.path.exists(coadd_path):
                     print('\t found',coadd_path)
                     fff_file = 'coadd_'+filter+'/fffcoadd.fits'
