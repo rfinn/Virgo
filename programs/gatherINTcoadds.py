@@ -74,6 +74,7 @@ for f1 in flist1:
                     elif os.path.exists(f_file):
                         imfile = f_file
                     '''
+
                     weight_file = imfile.split('.fits')[0]+'.weight.fits'
 
                     h = fits.getheader(imfile)

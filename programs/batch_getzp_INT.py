@@ -15,18 +15,8 @@ import os
 import shutil
 import glob
 from astropy.io import fits
-
-
-def count_lines(fname):
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            pass
-    try:
-        return i+1
-    except UnboundLocalError:
-        return 0
-
-
+import matplotlib
+matplotlib.use("Qt5agg")
 homedir = os.getenv("HOME")
 telescope = 'INT'
 # get list of current directory
@@ -35,10 +25,10 @@ working_dir = os.getcwd()
 # overwrite output files if they exist
 overwrite = True
 flist1.sort()
-runscamp=False
-runswarp=True
+#print(flist1)
 for subdir in flist1: # loop through list
-    if os.path.isdir(subdir) & (subdir.startswith('pointing')) & (subdir.find('-') > -1):
+    #if os.path.isdir(subdir) & (subdir.startswith('pointing')) & (subdir.find('-') > -1):
+    if os.path.isdir(subdir) & (subdir.find('pointing') > -1):
         print('##########################################')
         print('##########################################')        
         print('WORKING ON DIRECTORY: ',subdir)
@@ -48,9 +38,9 @@ for subdir in flist1: # loop through list
         # move to subdirectory
         os.chdir(subdir)
         # get list of coadds
-        # there will be two per directory - one with background subtracted, and one without
+        # there will be two per directory per filter - one with background subtracted, and one without
 
-        allcoadd = glob.glob('*coadd.fits')
+        allcoadd = glob.glob(subdir+'*noback.coadd.fits')
         allcoadd.sort()
         for c in allcoadd:
             try:
@@ -58,7 +48,7 @@ for subdir in flist1: # loop through list
                     filter='ha'
                 else:
                     filter='r'
-                os.system('python ~/github/HalphaImaging/python3/getzp.py --instrument i --image '+c+' --filter '+filter)
+                os.system('python ~/github/HalphaImaging/python3/getzp.py --instrument i --nexptime --image '+c+' --filter '+filter)
             except:
                 print('##########################################')
                 print('WARNING: problem running getzp for ',subdir, c)
@@ -66,7 +56,7 @@ for subdir in flist1: # loop through list
 
         os.chdir(working_dir)
         # just running on one directory for testing purposes
-        break
+        #break
 
 
 
