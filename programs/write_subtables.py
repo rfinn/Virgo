@@ -46,19 +46,6 @@ homedir = os.getenv("HOME")
 
 from virgoCommon import *
 
-###################################################################
-#### SET UP ARGPARSE
-#### ADD OPTION FOR NORTH ONLY WHEN MAKING TABLES
-#### (NO GUARANTEE THAT THIS WORKS FOR THE FULL TABLES ANYMORE!)
-###################################################################
-
-parser = argparse.ArgumentParser(description ='write out subtables for virgo filaments catalog')
-parser.add_argument('--version',dest = 'version', default='v1',help='version of tables. default is v1')
-#parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
-parser.add_argument('--north',dest = 'north', action='store_true',help='keep DEC > -1 galaxies')
-
-args = parser.parse_args()
-outfile_suffix = '_'+args.version
 
 
 ###################################################################
@@ -68,35 +55,10 @@ sdsspixelscale=0.396127#conversion for isophotal radii from pixels to arcseconds
 H0 = 70.
 h = H0/100 #H0/100
 
-###################################################################
-#### SET VERSION NUMBER
-###################################################################
-version = args.version
-
-###################################################################
-#### INPUT FILES
-###################################################################
-masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'.fits'
-masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'_evcc.fits'
-z0mgs_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_v1_z0mgs_30arcsec_120220.tbl'
-unwise_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_north_v1_unwise_dl_30arcsec_20201205.fits'
-###################################################################
-#### SET UP DIRECTORIES
-###################################################################
-outdir = homedir+'/research/Virgo/tables/'+version+'/'
-file_root = 'vf_'+version+'_'
 
 
 
 
-# keep DEC > -1 galaxies only
-if (args.north):
-    NORTH_ONLY = True
-else:
-    NORTH_ONLY = False
-if NORTH_ONLY:
-    outdir = homedir+'/research/Virgo/tables-north/'+version+'/'
-    file_root = 'vf_north_'+version+'_'
 
 ###################################################################
 #### FUNCTIONS
@@ -114,7 +76,7 @@ def duplicates(table,column,flag=None):
 #### CLASSES
 ###################################################################
 class catalog:
-    def __init__(self,catalog):
+    def __init__(self,catalog,hav1=False):
         self.cat = Table(fits.getdata(catalog))
 
         if NORTH_ONLY:
@@ -126,6 +88,7 @@ class catalog:
 
 
         self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],frame='icrs',unit='deg')
+        self.hav1flag = hav1
     def get_unwise(self):        
         self.unwise = Table.read(unwise_cat)
         self.unwiseFlag = (self.unwise['x'] > 0)
@@ -785,14 +748,41 @@ class catalog:
 
         ### ADD HALPHA SOURCES TO THEIR CORRESPONDING ROWS
 
-        for i in range(len(self.ha)):
-            #print(i,self.ha['VFID'][i])
+        ## for halpha measurements that reference the v0 catalogs, match by RA and DEC
 
-            ### RAF, 12/14/20
-            # will need to update this to use V1 tables, or else
-            # I will have to redo all of the Halpha analysis, which would be painful
-            flag =(self.hatable['VFID'] == self.ha['VFID'][i])
-            self.hatable[flag] = self.ha[i]
+        hav0_coord = SkyCoord(self.ha['RA'],self.ha['DEC'],unit='deg',frame='icrs')
+
+
+        # match steer to vf catalog
+        idx, d2d, d3d = self.catcoord.match_to_catalog_sky(hav0_coord)
+        # consider as matches any galaxies within 30 arcsec
+        matchflag = d2d < 20./3600*u.deg
+        print('number of Halpha matches = ',sum(matchflag))
+
+        self.hatable[matchflag] = self.ha[idx[matchflag]]
+
+        ############################################################################
+        ### READ IN HALPHA ANALYSIS FILES THAT WERE CREATED AFTER SWITCH TO V1
+        ### match these by VFID
+        ############################################################################
+        if self.hav1flag:
+            if halphafile is None:
+                #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
+                #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
+                infile = '/home/rfinn/research/Virgo/halpha-tables-v1/halpha-09Feb2021.fits'
+
+            else:
+                infile = halphafile
+            self.hav1 = Table.read(infile,format='fits')            
+            ### DELETE SOME UNNECESSARY COLUMNS
+            self.hav1.remove_columns(dcolnames)
+            print('number of columns after removing cols = ',len(self.hav1[0]))
+            c0 = Column(np.ones(len(self.hav1),'bool'),name='HAobsflag',description='observed in halpha')
+            self.hav1.add_column(c0)
+        
+            for i in range(len(self.hav1)):
+                flag =(self.hatable['VFID'] == self.hav1['VFID'][i])
+                self.hatable[flag] = self.hav1[i]
 
         
         #self.hatable = join(self.basictable,self.ha,keys='VFID',join_type='left')
@@ -1009,5 +999,48 @@ class catalog:
         # need RA, DEC, redshift, radius
         pass
 if __name__ == '__main__':
-    c = catalog(masterfile)
+    ###################################################################
+    #### SET UP ARGPARSE
+    #### ADD OPTION FOR NORTH ONLY WHEN MAKING TABLES
+    #### (NO GUARANTEE THAT THIS WORKS FOR THE FULL TABLES ANYMORE!)
+    ###################################################################
+
+    parser = argparse.ArgumentParser(description ='write out subtables for virgo filaments catalog')
+    parser.add_argument('--version',dest = 'version', default='v1',help='version of tables. default is v1')
+    #parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
+    parser.add_argument('--north',dest = 'north', action='store_true',help='keep DEC > -1 galaxies')
+    parser.add_argument('--hav1',dest = 'hav1', action='store_true',default=False,help='set this if there is halpha data post transition to virgo v1 catalogs')
+    
+    args = parser.parse_args()
+
+
+    ###################################################################
+    #### SET VERSION NUMBER
+    ###################################################################
+    version = args.version
+    outfile_suffix = '_'+args.version
+    ###################################################################
+    #### INPUT FILES
+    ###################################################################
+    masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'.fits'
+    masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'_evcc.fits'
+    z0mgs_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_v1_z0mgs_30arcsec_120220.tbl'
+    unwise_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_north_v1_unwise_dl_30arcsec_20201205.fits'
+    ###################################################################
+    #### SET UP DIRECTORIES
+    ###################################################################
+    outdir = homedir+'/research/Virgo/tables/'+version+'/'
+    file_root = 'vf_'+version+'_'
+    # keep DEC > -1 galaxies only
+    if (args.north):
+        NORTH_ONLY = True
+    else:
+        NORTH_ONLY = False
+    if NORTH_ONLY:
+        outdir = homedir+'/research/Virgo/tables-north/'+version+'/'
+        file_root = 'vf_north_'+version+'_'
+
+
+
+    c = catalog(masterfile,hav1=args.hav1)
     #c.runall()
