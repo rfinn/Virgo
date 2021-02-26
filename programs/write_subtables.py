@@ -769,7 +769,7 @@ class catalog:
             if halphafile is None:
                 #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
                 #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
-                infile = '/home/rfinn/research/Virgo/halpha-tables-v1/halpha-09Feb2021.fits'
+                infile = '/home/rfinn/research/Virgo/halpha-tables-v1/halpha-10Feb2021.fits'
 
             else:
                 infile = halphafile

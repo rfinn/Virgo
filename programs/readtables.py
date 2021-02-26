@@ -29,11 +29,14 @@ class vtables:
         self.read_z0mgs()
         self.read_ned()
         self.read_env()
+        self.read_filaments()
+        self.read_tempel()        
         self.read_a100()
         self.read_agc()
         self.read_co()
         self.read_unwise()        
-        self.read_halpha()                
+        self.read_halpha()
+        self.read_rphot()
     def read_main(self):
         ''' read in main table; store as self.main  '''
         self.main = Table.read(self.tabledir+self.tableprefix+'main.fits')
@@ -68,6 +71,12 @@ class vtables:
         tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
         self.env = hstack([tab1,tab2])
         pass
+    def read_filaments(self):
+        ''' read in GC's filament_membership catalog  '''
+        #self.fil = Table.read(self.tabledir+self.tableprefix+'main_filament_membership.fits')
+        self.fil = Table.read(self.tabledir+self.tableprefix+'main_filament_membership_allgalaxies.fits')
+
+        pass
                               
     def read_a100(self):
         ''' read in ALFALFA 100 table; store as self.a100, self.a100sdss, self.a100unwise  '''
@@ -94,11 +103,15 @@ class vtables:
         self.ha = Table.read(self.tabledir+self.tableprefix+'ha.fits')                               
         pass
     def read_tempel(self):
-        ''' read in Tempel table; store as self.te  '''
-        tab1 = Table.read(self.tabledir+self.tableprefix+'Tempelgroups_infos.fits')
-        tab2 = Table.read(self.tabledir+self.tableprefix+'Tempel_groupsinfo.fits')
+        ''' read in Tempel table; store as self.tempel  '''
+        tab1 = Table.read(self.tabledir+self.tableprefix+'main_Tempelgroups_infos.fits')
+        tab2 = Table.read(self.tabledir+self.tableprefix+'matchTempel_groupinfo.fits')
         self.tempel = hstack([tab1,tab2])
         # should merge these, and maybe remove the columns from main
+        
+    def read_rphot(self):
+        ''' read in rband phot  '''
+        self.rphot = Table.read(self.tabledir+self.tableprefix+'r_photometry.fits')
 
 if __name__ == '__main__':
     import argparse
