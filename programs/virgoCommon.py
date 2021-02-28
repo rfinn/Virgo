@@ -1,6 +1,10 @@
 import os
 from astropy.table import Table,join,Column
 import numpy as np
+import glob
+from matplotlib import pyplot as plt
+mycolors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+from matplotlib.patches import Rectangle
 
 #Get current path so program can tell if this is being run on Kelly's or Rose's computer
 mypath=os.getcwd()
@@ -161,3 +165,13 @@ SGXrange = dict((a,b) for a,b in zip(filaments,SGX))
 SGYrange = dict((a,b) for a,b in zip(filaments,SGY))
 SGZrange = dict((a,b) for a,b in zip(filaments,SGZ))
                 
+
+def plot_spines():
+    sfiles = glob.glob(homedir+'/research/Virgo/tables-north/spines/filament*.fits')
+    ncolor = 0
+    for i,f in enumerate(sfiles):
+        spine  = Table.read(f)
+        plt.plot(spine['ra'],spine['dec'],c=mycolors[ncolor],label=os.path.basename(f).replace('filament_spine_','').replace('.fits','').replace('_Filament',''),lw=3)
+        ncolor += 1
+        if ncolor > len(mycolors)-1:
+            ncolor = 0

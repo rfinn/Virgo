@@ -749,7 +749,6 @@ class catalog:
         ### ADD HALPHA SOURCES TO THEIR CORRESPONDING ROWS
 
         ## for halpha measurements that reference the v0 catalogs, match by RA and DEC
-
         hav0_coord = SkyCoord(self.ha['RA'],self.ha['DEC'],unit='deg',frame='icrs')
 
 
@@ -770,9 +769,12 @@ class catalog:
                 #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
                 #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
                 infile = '/home/rfinn/research/Virgo/halpha-tables-v1/halpha-10Feb2021.fits'
+                infile = '/home/rfinn/research/Virgo/halpha-tables-v1/halpha-10Feb2021.fits'
+                infile = '/home/rfinn/research/Virgo/halpha-tables-v1/halpha-26Feb2021.fits'                
 
             else:
                 infile = halphafile
+            print('reading in halpha v1 table ',infile)
             self.hav1 = Table.read(infile,format='fits')            
             ### DELETE SOME UNNECESSARY COLUMNS
             self.hav1.remove_columns(dcolnames)
@@ -781,7 +783,9 @@ class catalog:
             self.hav1.add_column(c0)
         
             for i in range(len(self.hav1)):
-                flag =(self.hatable['VFID'] == self.hav1['VFID'][i])
+                flag =(self.hatable['VFID'] == self.hav1['VFID'][i].rstrip())
+                if sum(flag) > 0:
+                    print('found halpha v1 match ',self.hav1['VFID'][i])
                 self.hatable[flag] = self.hav1[i]
 
         

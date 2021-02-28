@@ -92,6 +92,16 @@ from astroplan.plots import plot_airmass
 
 INGrun=False
 HDIrun = True
+
+########################################
+###### FOR BOK RUN              
+###### set BOKrun to True
+###### otherwise, set to False
+########################################
+BOKrun = True
+HDIrun = False
+
+
 ########################################
 ###### RUN-SPECIFIC PARAMETERS  ########
 ########################################
@@ -99,6 +109,9 @@ HDIrun = True
 if INGrun:
     telescope_run = '2019May/INT-2019May-227filter-'
     telescope_run = '2019May/INT-2019May-197filter-'
+elif BOKrun:
+    telescope_run = '2021Mar/BOK-2021Mar-Ha4-'
+    #telescope_run = '2021Apr/INT-2019May-197filter-'
 else:
     telescope_run = '2019June/MLO-2019June-'
     telescope_run = 'KPNO-2020Feb-'
