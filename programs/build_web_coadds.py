@@ -93,23 +93,23 @@ def plot_vf_gals(imx,imy,keepflag,cat,ax,galsize=120):
     
 
     for j in gindex:
-        rect= plt.Rectangle((imx[j]-galsize/2.,imy[j]-galsize/2.), galsize, galsize,fill=False, color='c')
+        rect= plt.Rectangle((imx[j]-galsize/2.,imy[j]-galsize/2.), galsize, galsize,fill=False, color='b',lw=2)
         ax.add_artist(rect)
         s='{}\n vr={:.0f}'.format(cat['VFID'][j],cat['vr'][j])
-        plt.text(imx[j],imy[j]+galsize/2.,s,fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='bottom')
-        plt.text(imx[j],imy[j]-galsize/2.,cat['NEDname'][j],fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='top')
+        plt.text(imx[j],imy[j]+galsize/2.,s,fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='bottom',bbox=dict(facecolor='c',alpha=.3))
+        plt.text(imx[j],imy[j]-galsize/2.,cat['NEDname'][j],fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='top',bbox=dict(facecolor='c',alpha=.3))
         #if cat['COflag'][j]:
-        #    size=galsize-.005
-        #    rect= plt.Rectangle((imx[j]-size/2.,imy[j]-size/2.), size, size,fill=False, color='g')
+        #    size=galsize+10
+        #    rect= plt.Rectangle((imx[j]-size/2.,imy[j]-size/2.), size, size,fill=False, color='g',lw=1.5)
         #    ax.add_artist(rect)
         if cat['COflag'][j]:
-            size=galsize-.005
+            size=galsize
             #rect= plt.Circle((ran-size/2.,decn-size/2.), size,fill=False, color='g')
-            rect= plt.Circle((imx[j],imy[j]), size,fill=False, color='g')
+            rect= plt.Circle((imx[j],imy[j]), size/2,fill=False, color='g',lw=1.5)
             ax.add_artist(rect)
         if cat['A100flag'][j]:
-            size=galsize+.005
-            rect= plt.Rectangle((imx[j]-size/2.,imy[j]-size/2.), size, size,fill=False, color='b')
+            size=galsize+20
+            rect= plt.Rectangle((imx[j]-size/2.,imy[j]-size/2.), size, size,fill=False, color='c',lw=1)
             ax.add_artist(rect)
         #if cat['HAobsflag'][j]:
         #    size=galsize+2*.005
