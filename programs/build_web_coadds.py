@@ -503,7 +503,7 @@ if __name__ == '__main__':
         haimage = rimage.replace('-r-','-ha4-').replace('-R-','-ha4')
         if not os.path.exists(haimage):
             # haimage could have a different date
-            search_string = rimage.split('HDI').replace('-r-','-ha4-').replace('-R-','-ha4')
+            search_string = rimage.split('HDI')[1].replace('-r-','-ha4-').replace('-R-','-ha4')
             haimage = glob.glob('*'+search_string)[0]
             if not os.path.exists(haimage):
                 print('WARNING: could not find halpha image for ',rimage,' Skipping for now.')
