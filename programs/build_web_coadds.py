@@ -410,8 +410,8 @@ class build_html_pointing():
         self.html.write('<table width="90%">\n')
         #self.html.write('<tr><th>Coadd<br>{}</th> <th>PSF images</th> <th>ZP Calib Orig</th> <th>ZP Calib Final</th></tr></p>\n'.format(os.path.basename(self.pointing.rimage)))
         self.html.write('<tr><th>Coadd</th> <th>PSF images</th> <th>ZP Calib Orig</th> <th>ZP Calib Final</th></tr></p>\n')        
-        pngfile = self.pointing.r.coadd_png
-        psfpng = self.pointing.r.psf_png
+        pngfile = os.path.basename(self.pointing.r.coadd_png)
+        psfpng = os.path.basename(self.pointing.r.psf_png)
         images = [pngfile,psfpng,psfpng,psfpng]
         self.html.write('<tr>')
         for i in images:
@@ -435,8 +435,8 @@ class build_html_pointing():
         #self.html.write('<tr><th>Coadd<br>{}</th> <th>PSF images</th> <th>ZP Calib Orig</th> <th>ZP Calib Final</th></tr></p>\n'.format(os.path.basename(self.pointing.haimage)))
         self.html.write('<tr><th>Coadd</th> <th>PSF images</th> <th>ZP Calib Orig</th> <th>ZP Calib Final</th></tr></p>\n')
         
-        pngfile = self.pointing.ha.coadd_png
-        psfpng = self.pointing.ha.psf_png
+        pngfile = os.path.basename(self.pointing.ha.coadd_png)
+        psfpng = os.path.basename(self.pointing.ha.psf_png)
         images = [pngfile,psfpng,psfpng,psfpng]
         self.html.write('<tr>')
         for i in images:
