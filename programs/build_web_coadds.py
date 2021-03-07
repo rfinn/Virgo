@@ -227,7 +227,7 @@ class coadd_image():
         imagebase = self.imagename.replace('-noback-coadd.fits','')
         zpsurf = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")
         self.zpsurf_png = os.path.join(self.plotdir,imagebase+"-getzp-xyresidual-fitted.png")
-        os.copy(zpsurf,self.zpsurf_png)
+        os.system('cp '+zpsurf+' '+self.zpsurf_png)
         pass
     
     def get_zpimage_finalpass(self):
@@ -243,7 +243,7 @@ class coadd_image():
         imagebase = self.imagename.replace('-noback-coadd.fits','')        
         pancomp = os.path.join(self.zpdir,imagebase+"-se-panflux.png")
         self.pancomp_png = os.path.join(self.plotdir,imagebase+"-se-panflux.png")
-        os.copy(pancomp,self.pancomp_png)
+        os.system('cp '+pancomp+' '+self.pancomp_png)
         pass
 
     
