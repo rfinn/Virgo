@@ -472,7 +472,7 @@ if __name__ == '__main__':
         homedir = '/mnt/qnap_home/rfinn/'
         vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
         coadd_dir = homedir+'/Halpha/reduced/virgo-coadds-HDI/'
-        zp_dir = homedir+'/Halpha/reduced/virgo-coadds-HDI/plots/'        
+        zpdir = homedir+'/Halpha/reduced/virgo-coadds-HDI/plots/'        
         psfdir = homedir+'/reduced/psf-images/'
         outdir = homedir+'/research/Virgo/html-dev/coadds/'
         
