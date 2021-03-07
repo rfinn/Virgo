@@ -466,6 +466,7 @@ class build_html_pointing():
 if __name__ == '__main__':
     # work through coadd directory
     virgovms=True
+    intonlaptop=False
     if virgovms:
         homedir = '/mnt/qnap_home/rfinn/'
         vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
