@@ -16,6 +16,7 @@ NOTES:
 
 import os
 import numpy as np
+import glob
 
 from matplotlib import pyplot as plt
 from astropy.io import fits
