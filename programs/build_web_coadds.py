@@ -261,6 +261,7 @@ class pointing():
         self.rimage = rimage
         self.haimage = haimage
         self.psfdir = psfdir
+        self.zpdir = zpdir
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         self.outdir = outdir
@@ -302,9 +303,9 @@ class pointing():
         if os.path.exists(rimage):
             outprefix = self.outdir+'/r-'
             if self.rpsf_flag:
-                self.r = coadd_image(self.rimage,psfimage=self.rpsf_image,plotdir=outprefix)
+                self.r = coadd_image(self.rimage,psfimage=self.rpsf_image,plotdir=outprefix,zpdir=self.zpdir)
             else:
-                self.r = coadd_image(self.rimage,psfimage=None,plotdir=outprefix)
+                self.r = coadd_image(self.rimage,psfimage=None,plotdir=outprefix,zpdir=self.zpdir)
             self.rcoadd_flag=True
             self.r.generate_plots()
         else:
@@ -316,9 +317,9 @@ class pointing():
         if os.path.exists(self.haimage):
             outprefix = self.outdir+'/ha-'
             if self.hapsf_flag:
-                self.ha = coadd_image(self.haimage,psfimage=self.rpsf_image,plotdir=outprefix)
+                self.ha = coadd_image(self.haimage,psfimage=self.rpsf_image,plotdir=outprefix,zpdir=self.zpdir)
             else:
-                self.ha = coadd_image(self.haimage,psfimage=None,plotdir=outprefix)
+                self.ha = coadd_image(self.haimage,psfimage=None,plotdir=outprefix,zpdir=self.zpdir)
             self.hacoadd_flag=True
             self.ha.generate_plots()
         else:
