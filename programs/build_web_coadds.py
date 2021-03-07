@@ -183,8 +183,8 @@ class coadd_image():
             display_image(self.imdata)
             galsize=60/(abs(self.imheader['CD1_1'])*3600)
             plot_vf_gals(imx,imy,keepflag,self.cat,ax,galsize=galsize)
-            plt.xlabel('RA (deg)',fontsize=16)
-            plt.ylabel('DEC (deg)',fontsize=16)        
+            ax.set_xlabel('RA (deg)',fontsize=16)
+            ax.set_ylabel('DEC (deg)',fontsize=16)        
             plt.savefig(self.coadd_png)        
 
     def get_psf_image(self):
