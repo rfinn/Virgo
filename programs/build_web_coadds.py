@@ -137,7 +137,7 @@ def write_coadd_prop_table(html,filter,zp,fwhm_arcsec):
 
 class coadd_image():
 
-    def __init__(self,imagename,psfimage=None,plotdir=None,cat=None):
+    def __init__(self,imagename,psfimage=None,plotdir=None,cat=None,zpdir=None):
         self.imagename = imagename
         if psfimage is not None:
             self.psf_flag = True
@@ -152,6 +152,7 @@ class coadd_image():
         if cat is None:
             self.cat = fits.getdata(VFMAIN_PATH)
 
+        self.zpdir = zpdir
     def generate_plots(self):
         self.get_image()
         self.make_coadd_png()
@@ -222,6 +223,10 @@ class coadd_image():
         ''' get the zp image, first pass'''
         # check that png file exists
         # display png file
+        imagebase = self.imagename.replace('-noback-coadd.fits','')
+        zpsurf = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")
+        self.zpsurf_png = os.path.join(self.plotdir,imagebase+"-getzp-xyresidual-fitted.png")
+        os.copy(zpsurf,self.zpsurf_png)
         pass
     
     def get_zpimage_finalpass(self):
@@ -233,7 +238,11 @@ class coadd_image():
     def get_zp_magcomparison(self):
         ''' get the final plot of inst mag vs panstarrs mag'''
         # check that png file exists
-        # display png file        
+        # display png file
+        imagebase = self.imagename.replace('-noback-coadd.fits','')        
+        pancomp = os.path.join(self.zpdir,imagebase+"-se-panflux.png")
+        self.pancomp_png = os.path.join(self.plotdir,imagebase+"-se-panflux.png")
+        os.copy(pancomp,self.pancomp_png)
         pass
 
     
@@ -320,6 +329,7 @@ class pointing():
     def get_filter_ratio_plot(self):
         ''' display the filter ratio png '''
         pass
+
 
     def get_params_for_gal_table(self):
         ''' setup arrays for galaxy table '''
@@ -412,7 +422,7 @@ class build_html_pointing():
         self.html.write('<tr><th>Coadd</th> <th>PSF images</th> <th>ZP Calib Orig</th> <th>ZP Calib Final</th></tr></p>\n')        
         pngfile = os.path.basename(self.pointing.r.coadd_png)
         psfpng = os.path.basename(self.pointing.r.psf_png)
-        images = [pngfile,psfpng,psfpng,psfpng]
+        images = [pngfile,psfpng,self.pointing.r.zpsurf_png,self.pointing.r.pancomp_png]
         self.html.write('<tr>')
         for i in images:
             self.html.write('<td><a href="{0}"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(i,i))
@@ -437,7 +447,8 @@ class build_html_pointing():
         
         pngfile = os.path.basename(self.pointing.ha.coadd_png)
         psfpng = os.path.basename(self.pointing.ha.psf_png)
-        images = [pngfile,psfpng,psfpng,psfpng]
+        images = [pngfile,psfpng,self.pointing.ha.zpsurf_png,self.pointing.ha.pancomp_png]        
+
         self.html.write('<tr>')
         for i in images:
             self.html.write('<td><a href="{0}"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(i,i))
