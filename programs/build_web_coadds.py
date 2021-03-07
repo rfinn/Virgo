@@ -160,7 +160,8 @@ class coadd_image():
             self.get_psf_image()
             if self.found_psf:
                 self.make_psf_png()
-                
+        self.get_zpimage_firstpass()
+        self.get_zp_magcomparison()        
     def get_image(self):
         '''  read in image, save data and header '''
         self.imdata,self.imheader = fits.getdata(self.imagename,header=True)
