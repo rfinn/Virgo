@@ -465,20 +465,49 @@ class build_html_pointing():
 
 if __name__ == '__main__':
     # work through coadd directory
-    vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
-    coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-jun2019-int/'
-    rimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-r-shifted.fits'
-
-    
-    
-    haimage = coadd_dir+'VF-219.9523+5.4009-INT-20190530-p019-Halpha.fits'
-    hacsimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-CS.fits'
-    psfdir = homedir+'/data/reduced/psf-images/'
-    outdir = homedir+'/research/Virgo/html-dev/coadds/'
+    if virgovms:
+        homedir = '/mnt/qnap_home/rfinn/'
+        vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
+        coadd_dir = homedir+'/Halpha/reduced/virgo-coadds-HDI/'
+        zp_dir = homedir+'/Halpha/reduced/virgo-coadds-HDI/plots/'        
+        psfdir = homedir+'/reduced/psf-images/'
+        outdir = homedir+'/research/Virgo/html-dev/coadds/'
+        
+    #rimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-r-shifted.fits'    
+    #haimage = coadd_dir+'VF-219.9523+5.4009-INT-20190530-p019-Halpha.fits'
+    #hacsimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-CS.fits'
+    if intonlaptop:
+        vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')        
+        coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-jun2019-int/'    
+        psfdir = homedir+'/data/reduced/psf-images/'
+        outdir = homedir+'/research/Virgo/html-dev/coadds/'
     if not os.path.exists(outdir):
         os.mkdir(outdir)
+
+    # for HDI files
+    rfiles = glob.glob('*-r-*coadd.fits')
+    Rfiles = glob.glob('*-R-*coadd.fits')
+    hfiles = glob.glob('*-ha4-*coadd.fits')        
+    hfiles.sort()
+
+    # combine r and R files
+    allrfiles = rfiles+Rfiles
+    allrfiles.sort()
+
+    # loop through r filenames
+    for rimage in allrfiles:
+        # find matching ha4 coadd
+        haimage = rimage.replace('-r-','-ha4-').replace('-R-','-ha4')
+        if not os.path.exists(haimage):
+            # haimage could have a different date
+            search_string = rimage.split('HDI').replace('-r-','-ha4-').replace('-R-','-ha4')
+            haimage = glob.glob('*'+search_string)[0]
+            if not os.path.exists(haimage):
+                print('WARNING: could not find halpha image for ',rimage,' Skipping for now.')
+                print('\t Looking for ',haimage)
+                continue
     pname = os.path.basename(rimage).replace('-shifted','').replace('.fits','').replace('-r','').replace('-R','')
     outdir = os.path.join(outdir,pname)
-    p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=None,outdir=outdir)
+    p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=outdir)
     h = build_html_pointing(p,outdir=outdir)
-    pass
+    break

@@ -710,7 +710,10 @@ if __name__ == '__main__':
     vfmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
     vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_ha.fits')    
     #cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-2019-june/cutouts/'
-    #cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-2019/cutouts/'
+    #telescope='INT'
+    #run='2019-Jun'
+    
+
     cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-2019/cutouts/'
     telescope='INT'
     run='2019-Feb'
