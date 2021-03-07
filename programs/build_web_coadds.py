@@ -482,7 +482,8 @@ if __name__ == '__main__':
     #hacsimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-CS.fits'
     if intonlaptop:
         vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')      
-        coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-jun2019-int/'    
+        coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-HDI/'
+        zpdir = coadd_dir+'/plots/'                
         psfdir = homedir+'/data/reduced/psf-images/'
         outdir = homedir+'/research/Virgo/html-dev/coadds/'
     if not os.path.exists(outdir):
