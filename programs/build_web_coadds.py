@@ -469,8 +469,9 @@ if __name__ == '__main__':
     virgovms=True
     intonlaptop=False
     if virgovms:
-        homedir = '/mnt/qnap_home/rfinn/'
         vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
+        homedir = '/mnt/qnap_home/rfinn/'
+        
         coadd_dir = homedir+'/Halpha/reduced/virgo-coadds-HDI/'
         zpdir = homedir+'/Halpha/reduced/virgo-coadds-HDI/plots/'        
         psfdir = homedir+'/reduced/psf-images/'
@@ -480,7 +481,7 @@ if __name__ == '__main__':
     #haimage = coadd_dir+'VF-219.9523+5.4009-INT-20190530-p019-Halpha.fits'
     #hacsimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-CS.fits'
     if intonlaptop:
-        vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')        
+        vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')      
         coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-jun2019-int/'    
         psfdir = homedir+'/data/reduced/psf-images/'
         outdir = homedir+'/research/Virgo/html-dev/coadds/'
