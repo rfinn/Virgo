@@ -241,8 +241,8 @@ class coadd_image():
         # check that png file exists
         # display png file
         imagebase = self.imagename.replace('-noback-coadd.fits','')        
-        pancomp = os.path.join(self.zpdir,imagebase+"-se-panflux.png")
-        self.pancomp_png = os.path.join(self.plotdir,imagebase+"-se-panflux.png")
+        pancomp = os.path.join(self.zpdir,imagebase+"-se-pan-flux.png")
+        self.pancomp_png = os.path.join(self.plotdir,imagebase+"-se-pan-flux.png")
         os.system('cp '+pancomp+' '+self.pancomp_png)
         pass
 
