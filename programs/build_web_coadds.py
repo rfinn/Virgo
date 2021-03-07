@@ -499,12 +499,17 @@ if __name__ == '__main__':
 
     # loop through r filenames
     for rimage in allrfiles:
+        print(rimage)
         # find matching ha4 coadd
         haimage = rimage.replace('-r-','-ha4-').replace('-R-','-ha4')
+        print('looking for ',haimage)
         if not os.path.exists(haimage):
+            print("couldn't find it")
             # haimage could have a different date
             search_string = rimage.split('HDI')[1].replace('-r-','-ha4-').replace('-R-','-ha4')
-            haimage = glob.glob('*'+search_string)[0]
+            print('looking for ',search_string)
+            try:
+                haimage = glob.glob('*'+search_string)[0]
             if not os.path.exists(haimage):
                 print('WARNING: could not find halpha image for ',rimage,' Skipping for now.')
                 print('\t Looking for ',haimage)
