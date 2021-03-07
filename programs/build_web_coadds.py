@@ -503,7 +503,7 @@ if __name__ == '__main__':
     for rimage in allrfiles:
         print(rimage)
         # find matching ha4 coadd
-        haimage = rimage.replace('-r-','-ha4-').replace('-R-','-ha4')
+        haimage = rimage.replace('-r-','-ha4-').replace('-R-','-ha4-')
         print('looking for ',haimage)
         if not os.path.exists(haimage):
             print("couldn't find it")
