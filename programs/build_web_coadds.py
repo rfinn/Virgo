@@ -474,7 +474,7 @@ if __name__ == '__main__':
         
         coadd_dir = homedir+'/Halpha/reduced/virgo-coadds-HDI/'
         zpdir = homedir+'/Halpha/reduced/virgo-coadds-HDI/plots/'        
-        psfdir = homedir+'/reduced/psf-images/'
+        psfdir = homedir+'/Halpha/reduced/psf-images/'
         outdir = homedir+'/research/Virgo/html-dev/coadds/'
         
     #rimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-r-shifted.fits'    
@@ -516,9 +516,11 @@ if __name__ == '__main__':
                 if not os.path.exists(haimage):
                     print('WARNING: could not find halpha image for ',rimage,' Skipping for now.')
                     print('\t Looking for ',haimage)
+                    break
                     continue
         pname = os.path.basename(rimage).replace('-shifted','').replace('.fits','').replace('-r','').replace('-R','')
         outdir = os.path.join(outdir,pname)
         p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=outdir)
         h = build_html_pointing(p,outdir=outdir)
+
         break
