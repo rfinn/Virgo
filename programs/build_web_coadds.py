@@ -507,8 +507,8 @@ if __name__ == '__main__':
                 print('WARNING: could not find halpha image for ',rimage,' Skipping for now.')
                 print('\t Looking for ',haimage)
                 continue
-    pname = os.path.basename(rimage).replace('-shifted','').replace('.fits','').replace('-r','').replace('-R','')
-    outdir = os.path.join(outdir,pname)
-    p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=outdir)
-    h = build_html_pointing(p,outdir=outdir)
-    break
+        pname = os.path.basename(rimage).replace('-shifted','').replace('.fits','').replace('-r','').replace('-R','')
+        outdir = os.path.join(outdir,pname)
+        p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=outdir)
+        h = build_html_pointing(p,outdir=outdir)
+        break
