@@ -45,7 +45,7 @@ else:
 
 class getNED:
     def __init__(self,clean_catalog):
-        self.clean_a100 = Table(fits.getdata(clean_catalog))
+        self.cat = Table(fits.getdata(clean_catalog))
     def get_NEDname(self):
 
         # skip for now until other parts are working
@@ -66,14 +66,14 @@ class getNED:
         nednames = Table(fits.getdata(self.nedfile))
         self.nednames = nednames
         # do a left join of the input catalog and nednames
-        # using column nednames.NEDinput and clean_a100.superName
+        # using column nednames.NEDinput and cat.superName
 
-        #self.clean_a100.rename_column('superName','NEDinput')
-        self.clean_a100.add_column(self.clean_a100['superName'],name='NEDinput')
+        #self.cat.rename_column('superName','NEDinput')
+        self.cat.add_column(self.cat['superName'],name='NEDinput')
 
         # join returns a table that is sorted by the key columns
         # the following command gets table back into its original order
-        self.newtab = myjoinleft(self.clean_a100,nednames,keys='NEDinput')
+        self.newtab = myjoinleft(self.cat,nednames,keys='NEDinput')
 
         
         # fix case for UGC09348, until we run the full query again...
@@ -124,13 +124,13 @@ class getNED:
         
         no_match_by_name = self.newtab['NEDname'].mask
         print(no_match_by_name)
-        pos_match_indices = np.arange(len(self.clean_a100))[no_match_by_name]
+        pos_match_indices = np.arange(len(self.cat))[no_match_by_name]
 
         # shorten NED catalog to those that were matched by location
         # this should make search by location faster
         self.nednames_bypos = nednames[nednames['NEDinput'] == 'bylocation']
         #nedcoord = SkyCoord(self.nednames_bypos['NEDra'],self.nednames_bypos['NEDdec'],unit='deg',frame='icrs')            
-        #self.catcoord = SkyCoord(self.clean_a100['RA'],self.clean_a100['DEC'],unit='deg',frame='icrs')            
+        #self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],unit='deg',frame='icrs')            
         for i in pos_match_indices:
             d = np.sqrt((self.newtab['RA'][i]-self.nednames_bypos['NEDra'])**2 + \
                         (self.newtab['DEC'][i]-self.nednames_bypos['NEDdec'])**2)
@@ -150,25 +150,25 @@ class getNED:
         ## running query for those that haven't yet been matched to an entry in the catalog
         ##
 
-        no_match_by_name = self.clean_a100['NEDname'].mask
-        pos_match_indices = np.arange(len(self.clean_a100))[no_match_by_name]
+        no_match_by_name = self.cat['NEDname'].mask
+        pos_match_indices = np.arange(len(self.cat))[no_match_by_name]
         
         
         for i in pos_match_indices:
             foundit=False
             
             time.sleep(.5)
-            coord = SkyCoord(self.clean_a100['RA'][i],self.clean_a100['DEC'][i],unit=(u.deg,u.deg), frame='icrs')
-            print(i,self.clean_a100['RA'][i],self.clean_a100['DEC'][i])
+            coord = SkyCoord(self.cat['RA'][i],self.cat['DEC'][i],unit=(u.deg,u.deg), frame='icrs')
+            print(i,self.cat['RA'][i],self.cat['DEC'][i])
             
             try:
                 t = Ned.query_region(coord,radius=10./3600*u.deg, equinox='J2000')
                 print(t)
-                #t = Ned.query_object('NSA '+str(self.clean_a100['NSAID_2'][i]))
-                self.clean_a100['NEDname'][i] = t['Object Name'][0]
-                self.clean_a100['NEDra'][i] = t['RA'][0]
-                self.clean_a100['NEDdec'][i] = t['DEC'][0]
-                self.clean_a100['NEDinput'][i] = 'bylocation'
+                #t = Ned.query_object('NSA '+str(self.cat['NSAID_2'][i]))
+                self.cat['NEDname'][i] = t['Object Name'][0]
+                self.cat['NEDra'][i] = t['RA'][0]
+                self.cat['NEDdec'][i] = t['DEC'][0]
+                self.cat['NEDinput'][i] = 'bylocation'
                 foundit=True
                 continue
             except IndexError:
@@ -179,13 +179,13 @@ class getNED:
 
             if not(foundit):
                 print("oh no - could not find NED name! so sorry...",i)
-                self.clean_a100['NEDname'][i] = ''
-                self.clean_a100['NEDra'][i] = -999
-                self.clean_a100['NEDdec'][i] = -999
+                self.cat['NEDname'][i] = ''
+                self.cat['NEDra'][i] = -999
+                self.cat['NEDdec'][i] = -999
                 
 
     def write_NEDnames(self):
-        nedtable = Table([self.clean_a100['NEDinput'],self.clean_a100['NEDra'],self.clean_a100['NEDdec'],self.clean_a100['NEDname']])
+        nedtable = Table([self.cat['NEDinput'],self.cat['NEDra'],self.cat['NEDdec'],self.cat['NEDname']])
         nedtable.write(self.nedfile,format='fits',overwrite=True)            
 
             
@@ -203,7 +203,7 @@ class getNED:
         NEDdec = []
         NEDinput = []
         
-        for i in range(startindex,len(self.clean_a100['objname'])):
+        for i in range(startindex,len(self.cat['objname'])):
         #for i in range(20):            
             # check if HL id exists, look up NED name
             # if yes, break
@@ -217,93 +217,93 @@ class getNED:
             # if no Ned name comes back, then no NED name!
             #
             foundit=False
-            if self.clean_a100['HLflag'][i]:
-                time.sleep(1)
+            if self.cat['HLflag'][i]:
+                time.sleep(.5)
                 try:
-                    t = Ned.query_object(self.clean_a100['objname'][i])
+                    t = Ned.query_object(self.cat['objname'][i])
                     NEDid.append(t['Object Name'][0])
                     NEDra.append(t['RA'][0])
                     NEDdec.append(t['DEC'][0])
-                    NEDinput.append(self.clean_a100['objname'][i])
+                    NEDinput.append(self.cat['objname'][i])
                     foundit=True
                     continue
                 except IndexError:
                     pass
                 except:
-                    print(i,'2 NED did not like ',self.clean_a100['objname'][i])
+                    print(i,'2 NED did not like ',self.cat['objname'][i])
                     pass
                 
 
-            if self.clean_a100['NSAflag'][i]:
+            if self.cat['NSAflag'][i]:
                 if not(foundit):
-                    time.sleep(1)
+                    time.sleep(.5)
                     try:
-                        t = Ned.query_object('NSA '+str(self.clean_a100['NSAID'][i]))
+                        t = Ned.query_object('NSA '+str(self.cat['NSAID'][i]))
                         NEDid.append(t['Object Name'][0])
                         NEDra.append(t['RA'][0])
                         NEDdec.append(t['DEC'][0])
-                        NEDinput.append('NSA '+str(self.clean_a100['NSAID'][i]))
+                        NEDinput.append('NSA '+str(self.cat['NSAID'][i]))
                         foundit=True
                         continue
                     except IndexError:
                         pass
                     except:
-                        print(i,'2 NED did not like ','NSA '+str(self.clean_a100['NSAID'][i]))
+                        print(i,'2 NED did not like ','NSA '+str(self.cat['NSAID'][i]))
                         pass
-            if self.clean_a100['A100flag'][i]:
+            if self.cat['A100flag'][i]:
                 if not(foundit):
-                    time.sleep(1)
+                    time.sleep(.5)
                     try:
-                        #print('AGC'+str(self.clean_a100['AGC'][i]))
-                        t = Ned.query_object('AGC'+str(self.clean_a100['AGC'][i]))
+                        #print('AGC'+str(self.cat['AGC'][i]))
+                        t = Ned.query_object('AGC'+str(self.cat['AGC'][i]))
                         NEDid.append(t['Object Name'][0])
                         NEDra.append(t['RA'][0])
                         NEDdec.append(t['DEC'][0])
-                        NEDinput.append('AGC'+str(self.clean_a100['AGC'][i]))
+                        NEDinput.append('AGC'+str(self.cat['AGC'][i]))
                         foundit=True
                         continue
                     except IndexError:
                         pass
                     except:
-                        print(i,'2 NED did not like ','AGC'+str(self.clean_a100['AGC'][i]))
+                        print(i,'2 NED did not like ','AGC'+str(self.cat['AGC'][i]))
                         pass
-            if self.clean_a100['NSA0flag'][i]:
+            if self.cat['NSA0flag'][i]:
                 if not(foundit):
-                    time.sleep(1)
+                    time.sleep(.5)
                     try:
-                        t = Ned.query_object('NSA '+str(self.clean_a100['NSAID_2'][i]))
+                        t = Ned.query_object('NSA '+str(self.cat['NSAID_2'][i]))
                         NEDid.append(t['Object Name'][0])
                         NEDra.append(t['RA'][0])
                         NEDdec.append(t['DEC'][0])
-                        NEDinput.append('NSA '+str(self.clean_a100['NSAID_2'][i]))
+                        NEDinput.append('NSA '+str(self.cat['NSAID_2'][i]))
                         foundit=True
                         continue
                     except IndexError:
                         pass
                     except:
-                        print(i,'2 NED did not like ','NSA '+str(self.clean_a100['NSAID'][i]))
+                        print(i,'2 NED did not like ','NSA '+str(self.cat['NSAID'][i]))
                         pass
 
             # check to make sure that the NED ra and dec
             # is not offset from object
             # we have a few cases where the NED object is wrong
             if foundit:
-                distance = np.sqrt((self.clean_a100['RA'][i]-NEDra[-1])**2 + \
-                                   (self.clean_a100['DEC'][i] - NEDdec[-1])**2)
+                distance = np.sqrt((self.cat['RA'][i]-NEDra[-1])**2 + \
+                                   (self.cat['DEC'][i] - NEDdec[-1])**2)
                 if (distance > 10./3600):
                     print('NED name is offset from source by {1:.3e} arcsec'.format(distance*3600))
                     print('resetting foundit to false')
                     foundit = False
             if not(foundit):
                 # search by coordinates
-                time.sleep(1)
-                coord = SkyCoord(self.clean_a100['RA'][i],self.clean_a100['DEC'][i],unit=(u.deg,u.deg), frame='icrs')
-                print(i,self.clean_a100['RA'][i],self.clean_a100['DEC'][i])
+                time.sleep(.5)
+                coord = SkyCoord(self.cat['RA'][i],self.cat['DEC'][i],unit=(u.deg,u.deg), frame='icrs')
+                print(i,self.cat['RA'][i],self.cat['DEC'][i])
 
                 try:
                     t = Ned.query_region(coord,radius=10./3600*u.deg, equinox='J2000')
                     print(t)
-                    #t = Ned.query_object('NSA '+str(self.clean_a100['NSAID_2'][i]))
+                    #t = Ned.query_object('NSA '+str(self.cat['NSAID_2'][i]))
 
                     # should check if NED name already points to another galaxy
                     # and remove it if it does
@@ -355,8 +355,8 @@ class getNED:
         except:
             print("couldn't write ned names")
             
-        self.clean_a100.add_columns([c1,c2,c3,c4])
-        self.clean_a100.write('vf_clean_sample_wNEDname'+outfile_suffix+'.fits',format='fits',overwrite=True)
+        self.cat.add_columns([c1,c2,c3,c4])
+        self.cat.write('vf_clean_sample_wNEDname'+outfile_suffix+'.fits',format='fits',overwrite=True)
     def get_GL_NEDname(self):
         # for galaxies with no NED match, use GL's catalog to match
         # HL name to NEDname (he did a position match for those that didn't return a NED name

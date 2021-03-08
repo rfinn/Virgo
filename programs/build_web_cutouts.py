@@ -103,7 +103,7 @@ def write_coadd_prop_table(html,filter,zp,fwhm_arcsec):
     html.write('</tr>\n')
     html.write('</table>\n')
 
-def write_table(html,images,labels):    
+def write_table(html,images=None,labels=None,images2=None):    
     html.write('<table width="90%">\n')
     html.write('<tr>')
     for l in labels:
@@ -112,7 +112,14 @@ def write_table(html,images,labels):
     html.write('<tr>')
     for i in images:
         html.write('<td><a href="{0}"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(i,i))
-    html.write('</tr>\n')            
+    html.write('</tr>\n')
+    if images2 is not None:
+        html.write('<tr>')
+        for i in images2:
+            html.write('<td><a href="{0}"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(i,i))            
+
+        html.write('</tr>\n')            
+    
     html.write('</table>\n')
 
 def write_text_table(html,labels,data,data2=None):    
@@ -599,7 +606,7 @@ class build_html_cutout():
 
             labels = ['Legacy','Halpha','W3','W4']
         images = [os.path.basename(i) for i in images]            
-        write_table(self.html,images,labels)
+        write_table(self.html,images=images,labels=labels)
         pass
 
     
@@ -610,7 +617,7 @@ class build_html_cutout():
         images = [os.path.basename(i) for i in images]
 
         labels = ['R','Halpha+Continuum','CS, stretch 1','CS, stretch 2']
-        write_table(self.html,images,labels)
+        write_table(self.html,images=images,labels=labels)
         pass
 
     def write_legacy_images(self):
@@ -621,7 +628,7 @@ class build_html_cutout():
         images = [os.path.basename(i) for i in images]        
         images.insert(0,os.path.basename(self.cutout.legacy_jpg))        
         labels = ['grz','g','r','z']
-        write_table(self.html,images,labels)
+        write_table(self.html,images=images,labels=labels)
 
     def write_wise_images(self):
         ''' w1 - w4 images '''
@@ -629,7 +636,7 @@ class build_html_cutout():
         images = self.cutout.pngimages[6:10]
         images = [os.path.basename(i) for i in images]        
         labels = ['W1','W2','W3','W4']
-        write_table(self.html,images,labels)
+        write_table(self.html,images=images,labels=labels)
     
     def write_galex_images(self):
         ''' right now just nuv '''
@@ -643,7 +650,7 @@ class build_html_cutout():
                   self.cutout.pngimages[10]]
         images = [os.path.basename(i) for i in images]        
         labels = ['Image', 'Model', 'Residual','Mask']
-        write_table(self.html,images,labels)
+        write_table(self.html,images=images,labels=labels)
         pass
     
     def write_galfit_table(self):
@@ -672,7 +679,7 @@ class build_html_cutout():
         images = [self.cutout.efluxsma_png,self.cutout.emagsma_png,self.cutout.sbfluxsma_png,self.cutout.sbmagsma_png]
         images = [os.path.basename(i) for i in images]
         labels = ['Enclosed Flux','Enclosed Magnitude','Surface Brightness','Surface Brightness']
-        write_table(self.html,images,labels)
+        write_table(self.html,images=images,labels=labels)
 
     def write_mag_table(self):
         self.html.write('<h2>R-band AB Magnitudes</h2>\n')        
@@ -740,8 +747,8 @@ if __name__ == '__main__':
                 # move to subdirectory
                 # adding the telescope and run so that we don't write over
                 # images if galaxy was observed more than once
-                galdirname = "{}-{}-{}".format(subdir,telescope,run
-                gal_outdir = os.path.join(outdir,subdir+,"")
+                galdirname = "{}-{}-{}".format(subdir,telescope,run)
+                gal_outdir = os.path.join(outdir,subdir+"")
                 print('out directory for this galaxy = ',gal_outdir)
                 if not os.path.exists(outdir):
                     os.mkdir(outdir)

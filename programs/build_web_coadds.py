@@ -17,6 +17,7 @@ NOTES:
 import os
 import numpy as np
 import glob
+import sys
 
 from matplotlib import pyplot as plt
 from astropy.io import fits
@@ -27,10 +28,15 @@ from astropy.visualization import simple_norm
 from astropy import units as u
 from astropy.nddata import Cutout2D
 from astropy.stats import sigma_clip
+from astropy.time import Time
 
 homedir = os.getenv("HOME")
 VFMAIN_PATH = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits'
 
+import build_web_cutouts as buildweb
+
+sys.path.append(homedir+'/github/halphagui/')
+import filter_transmission as ft
 
 ###########################################################
 ####  FUNCTIONS
@@ -91,9 +97,10 @@ def get_galaxies_fov(imagename,RA,DEC):
 def plot_vf_gals(imx,imy,keepflag,cat,ax,galsize=120):
     ''' plot galaxies   '''
     gindex=np.arange(len(imx))[keepflag]
-    
+    galsizes = vmain['radius']/.4*2
 
     for j in gindex:
+        galsize = galsizes[j]
         rect= plt.Rectangle((imx[j]-galsize/2.,imy[j]-galsize/2.), galsize, galsize,fill=False, color='b',lw=2)
         ax.add_artist(rect)
         s='{}\n vr={:.0f}'.format(cat['VFID'][j],cat['vr'][j])
@@ -137,21 +144,24 @@ def write_coadd_prop_table(html,filter,zp,fwhm_arcsec):
 
 class coadd_image():
 
-    def __init__(self,imagename,psfimage=None,plotdir=None,cat=None,zpdir=None):
+    def __init__(self,imagename,psfimage=None,plotdir=None,cat=None,zpdir=None,filter=None):
         self.imagename = imagename
         if psfimage is not None:
             self.psf_flag = True
             self.psf_image = psfimage
+            self.psfdir = os.path.split(psfimage)[0]
         else:
             self.psf_flag = False
 
+        
         if plotdir is None:
             self.plotdir = os.getcwd()
         else:
             self.plotdir = plotdir
         if cat is None:
             self.cat = fits.getdata(VFMAIN_PATH)
-
+        self.filter = filter
+        self.plotprefix = os.path.join(self.plotdir,filter+'-')
         self.zpdir = zpdir
     def generate_plots(self):
         self.get_image()
@@ -160,8 +170,14 @@ class coadd_image():
             self.get_psf_image()
             if self.found_psf:
                 self.make_psf_png()
+        self.get_zpplot_firstpass()                
         self.get_zpimage_firstpass()
-        self.get_zp_magcomparison()        
+        self.get_zp_magcomp_firstpass()        
+        self.get_zpplot_secondpass()                
+        self.get_zpimage_secondpass()
+        self.get_zp_magcomp_secondpass()
+        self.get_psf_allstars()
+        self.get_gredshift_filter_curve()
     def get_image(self):
         '''  read in image, save data and header '''
         self.imdata,self.imheader = fits.getdata(self.imagename,header=True)
@@ -170,16 +186,23 @@ class coadd_image():
         self.racenter,self.deccenter = self.wcs.wcs_pix2world(self.xdim/2,self.ydim/2,1)
         self.zp = self.imheader['PHOTZP']
         self.pscale = np.abs(self.imheader['CD1_1'])*3600
-    
+        self.exptime = self.imheader['EXPTIME']
+        self.sefwhm_arcsec = self.imheader['SEFWHM']
+        t = self.imheader['EPOCH']
+        # convert to year, month,day
+        t = Time(t,format='decimalyear')
+        self.dateobs = t.iso.split()[0]
+        self.utobs = t.iso.split()[1]
+
     def make_coadd_png(self):
         ''' display image, and mark position of galaxies '''
-        self.coadd_png = self.plotdir+'coadd.png'
+        self.coadd_png = self.plotprefix+'coadd.png'
         imx,imy,keepflag = get_galaxies_fov(self.imagename,self.cat['RA'],self.cat['DEC'])
         self.keepflag = keepflag        
         if os.path.exists(self.coadd_png):
             print('Found {}.  not remaking this.'.format(self.coadd_png))
         else:
-            plt.figure(figsize=(6,6))
+            plt.figure(figsize=(8,8))
             ax = plt.subplot(projection=wcs.WCS(self.imheader))
             plt.subplots_adjust(top=.95,right=.95,left=.15,bottom=.1)
             display_image(self.imdata)
@@ -187,7 +210,7 @@ class coadd_image():
             plot_vf_gals(imx,imy,keepflag,self.cat,ax,galsize=galsize)
             ax.set_xlabel('RA (deg)',fontsize=16)
             ax.set_ylabel('DEC (deg)',fontsize=16)        
-            plt.savefig(self.coadd_png)        
+            plt.savefig(self.coadd_png)
 
     def get_psf_image(self):
         ''' get psf image, store FWHM '''
@@ -205,51 +228,123 @@ class coadd_image():
         # check that png file exists
         # display png file
         norm = simple_norm(self.psfdata, 'log', percent=99.)
-        plt.figure(figsize=(6,6))
+        plt.figure(figsize=(8,8))
         plt.subplots_adjust(right=.9,top=.95,left=.1,bottom=.05)
         plt.imshow(self.psfdata, norm=norm, origin='lower', cmap='viridis')
         plt.colorbar(fraction=.046,pad=.04)
         #plt.show()
-        self.psf_png = self.plotdir+'psf.png'
+        self.psf_png = self.plotprefix+'psf.png'
         plt.savefig(self.psf_png)        
 
-    def display_psf_allstars(self):
+    def get_psf_allstars(self):
         ''' display psf image mosaic of 100 stars '''
         # check that png file exists
         # display png file
-        
-        pass
+        imagebase = os.path.basename(self.imagename).replace('.fits','')
+        #print(imagebase)
+        #print('plotdir = ',self.plotdir)
+        zpsurf = os.path.join(self.psfdir,'plots',imagebase+"-allstars.png")
+        #print('allstars source = ',zpsurf)
+        self.psf_allstars_png = os.path.join(self.plotdir,imagebase+"-allstars.png")
+        #print('allstars destination = ',self.psf_allstars_png)
+        os.system('cp '+zpsurf+' '+self.psf_allstars_png)
 
+
+
+    def get_zpplot_firstpass(self):
+        ''' get the zp image, first pass'''
+        # check that png file exists
+        # display png file
+        #print(self.imagename)
+
+        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','')
+        #print(imagebase)
+        #print('plotdir = ',self.plotdir)
+        zpsurf = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")
+        self.zpplot_png = os.path.join(self.plotdir,imagebase+"-getzp-xyresidual-fitted.png")
+        os.system('cp '+zpsurf+' '+self.zpplot_png)
+        pass
+    def get_zpplot_secondpass(self):
+        ''' get the zp image, first pass'''
+        # check that png file exists
+        # display png file
+        #print(self.imagename)
+
+        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','')
+        #print(imagebase)
+        #print('plotdir = ',self.plotdir)
+        zpplot2 = os.path.join(self.zpdir,"f"+imagebase+"-getzp-xyresidual-fitted.png")
+        self.zpplot2_png = os.path.join(self.plotdir,"f"+imagebase+"-getzp-xyresidual-fitted.png")
+        os.system('cp '+zpplot2+' '+self.zpplot2_png)
+        pass
     def get_zpimage_firstpass(self):
         ''' get the zp image, first pass'''
         # check that png file exists
         # display png file
-        print(self.imagename)
-        print(imagebase)
-        imagebase = self.imagename.replace('-noback-coadd.fits','')
-        print(imagebase)
-        print('plotdir = ',self.plotdir)
-        zpsurf = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")
-        self.zpsurf_png = os.path.join(self.plotdir,imagebase+"-getzp-xyresidual-fitted.png")
+        #print(self.imagename)
+
+        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','')
+        #print(imagebase)
+        #print('plotdir = ',self.plotdir)
+        zpsurf = os.path.join(self.zpdir,imagebase+"--imsurfit-2-.png")
+        self.zpsurf_png = os.path.join(self.plotdir,imagebase+"-imsurfit-2.png")
         os.system('cp '+zpsurf+' '+self.zpsurf_png)
         pass
     
-    def get_zpimage_finalpass(self):
+    def get_zpimage_secondpass(self):
         ''' get the zp image, first pass'''
         # check that png file exists
-        # display png file        
+        # display png file
+        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','')
+        #print(imagebase)
+        #print('plotdir = ',self.plotdir)
+        zpsurf = os.path.join(self.zpdir,"f"+imagebase+"--imsurfit-2-round2.png")
+        self.zpsurf2_png = os.path.join(self.plotdir,"f"+imagebase+"-imsurfit-2-round2.png")
+        os.system('cp '+zpsurf+' '+self.zpsurf2_png)
         pass
+        
 
-    def get_zp_magcomparison(self):
+    def get_zp_magcomp_firstpass(self):
         ''' get the final plot of inst mag vs panstarrs mag'''
         # check that png file exists
         # display png file
-        imagebase = self.imagename.replace('-noback-coadd.fits','')        
-        pancomp = self.zpdir+'/'+imagebase+"-se-pan-flux.png")
-        self.pancomp_png = self.plotdir+'/'+imagebase+"-se-pan-flux.png")
+        #print('imagename = ',self.imagename)
+        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','')
+        #print('imagebase = ',imagebase)        
+        pancomp = self.zpdir+'/'+imagebase+"-se-pan-flux.png"
+        self.pancomp_png = self.plotdir+'/'+imagebase+"-se-pan-flux.png"
+        #print('pancomp_png = ',self.pancomp_png)
         os.system('cp '+pancomp+' '+self.pancomp_png)
         pass
+    def get_zp_magcomp_secondpass(self):
+        ''' get the final plot of inst mag vs panstarrs mag'''
+        # check that png file exists
+        # display png file
+        #print('imagename = ',self.imagename)
+        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','')
+        #print('imagebase = ',imagebase)        
+        pancomp = self.zpdir+'/'+'f'+imagebase+"-se-pan-flux.png"
+        self.pancomp2_png = self.plotdir+'/'+'f'+imagebase+"-se-pan-flux.png"
+        #print('pancomp_png = ',self.pancomp_png)
+        os.system('cp '+pancomp+' '+self.pancomp2_png)
+        pass
 
+    def get_html_data(self):
+        labels = ['Date Obs','UT Time','Filter','ZP<br>(AB mag)','Max Exptime <br> (minutes)','PSF FWHM <br> (arcsec)','SE FWHM <br> (arcsec)']
+        data = [self.dateobs,self.utobs,\
+                self.imheader['FILTER'],\
+                "{:.1f}".format(self.zp),\
+                "{:.1f}".format(self.exptime/60),\
+                "{:.2f}".format(self.fwhm_arcsec),\
+                "{:.2f}".format(self.sefwhm_arcsec)]
+        return labels,data
+    def get_gredshift_filter_curve(self):
+        redshift = vmain['vr'][self.keepflag]/3.e5
+        myfilter = ft.filter_trace(4)
+        corrections = myfilter.get_trans_correction(redshift)
+        self.gals_filter_png = os.path.join(self.plotdir,'galaxies_in_filter.png')
+        os.rename('galaxies_in_filter.png',self.gals_filter_png)
+        pass
     
 class pointing():
 
@@ -285,6 +380,8 @@ class pointing():
         self.get_rband_image()
         self.get_halpha_image()
         self.get_params_for_gal_table()
+        self.plot_pointing_position()
+
     def build_psf_names(self):
         self.rpsf_image = self.psfdir+'/'+os.path.basename(self.rimage).replace('-shifted','').split('.fits')[0]+'-psf.fits'
         if os.path.exists(self.rpsf_image):
@@ -305,11 +402,12 @@ class pointing():
         ''' initiate an instance of coadd image class '''
         
         if os.path.exists(rimage):
-            outprefix = self.outdir+'/r-'
+            outprefix = self.outdir
+            filter='r'
             if self.rpsf_flag:
-                self.r = coadd_image(self.rimage,psfimage=self.rpsf_image,plotdir=outprefix,zpdir=self.zpdir)
+                self.r = coadd_image(self.rimage,psfimage=self.rpsf_image,plotdir=outprefix,zpdir=self.zpdir,filter=filter)
             else:
-                self.r = coadd_image(self.rimage,psfimage=None,plotdir=outprefix,zpdir=self.zpdir)
+                self.r = coadd_image(self.rimage,psfimage=None,plotdir=outprefix,zpdir=self.zpdir,filter=filter)
             self.rcoadd_flag=True
             self.r.generate_plots()
         else:
@@ -319,11 +417,12 @@ class pointing():
     def get_halpha_image(self):
         ''' initiate an instance of coadd image class '''
         if os.path.exists(self.haimage):
-            outprefix = self.outdir+'/ha-'
+            outprefix = self.outdir
+            filter='ha'
             if self.hapsf_flag:
-                self.ha = coadd_image(self.haimage,psfimage=self.rpsf_image,plotdir=outprefix,zpdir=self.zpdir)
+                self.ha = coadd_image(self.haimage,psfimage=self.hapsf_image,plotdir=outprefix,zpdir=self.zpdir,filter=filter)
             else:
-                self.ha = coadd_image(self.haimage,psfimage=None,plotdir=outprefix,zpdir=self.zpdir)
+                self.ha = coadd_image(self.haimage,psfimage=None,plotdir=outprefix,zpdir=self.zpdir,filter=filter)
             self.hacoadd_flag=True
             self.ha.generate_plots()
         else:
@@ -340,23 +439,87 @@ class pointing():
     def get_params_for_gal_table(self):
         ''' setup arrays for galaxy table '''
         self.groupgals = self.r.cat[self.r.keepflag]
+        self.vffil = vffil[self.r.keepflag]        
+
+    def plot_pointing_position(self):
+        ''' plot position of pointing wrt vf sample '''
+        plt.figure(figsize=(8,8))
+        plt.scatter(vmain['RA'],vmain['DEC'],marker='.',s=6,c=vmain['vr'],vmin=500,vmax=3200)
+        plt.colorbar(fraction=0.046,pad=.04)
+        px = self.r.imheader['CRVAL1']
+        py = self.r.imheader['CRVAL2']
+        boxsize=60
+        plt.plot(px,py,'ks',markersize=14,mec='r',alpha=.6)
+        #rect= plt.Rectangle((px-boxsize/2.,py-boxsize/2.), boxsize, boxsize,fill=True, color='k',lw=2,alpha=.5)
+        #self.position_plot = self.outdir+'/positions.png'
+        plt.gca().invert_xaxis()
+        plt.xlabel('RA (deg)',fontsize=16)
+        plt.ylabel('DEC (deg)',fontsize=16)        
+        
+        self.position_plot = self.outdir+'/positions.png'        
+        plt.savefig(self.position_plot)
+        
+        plt.close()
+        
+        # zoom
+        zoombox=5
+        plt.figure(figsize=(8,8))
+        sp = plt.scatter(vmain['RA'],vmain['DEC'],marker='.',s=100,c=vmain['vr'],vmin=500,vmax=3200,label='VF')
+        coflag = vmain['COflag']
+        plt.plot(vmain['RA'][coflag],vmain['DEC'][coflag],'ro',markersize=12,mfc='None',label="CO")
+
+        px = self.r.imheader['CRVAL1']
+        py = self.r.imheader['CRVAL2']
+        #print(px,py)
+        boxsizex=self.r.imheader['NAXIS1']*np.abs(float(self.r.imheader['CD1_1']))
+        boxsizey=self.r.imheader['NAXIS2']*np.abs(float(self.r.imheader['CD2_2']))
+        #boxsizex,boxsizey=2,2
+        rect= plt.Rectangle((px-boxsizex/2.,py-boxsizex/2.), boxsizex, boxsizey,fill=True, color='k',lw=2,alpha=.2)
+        plt.gca().add_artist(rect)
+        plt.colorbar(sp,fraction=0.046,pad=.04)        
+        plt.xlabel('RA (deg)',fontsize=16)
+        plt.ylabel('DEC (deg)',fontsize=16)        
+        plt.axis([px-zoombox/2,px+zoombox/2,\
+                  py-zoombox/2,py+zoombox/2])
+        plt.gca().invert_xaxis()
+        plt.legend()
+        self.position_plot_zoom = self.outdir+'/positions-zoom.png'
+        plt.savefig(self.position_plot_zoom)
         
 class build_html_pointing():
 
-    def __init__(self,pointing,outdir):
+    def __init__(self,pointing,outdir,next=None,previous=None):
         self.pointing = pointing
         outfile = self.pointing.pointing_name+'.html'
         outfile = os.path.join(outdir,outfile)
         self.html = open(outfile,'w')
+        self.next = next
+        self.previous = previous
+        self.htmlhome = 'index.html'
         self.build_html()
     def build_html(self):
         self.write_header()
+        self.write_navigation_links()
         self.write_gal_table()
-        self.write_rband_div()
+        self.write_pointing_location()        
+        self.write_rband_header()
         self.write_rband_table()
-        self.write_ha_div()
-        self.write_ha_table()        
-        self.write_footer()
+        self.write_rband_psf()        
+        self.write_rband_zp()
+
+                 
+        #self.write_rband_div()
+        self.write_ha_header()
+        self.write_ha_table()
+
+        self.write_ha_psf()        
+        self.write_ha_zp()
+
+        
+        #self.write_ha_div()
+
+        #self.write_footer()
+        self.write_navigation_links()        
         self.close_html()
     def write_header(self):
         # title
@@ -369,17 +532,36 @@ class build_html_pointing():
         self.html.write('</style>\n')
 
         # Top navigation menu--
+        #self.html.write('<h1>{}</h1>\n'.format(self.pointing.pointing_name))
+
+        #self.html.write('<a href="../{}">Home</a>\n'.format(htmlhome))
+        #self.html.write('<br />\n')
+        #self.html.write('<a href="../{}">Next ({})</a>\n'.format(nexthtmlgalaxydir1, nextgalaxy[ii]))
+        #self.html.write('<br />\n')
+        #self.html.write('<a href="../{}">Previous ({})</a>\n'.format(prevhtmlgalaxydir1, prevgalaxy[ii]))
+    def write_navigation_links(self):
+        # Top navigation menu--
         self.html.write('<h1>{}</h1>\n'.format(self.pointing.pointing_name))
 
-        #self.html.write('<a href="../../{}">Home</a>\n'.format(htmlhome))
-        #self.html.write('<br />\n')
-        #self.html.write('<a href="../../{}">Next ({})</a>\n'.format(nexthtmlgalaxydir1, nextgalaxy[ii]))
-        #self.html.write('<br />\n')
-        #self.html.write('<a href="../../{}">Previous ({})</a>\n'.format(prevhtmlgalaxydir1, prevgalaxy[ii]))
+        self.html.write('<a href="../{}">Home</a>\n'.format(self.htmlhome))
+        self.html.write('<br />\n')
+        
+        if self.previous is not None:
+            previoushtml = "{}.html".format(self.previous)
+            self.html.write('<a href="../{}/{}">Previous ({})</a>\n'.format(self.previous,previoushtml, self.previous.replace('-noback-coadd.fits','')))
+            self.html.write('<br />\n')        
+        if self.next is not None:
+            nexthtml = "{}.html".format(self.next)
+            self.html.write('<a href="../{}/{}">Next ({})</a>\n'.format(self.next,nexthtml,self.next.replace('-noback-coadd.fits','')))
+        self.html.write('<p>')
+        self.html.write('<p>')
+        self.html.write('<p>')        
+
+
 
     def write_gal_table(self):
        # Add the properties of each galaxy.
-        self.html.write('<h3>Galaxies in FOV</h3>\n')
+        self.html.write('<h2>Galaxies in FOV</h2>\n')
         self.html.write('<table>\n')
         self.html.write('<tr>\n')
         self.html.write('<th>VFID</th>\n')
@@ -387,11 +569,14 @@ class build_html_pointing():
         #self.html.write('<th>Morphology</th>\n')
         self.html.write('<th>RA</th>\n')
         self.html.write('<th>Dec</th>\n')
-        self.html.write('<th>D(25)<br />(arcmin)</th>\n')
+        self.html.write('<th>vr<br>(km/s)</th>\n')        
+        self.html.write('<th>D(25)<br>(arcmin)</th>\n')
         self.html.write('<th>CO</th>\n')
         self.html.write('<th>A100</th>\n')
+        self.html.write('<th>Filament<br> Member</th>\n')
+        self.html.write('<th>Nearest<br> Filament</th>\n')        
         self.html.write('</tr>\n')
-        for g in self.pointing.groupgals:
+        for i,g in enumerate(self.pointing.groupgals):
             #if '031705' in gal['GALAXY']:
             #    print(groupgal['GALAXY'])
             self.html.write('<tr>\n')
@@ -401,11 +586,15 @@ class build_html_pointing():
             #if typ == '' or typ == 'nan':
             #    typ = '...'
             #self.html.write('<td>{}</td>\n'.format(typ))
-            self.html.write('<td>{:.7f}</td>\n'.format(g['RA']))
-            self.html.write('<td>{:.7f}</td>\n'.format(g['DEC']))
-            self.html.write('<td>{:.4f}</td>\n'.format(g['radius']*2/60.))
-            self.html.write('<td>{:.4f}</td>\n'.format(g['COflag']))
-            self.html.write('<td>{:.4f}</td>\n'.format(g['A100flag']))                        
+            self.html.write('<td>{:.6f}</td>\n'.format(g['RA']))
+            self.html.write('<td>{:.6f}</td>\n'.format(g['DEC']))
+            self.html.write('<td>{:.0f}</td>\n'.format(g['vr']))            
+            self.html.write('<td>{:.3f}</td>\n'.format(g['radius']*2/60.))
+            self.html.write('<td>{:.0f}</td>\n'.format(g['COflag']))
+            self.html.write('<td>{:.0f}</td>\n'.format(g['A100flag']))
+            self.html.write('<td>{}</td>'.format(self.pointing.vffil['filament_member'][i]))
+            self.html.write('<td>{}</td>'.format(self.pointing.vffil['filament'][i]))            
+            
             #if np.isnan(groupgal['PA']):
             #    pa = 0.0
             #else:
@@ -413,39 +602,92 @@ class build_html_pointing():
             #self.html.write('<td>{:.2f}</td>\n'.format(pa))
             #self.html.write('<td>{:.3f}</td>\n'.format(1-groupgal['BA']))
             self.html.write('</tr>\n')
-        self.html.write('</table>\n')        
-    def write_rband_div(self):
-        # write coadd
-        # write psf
-        # write table with filter, zp, fwhm
-        self.html.write('<h2>r-band Coadd</h2>\n')
-
-
-
-
-        self.html.write('<table width="90%">\n')
-        #self.html.write('<tr><th>Coadd<br>{}</th> <th>PSF images</th> <th>ZP Calib Orig</th> <th>ZP Calib Final</th></tr></p>\n'.format(os.path.basename(self.pointing.rimage)))
-        self.html.write('<tr><th>Coadd</th> <th>PSF images</th> <th>ZP Calib Orig</th> <th>ZP Calib Final</th></tr></p>\n')        
-        pngfile = os.path.basename(self.pointing.r.coadd_png)
-        psfpng = os.path.basename(self.pointing.r.psf_png)
-        images = [pngfile,psfpng,self.pointing.r.zpsurf_png,self.pointing.r.pancomp_png]
-        self.html.write('<tr>')
-        for i in images:
-            self.html.write('<td><a href="{0}"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(i,i))
-        self.html.write('</tr>\n')            
         self.html.write('</table>\n')
+    def write_pointing_location(self):
+        ''' write table with rband coadd and location in sky '''
+        labels=['Location','Zoom <br>5x5deg','Filter <b> Transmission']
+        images=[os.path.basename(self.pointing.position_plot),\
+                os.path.basename(self.pointing.position_plot_zoom),\
+                os.path.basename(self.pointing.r.gals_filter_png)]
+        buildweb.write_table(self.html,labels=labels,images=images,images2=None)
 
+        
+    def write_rband_header(self):
+        #self.html.write('<hr>')
+        self.html.write('<h2>r-band Coadd</h2>\n')
     def write_rband_table(self):
-        # write coadd
-        # write psf
-        # write table with filter, zp, fwhm
-        write_coadd_prop_table(self.html,self.pointing.r.imheader['FILTER'],self.pointing.r.zp,self.pointing.r.fwhm_arcsec)
-        pass
+        labels,data = self.pointing.r.get_html_data()
+        buildweb.write_text_table(self.html,labels,data)
+
+        
+    def write_rband_psf(self):
+        '''  make table with rband psf results '''
+        labels=['Coadd','Stars','PSF']
+        images=[os.path.basename(self.pointing.r.coadd_png),\
+                os.path.basename(self.pointing.r.psf_allstars_png),\
+                os.path.basename(self.pointing.r.psf_png)]
+        buildweb.write_table(self.html,labels=labels,images=images,images2=None)
+
+    def write_rband_zp(self):
+        ''' make table with rband zp fit '''
+        labels=['Fit','Residuals','Residual<br> Surface']
+        images = [self.pointing.r.pancomp_png,\
+                  self.pointing.r.zpplot_png,\
+                  self.pointing.r.zpsurf_png]
+        buildweb.write_table(self.html,labels=labels,images=images,images2=None)
+        labels=['2nd Pass Fit','Residuals','Residual<br> Surface']        
+        images2 = [self.pointing.r.pancomp2_png,\
+                   self.pointing.r.zpplot2_png,\
+                   self.pointing.r.zpsurf2_png]
+        buildweb.write_table(self.html,labels=labels,images=images2)
+
+        
+
+    def write_ha_header(self):
+        ''' write start of halpha section '''
+        #self.html.write('<hr>')
+        self.html.write('<h2>Halpha Coadd</h2>\n')
+
+    def write_ha_table(self):
+        labels,data = self.pointing.ha.get_html_data()
+        buildweb.write_text_table(self.html,labels,data)
+
+    def write_ha_image(self):
+        ''' write table with rband coadd and location in sky '''
+        labels=['Coadd','Location','Zoom <br>5x5deg']
+        images=[os.path.basename(self.pointing.ha.coadd_png),\
+                os.path.basename(self.pointing.position_plot),\
+                os.path.basename(self.pointing.position_plot_zoom)]
+        buildweb.write_table(self.html,labels=labels,images=images,images2=None)
+
+        
+    def write_ha_psf(self):
+        '''  make table with rband psf results '''
+        labels=['Coadd','Stars','PSF']
+        images = [os.path.basename(self.pointing.ha.coadd_png),\
+                  os.path.basename(self.pointing.ha.psf_allstars_png),\
+                  os.path.basename(self.pointing.ha.psf_png)]
+        buildweb.write_table(self.html,labels=labels,images=images,images2=None)
+
+    def write_ha_zp(self):
+        ''' make table with rband zp fit '''
+        labels=['Fit','Residuals','Residual<br> Surface']
+        images = [self.pointing.ha.pancomp_png,\
+                  self.pointing.ha.zpplot_png,\
+                  self.pointing.ha.zpsurf_png]
+        buildweb.write_table(self.html,labels=labels,images=images,images2=None)
+        labels=['2nd Pass Fit','Residuals','Residual<br> Surface']        
+        images2 = [self.pointing.ha.pancomp2_png,\
+                   self.pointing.ha.zpplot2_png,\
+                   self.pointing.ha.zpsurf2_png]
+        buildweb.write_table(self.html,labels=labels,images=images2)
+
+
     def write_ha_div(self):
         # write coadd
         # write psf
         # write table with filter, zp, fwhm
-        self.html.write('<h2>Halpha Coadd</h2>\n')
+        #self.html.write('<h2>Halpha Coadd</h2>\n')
         self.html.write('<table width="90%">\n')
 
         #self.html.write('<tr><th>Coadd<br>{}</th> <th>PSF images</th> <th>ZP Calib Orig</th> <th>ZP Calib Final</th></tr></p>\n'.format(os.path.basename(self.pointing.haimage)))
@@ -465,7 +707,11 @@ class build_html_pointing():
         # write coadd
         # write psf
         # write table with filter, zp, fwhm
-        write_coadd_prop_table(self.html,self.pointing.ha.imheader['FILTER'],self.pointing.ha.zp,self.pointing.ha.fwhm_arcsec)
+        #write_coadd_prop_table(self.html,self.pointing.ha.imheader['FILTER'],self.pointing.ha.zp,self.pointing.ha.fwhm_arcsec)
+        labels,data = self.pointing.ha.get_html_data()
+        buildweb.write_text_table(self.html,labels,data)
+
+
         pass
 
     def write_footer(self):
@@ -483,8 +729,9 @@ class build_html_pointing():
 
 if __name__ == '__main__':
     # work through coadd directory
-    virgovms=True
+    virgovms=False
     intonlaptop=False
+    laptophdi=True    
     if virgovms:
         vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
         homedir = '/mnt/qnap_home/rfinn/'
@@ -492,6 +739,17 @@ if __name__ == '__main__':
         coadd_dir = homedir+'/Halpha/reduced/virgo-coadds-HDI/'
         zpdir = homedir+'/Halpha/reduced/virgo-coadds-HDI/plots/'        
         psfdir = homedir+'/Halpha/reduced/psf-images/'
+        outdir = homedir+'/research/Virgo/html-dev/coadds/'
+        
+    if laptophdi:
+        vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
+        #homedir = '/mnt/qnap_home/rfinn/'
+        VFFIL_PATH = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main_filament_membership_allgalaxies.fits'
+        vffil = fits.getdata(VFFIL_PATH)
+        
+        coadd_dir = homedir+'/data/reduced/virgo-coadds-HDI/'
+        zpdir = homedir+'/data/reduced/virgo-coadds-HDI/plots/'        
+        psfdir = homedir+'/data/reduced/psf-images/'
         outdir = homedir+'/research/Virgo/html-dev/coadds/'
         
     #rimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-r-shifted.fits'    
@@ -507,9 +765,9 @@ if __name__ == '__main__':
         os.mkdir(outdir)
 
     # for HDI files
-    rfiles = glob.glob('*-r-*coadd.fits')
-    Rfiles = glob.glob('*-R-*coadd.fits')
-    hfiles = glob.glob('*-ha4-*coadd.fits')        
+    rfiles = glob.glob(coadd_dir+'VF*-r-*coadd.fits')
+    Rfiles = glob.glob(coadd_dir+'VF*-R-*coadd.fits')
+    hfiles = glob.glob(coadd_dir+'VF*-ha4-*coadd.fits')        
     hfiles.sort()
 
     # combine r and R files
@@ -517,27 +775,44 @@ if __name__ == '__main__':
     allrfiles.sort()
 
     # loop through r filenames
-    for rimage in allrfiles:
+    for i,rimage in enumerate(allrfiles):
         print(rimage)
         # find matching ha4 coadd
         haimage = rimage.replace('-r-','-ha4-').replace('-R-','-ha4-')
-        print('looking for ',haimage)
+        print('\t looking for ',haimage)
         if not os.path.exists(haimage):
             print("couldn't find it")
             # haimage could have a different date
-            search_string = rimage.split('HDI')[1].replace('-r-','-ha4-').replace('-R-','-ha4')
-            print('looking for ',search_string)
+            impath,rfile = os.path.split(rimage)
+            #print(impath)
+            #print(rfile)
+            search_string = os.path.join(impath,"VF*"+rfile.split('HDI')[1].replace('-r-','-ha4-').replace('-R-','-ha4-'))
+            print('\t looking for ',search_string)
             try:
-                haimage = glob.glob('*'+search_string)[0]
+                haimage = glob.glob(search_string)[0]
             except:
                 if not os.path.exists(haimage):
                     print('WARNING: could not find halpha image for ',rimage,' Skipping for now.')
                     print('\t Looking for ',haimage)
                     break
                     continue
-        pname = os.path.basename(rimage).replace('-shifted','').replace('.fits','').replace('-r','').replace('-R','')
-        outdir = os.path.join(outdir,pname)
-        p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=outdir)
-        h = build_html_pointing(p,outdir=outdir)
+                            # define previous gal for html links
+        if i > 0:
+            previous = os.path.basename(allrfiles[i-1]).replace('.fits','').replace('-R','').replace('-r','')
+            #print('previous = ',previous)
+        else:
+            previous = None
+        if i < len(allrfiles)-1:
+            next = os.path.basename(allrfiles[i+1]).replace('.fits','').replace('-R','').replace('-r','')
+            #print('next = ',next)
+        else:
+            next = None
 
-        break
+        pname = os.path.basename(rimage).replace('-shifted','').replace('.fits','').replace('-r','').replace('-R','')
+        poutdir = os.path.join(outdir,pname)
+        print(poutdir)
+        p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=poutdir)
+        h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
+        plt.close('all')
+        #if i > 2:
+        #    break
