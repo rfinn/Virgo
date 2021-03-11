@@ -9,7 +9,7 @@ def bok_dither_make(exptime,objroot,band,ra,dec,outfile,dithsize = 50,nexp=1):
 
     '''Written by Gregory Rudnick 10 March 2021
     
-    PURPOSE:
+    PURPOSE: 
 
     Generate a list of dithers for Bok telescope observations.  This
     will use a 5 point dither pattern
