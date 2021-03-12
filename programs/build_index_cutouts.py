@@ -110,7 +110,9 @@ class build_html_cutout():
         # write one row for each galaxy
         galindex = 1
         for i,g in enumerate(self.galnames):
-            vfindex = vfindices[vfmain['prefix'] == g][0]
+            #print(g)
+            vfid = g.split('-')[0]
+            vfindex = vfindices[vfmain['VFID'] == vfid][0]
             ra = vfmain['RA'][vfindex]
             dec = vfmain['DEC'][vfindex]
             

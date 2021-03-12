@@ -43,7 +43,8 @@ homedir = os.getenv("HOME")
 os.sys.path.append(homedir+'/github/virgowise/')
 import rungalfit as rg #This code has galfit defined functions 
 
-from build_web_coadds import get_galaxies_fov, plot_vf_gals
+#from build_web_coadds import get_galaxies_fov, plot_vf_gals
+from build_web_common import *
 ###########################################################
 ####  GLOBAL VARIABLES
 ###########################################################
@@ -91,55 +92,6 @@ def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=Non
 
     plt.imshow(image, norm=norm,cmap='gray_r',origin='lower',vmin=v1,vmax=v2)
     
-def write_coadd_prop_table(html,filter,zp,fwhm_arcsec):
-    html.write('<h3>Image Characteristics</h3>\n')
-    html.write('<table>\n')
-    html.write('<tr>')
-    html.write('<th ">Filter</th>\n')
-    html.write('<th ">ZP<br />mag</th>\n')
-    html.write('<th ">PSF FWHM <br />arcsec</th>\n')
-    html.write('</tr>\n')
-    html.write('<tr><td>{}</td><td>{:.2f}</td><td>{:.2f}</td>\n'.format(filter,zp,fwhm_arcsec))
-    html.write('</tr>\n')
-    html.write('</table>\n')
-
-def write_table(html,images=None,labels=None,images2=None):    
-    html.write('<table width="90%">\n')
-    html.write('<tr>')
-    for l in labels:
-        html.write('<th>{}</th>'.format(l))
-    html.write('</tr></p>\n')        
-    html.write('<tr>')
-    for i in images:
-        html.write('<td><a href="{0}"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(i,i))
-    html.write('</tr>\n')
-    if images2 is not None:
-        html.write('<tr>')
-        for i in images2:
-            html.write('<td><a href="{0}"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(i,i))            
-
-        html.write('</tr>\n')            
-    
-    html.write('</table>\n')
-
-def write_text_table(html,labels,data,data2=None):    
-    html.write('<table width="90%">\n')
-    html.write('<tr>')
-    for l in labels:
-        html.write('<th>{}</th>'.format(l))
-    html.write('</tr></p>\n')        
-    html.write('<tr>')
-    for d in data:
-        html.write('<td>{}</td>'.format(d))
-    html.write('</tr>\n')            
-    if data2 is not None:
-        html.write('<tr>')
-        for d in data2:
-            html.write('<td>{}</td>'.format(d))
-        html.write('</tr>\n')            
-
-    html.write('</table>\n')
-
 
 def make_png(fitsimage,outname):
     imdata,imheader = fits.getdata(fitsimage,header=True)
@@ -246,7 +198,7 @@ class cutout_dir():
         This creates the png images for different cutouts
         '''
         self.gname = os.path.basename(os.path.dirname(cutoutdir))
-        
+        self.vfid = self.gname.split('-')[0]
         print('inside cutoutdir, gname = ',self.gname)
         print('cutoutdir = ',cutoutdir)
         print('outdir = ',outdir)        
@@ -260,14 +212,30 @@ class cutout_dir():
         self.cutoutdir = cutoutdir
     def runall(self):
         self.get_halpha_names()
-        self.get_legacy_names()
-        self.get_legacy_jpg()        
-        self.get_wise_names()
-        self.get_galex_names()
+        try:
+            self.get_legacy_names()
+            self.legacy_flag = True
+            self.get_legacy_jpg()                    
+        except IndexError:
+            print('WARNING: problem with legacy images')
+            self.legacy_flag = False
+        try:
+            self.get_wise_names()
+        except:
+            print('WARNING: problem with wise images')
+            self.wise_flag = False
+        try:
+            self.get_galex_names()
+        except:
+            print('WARNING: problem with wise images')
+            self.galex_flag = False
         self.make_png_plots()
         self.make_cs_png()        
         self.get_galfit_model()
-        self.get_phot_tables()
+        try:
+            self.get_phot_tables()
+        except FileNotFoundError:
+            print('WARNING: no phot files found - check this out')
     def get_halpha_names(self):
         search_string = os.path.join(self.cutoutdir,self.gname+'*-R.fits')
         print(search_string)
@@ -515,7 +483,7 @@ class build_html_cutout():
         outfile = os.path.join(outdir,self.cutout.gname+'.html')
 
         vfindices = np.arange(len(vfmain))
-        self.vfindex = vfindices[vfmain['prefix'] == self.cutout.gname]
+        self.vfindex = vfindices[vfmain['VFID'] == self.cutout.vfid]
         #print('inside build html')
         #print('coutdir = ',coutdir)
         print('outfile = ',outfile)        
@@ -544,8 +512,11 @@ class build_html_cutout():
         self.write_halpha_images()
         if self.cutout.galimage is not None:
             self.write_galfit_images()
-            self.write_galfit_table()        
-        self.write_phot_profiles()
+            self.write_galfit_table()
+        try:
+            self.write_phot_profiles()
+        except AttributeError:
+            pass
         self.write_mag_table()
         self.write_morph_table()        
         self.write_navigation_links()
@@ -566,26 +537,31 @@ class build_html_cutout():
 
         self.html.write('<a href="../{}">Home</a>\n'.format(self.htmlhome))
         self.html.write('<br />\n')
+        if self.previous is not None:
+            previoushtml = "{}.html".format(self.previous)
+            self.html.write('<a href="../{}/{}">Previous ({})</a>\n'.format(self.previous,previoushtml, self.previous))
+            self.html.write('<br />\n')        
         if self.next is not None:
             nexthtml = "{}.html".format(self.next)
             self.html.write('<a href="../{}/{}">Next ({})</a>\n'.format(self.next,nexthtml,self.next))
             self.html.write('<br />\n')
-        if self.previous is not None:
-            previoushtml = "{}.html".format(self.previous)
-            self.html.write('<a href="../{}/{}">Previous ({})</a>\n'.format(self.previous,previoushtml, self.previous))
 
     def write_image_stats(self):
         self.html.write('<h2>Image Statistics</h2>\n')        
         labels=['Telescope','Run','Pointing','R FWHM <br> (arcsec)','Halpha FWHM <br> (arcsec)','Filter Ratio','Filter Correction']
         myrow = vfha[self.vfindex]
+        #print('HALPHA FILE')
+        #print(self.vfindex)
+        #print(myrow)
         colnames = ['POINTING','R_FWHM','H_FWHM','FILTER_RATIO','FILT_COR']
         
         data = [myrow['POINTING'][0], "{:.2f}".format(myrow['R_FWHM'][0]),\
                 "{:.2f}".format(myrow['H_FWHM'][0]),\
                 "{:.4f}".format(myrow['FILTER_RATIO'][0]),\
                 "{:.2f}".format(myrow['FILT_COR'][0])]
-        data.insert(self.run,0)
-        data.insert(self.telescope,0)
+        print('self.run = ',self.run)
+        data.insert(0,self.run)
+        data.insert(0,self.telescope)
         write_text_table(self.html,labels,data)        
     def write_sfr_images(self):
         ''' legacy jpeg, galex nuv, halpha, w4 '''
@@ -725,6 +701,15 @@ if __name__ == '__main__':
     telescope='INT'
     run='2019-Feb'
     os.chdir(cutout_source_dir)
+    hdiflag = False
+    
+    # setup for HDI cutouts!
+    cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-all-hdi-20210308/cutouts/'
+    cutout_source_dir = '/home/rfinn/research/Virgo/all-cutouts-20210309/'    
+    telescope='WIYN'
+    run='HDI'
+    os.chdir(cutout_source_dir)
+    hdiflag = True
     
     outdir = homedir+'/research/Virgo/html-dev/cutouts/'
 
@@ -747,7 +732,6 @@ if __name__ == '__main__':
                 # move to subdirectory
                 # adding the telescope and run so that we don't write over
                 # images if galaxy was observed more than once
-                galdirname = "{}-{}-{}".format(subdir,telescope,run)
                 gal_outdir = os.path.join(outdir,subdir+"")
                 print('out directory for this galaxy = ',gal_outdir)
                 if not os.path.exists(outdir):

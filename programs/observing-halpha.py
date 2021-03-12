@@ -585,8 +585,12 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     galsize=0.033
     i = npointing-1
 
+    
     center_ra = pointing_ra[i]+offset_ra
     center_dec = pointing_dec[i] + offset_dec
+    if BOK:
+        center_ra += 10./60 # 10' east
+        center_dec += -10/60.
     #print('center ra, dec = ',center_ra,center_dec)
     if plotsingle:
         if delta_image > .3:

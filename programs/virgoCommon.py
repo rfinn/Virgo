@@ -160,11 +160,31 @@ SGZ = [[-16,-3],
        [-4,0],
        [1,5]]
 
+filaments.append('Canes_B_Filament')
+SGX.append([5,15])
+SGZ.append([0,10])
+SGY.append([14,18])
+
 
 SGXrange = dict((a,b) for a,b in zip(filaments,SGX))
 SGYrange = dict((a,b) for a,b in zip(filaments,SGY))
 SGZrange = dict((a,b) for a,b in zip(filaments,SGZ))
-                
+
+# from paper
+fil_lengths = {'LeoII_A_Filament':13.93,\
+               'LeoII_B_Filament':12.67,\
+               'Leo_Minor_Filament':7.63,\
+               'VirgoIII_Filament':11.72,\
+               'NGC5353_4_Filament':24.01,\
+               'Virgo_Draco_Filament':12.31,\
+               'Virgo_Serpens_Filament':25.63,\
+               'Virgo_Coma_Berenices_Filament':26.27,\
+               'Leo_Minor_B_Filament':7.95,\
+               'Ursa_Major_Cloud':15.44,\
+               'W-M_Sheet':8.45,\
+               'Canes_Venatici_Filament':10.53,\
+               'Canes_B_Filament':10}# just making up a number
+
 
 def plot_spines():
     sfiles = glob.glob(homedir+'/research/Virgo/tables-north/spines/filament*.fits')

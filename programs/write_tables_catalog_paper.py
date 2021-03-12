@@ -52,7 +52,7 @@ class latextable(vtables):
         else:
             fname = filename 
         outfile = open(fname,'w')
-        
+        ### ADD FLAGS FOR CO, HI, ALFALFA
         outfile.write('\\begin{table*}%[ptbh!]\n')
         outfile.write('\\begin{center}\n')
         outfile.write('\\scriptsize\n')
@@ -120,20 +120,69 @@ class latextable(vtables):
             fname = filename 
         outfile = open(fname,'w')
 
+        # ADD 2d MEMBER TO FILAMENTS
+        # PUT CLOSEST FILAMENT FIRST
         outfile.write('\\begin{table*}%[ptbh!]\n')
         outfile.write('\\begin{center}\n')
         outfile.write('\\scriptsize\n')
         outfile.write('\\setlength\\tabcolsep{3.0pt} \n')
         outfile.write('\\tablenum{5} \n')
         outfile.write('\\caption{Environmental Properties of Catalog Galaxies\label{tab:environment}  } \n')
-        outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
+        outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
         outfile.write('\\hline \n')
         outfile.write('\\toprule \n')
-        outfile.write('VFID & V$_{cosmic}$ &	SGX & SGY & SGZ &n5th\_2D &err &n5th\_3D & err & Filament && \\\\ \n')
-        outfile.write('& $km~s^{-1}$ & Mpc & Mpc & Mpc &  & & && && \\\\ \n')
-        outfile.write('(1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11) & (12) \\\\ \n')
+        columns = ['VFID','SGX', 'SGY', 'SGZ',\
+                   'n5th\_2D', 'err' ,'n5th\_3D','err' ,\
+                   '$\\rm D_{Filament}~3D$',\
+                   'Nearest Filament', 'Filament Memb',\
+                   'Group','Cluster','Pure Field']
+        
+
+        units = ['','Mpc', 'Mpc', 'Mpc', \
+                 '', '', '', '', \
+                 'Mpc',\
+                 '','',\
+                 '','','']
+        # build the latex for header and units
+        outstring = ""
+        for i in range(len(columns)):
+            if i == len(columns)-1:
+                outstring += "{} \\\\ \n"
+            else:
+                outstring += "{} &"
+
+        # combine latex formatting with the column names 
+        header = outstring.format(*columns)
+        outfile.write(header)
+        
+        # combine latex formatting with the column names 
+        latexunits = outstring.format(*units)
+        outfile.write(latexunits)
+
+        # column numbers
+        outstring = ""
+        for i in range(len(columns)):
+            if i == len(columns)-1:
+                outstring += "({}) \\\\ \n".format(i+1)
+            else:
+                outstring += "({}) &".format(i+1)
+        outfile.write(outstring)
+                                                   
         outfile.write('\\midrule \n')
         outfile.write('\\hline \n')
+                                                   
+        # build the data string 
+        outstring = ""
+        for i in range(len(columns)):
+            if (i > 0) & (i < 9):
+                outstring += "{:.1f} & "
+            # don't add & after the last column
+            # also add line end in latex (\\\\) and newline in text file (\n)
+            elif i == len(columns)-1:
+                outstring += "{} \\\\ \n"
+            else:
+                outstring += "{} &"
+
         for i in range(startindex,startindex+nlines): # print first N lines of data
             # vfid ra dec z
             # replace ids with values of zero as nodata
@@ -143,13 +192,22 @@ class latextable(vtables):
             #                    self.env['n5th_2D'][i],self.env['n5th_2D_err'][i],\
             #                    self.env['n5th'][i],self.env['n5th_err'][i],\
             #                    self.fil['filament'][i])
-                                
-            format_s = '{0:s} & {1:.1f} &{2:.1f} & {3:.1f} & {4:.1f} & {5:.1f} &{6:.1f}& {7:.1f}& {8:.1f} & & & \\\\ \n'
-            s = format_s.format(self.main['VFID'][i],self.env['Vcosmic'][i],\
-                                self.fil['SGX'][i],self.fil['SGY'][i],self.fil['SGZ'][i],\
-                                self.env['n5th_2D'][i],self.env['n5th_2D_err'][i],\
-                                self.env['n5th'][i],self.env['n5th_err'][i])
-                                #self.fil['filament'][i]
+
+            #columns = ['VFID','SGX', 'SGY', 'SGZ',\
+            #       'n5th\_2D', 'err' ,'n5th\_3D','err' ,\
+            #       'dist\_3D','err', \
+            #       'Filament', 'Filament Memb',\
+            #       'Group','Cluster','Pure Field'
+            #       ]
+
+            s = outstring.format(self.main['VFID'][i],\
+                                 self.fil['SGX'][i],self.fil['SGY'][i],self.fil['SGZ'][i],\
+                                 self.env['n5th_2D'][i],self.env['n5th_2D_err'][i],\
+                                 self.env['n5th'][i],self.env['n5th_err'][i],\
+                                 self.fil['filament_dist_3D'][i],\
+                                 self.fil['filament'][i].replace('_','\_'),self.fil['filament_member'][i],\
+                                 self.env['flag_gro'][i],self.env['flag_clus'][i],self.env['flag_fie'][i])
+                                 
                                 
             if papertableflag:
                 # replace nans with \\nodata
