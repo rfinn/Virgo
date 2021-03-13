@@ -68,27 +68,31 @@ http://www.astropy.org/astropy-tutorials/Coordinates.html
 ###### IMPORT MODULES  ########
 ########################################
 
-from astropy.io import fits
+
 from virgoCommon import *
 import pylab as plt
 import numpy as np
 import os
+import sys
+
 from astroquery.sdss import SDSS
-from astropy import coordinates as coords
-from astropy import units as u
 from astroquery.skyview import SkyView
 
+from astropy import coordinates as coords
+from astropy import units as u
+from astropy.io import fits
 from astropy.coordinates import EarthLocation, AltAz
 from astropy.time import Time
-
 from astropy.coordinates import AltAz
+from astropy.wcs import WCS
 
 from astroplan import Observer
 from astroplan.plots import plot_airmass
 
-import sys
+
 sys.path.append(homedir+'/github/Virgo/programs/')
 import readtables
+
 
 ########################################
 ###### FOR INT RUN              
@@ -111,6 +115,8 @@ HDIrun = False
 ########################################
 ###### RUN-SPECIFIC PARAMETERS  ########
 ########################################
+
+## NOTE: outfile_directory is defined in virgoCommon
 
 if INGrun:
     telescope_run = '2019May/INT-2019May-227filter-'
@@ -169,11 +175,15 @@ ha_obs = v.main['HAobsflag']
 ha_detect = v.main['HAobsflag'] & v.main['HAflag']
 
 # galaxies that have NOT been observed in Halpha, but have been observed in CO
-need_obs = v.main['COflag'] & ~v.main['HAobsflag']
+need_obs = v.main['COflag'] & (~v.main['HAobsflag'] | (v.ha['FILT_COR'] > 2.))
+
 
 HIflag = v.main['A100flag']
 
 obs_mass_flag = need_obs
+bok_duplicates = ['VFID0607','VFID0611']
+for vf in bok_duplicates:
+    obs_mass_flag[v.main['VFID'] == vf] = False
 '''
 ########################################
 ######  DEFINE FILAMENTS  #######
@@ -249,6 +259,7 @@ pointing_id = v.main['VFID'][obs_mass_flag]
 pointing_mag = 22.5 - 2.5 * np.log10(v.nsav0['NMGY'][:,4][obs_mass_flag])
 pointing_vr = v.main['vr'][obs_mass_flag]
 
+
 # sort by RA
 sorted_indices = np.argsort(pointing_ra)
 pointing_dec = pointing_dec[sorted_indices]
@@ -256,7 +267,7 @@ pointing_ra = pointing_ra[sorted_indices]
 pointing_id = pointing_id[sorted_indices]
 pointing_mag = pointing_mag[sorted_indices]
 pointing_vr = pointing_vr[sorted_indices]
-nsadict = dict((a,b) for a,b in zip(pointing_id,np.arange(len(pointing_id))))
+vfdict = dict((a,b) for a,b in zip(pointing_id,np.arange(len(pointing_id))))
 
 ########################################
 ### OFFSETS TO GET MULTIPLE GALAXIES ###
@@ -276,17 +287,17 @@ pointing_offsets_dec = np.zeros(len(pointing_ra))
 ##################################################
 
 try:
-    id=156595
-    pointing_offsets_ra[nsadict[id]] = 8.5/60
-    pointing_offsets_dec[nsadict[id]] = 12./60
+    id='VFID0783'
+    pointing_offsets_ra[vfdict[id]] = 0/60
+    pointing_offsets_dec[vfdict[id]] = 0./60
 except KeyError:
     print('nsa id not found in list of pointings')
 
 
 try:
     id=64369
-    pointing_offsets_ra[nsadict[id]] = 20./60
-    pointing_offsets_dec[nsadict[id]] = -10./60
+    pointing_offsets_ra[vfdict[id]] = 0./60
+    pointing_offsets_dec[vfdict[id]] = 0./60
 except KeyError:
     print('nsa id not found in list of pointings')
 
@@ -303,7 +314,7 @@ except KeyError:
 ##################################################
 
 
-# make a dictionary to store the offsets according to NSA ID
+# make a dictionary to store the offsets according to VFID
 # format is offsets = {nsaid:[dra,ddec]} in arcmin
 # offsets = {135046:[5.,4.],
 #            84889:[3.,2.],
@@ -312,8 +323,7 @@ except KeyError:
 #            }
 
 # The following are INT vallues, which I deleted from the long list above
-offsets_INT = {#135046:[5.,4.], # already observed
-           #84889:[3.,2.],
+offsets_INT = {#84889:[3.,2.],
            #157073:[4.,0],
            #64408:[2.,-1],
            147731:[0.,3],
@@ -404,19 +414,40 @@ offsets_INT = {#135046:[5.,4.], # already observed
            146289:[9.,-2.5]
            
            }
+# shifts in arcmin
+offsets_BOK = {'VFID0377':[-10,0],\
+               'VFID0422':[-2,0],\
+               'VFID0603':[-7,-1],\
+               'VFID0776':[-7,-7],\
+               'VFID0783':[-5,0],\
+               'VFID0788':[15,6],\
+               'VFID0957':[-7,5],\
+               'VFID1010':[-14,0],\
+               'VFID1036':[5,12],\
+               'VFID1168':[0,-4],\
+               'VFID1213':[-12,-5],\
+               'VFID1277':[5,-7],\
+               'VFID1538':[-5,7],\
+               'VFID1573':[9,-14],\
+               'VFID1819':[9,10],\
+               'VFID1821':[9,12],\
+               'VFID1832':[0,9]
+               #'VFID1832':[0,9],\               
+               
+           }
 
 # change this to use the offsets for the desired telescope
 if INGrun:
     offsets = offsets_INT
 elif HDIrun:
     offsets = offsets_HDI
-else:
-    offsets = {}
+elif BOKrun:
+    offsets = offsets_BOK
     
 for key in offsets:
     try:
-        pointing_offsets_ra[nsadict[key]] = offsets[key][0]/60.
-        pointing_offsets_dec[nsadict[key]] = offsets[key][1]/60.
+        pointing_offsets_ra[vfdict[key]] = offsets[key][0]/60.
+        pointing_offsets_dec[vfdict[key]] = offsets[key][1]/60.
     except:
         print('problem setting offset for {} - already observed, or in INT filter gap?'.format(key))
 # update pointing centers to account for offsets
@@ -560,8 +591,10 @@ def plotall(delta=1.5,nrow=3,ncol=3):
     if count != 0:
         plt.colorbar(ax = allax,label='$ \log_{10}(M_*/M_\odot) $',fraction=0.08)
         plt.legend()
-        plt.savefig(outfile_prefix+'plotall-%i.png'%(nfig)) 
+        plt.savefig(outfile_prefix+'plotall-%i.png'%(nfig))
+        
 def fix_project(ra,dec,b):
+    ''' accounting for projection onto tangent plane?   '''
     a = np.cos(np.radians(dec))*np.cos(np.radians(ra-b.header['CRVAL1']))
     f = 1./b.header['CDELT2']*(180./np.pi)/(np.sin(np.radians(b.header['CRVAL2']))*np.sin(np.radians(dec))+a*np.cos(np.radians(b.header['CRVAL2'])))
     decn = -f*(np.cos(np.radians(b.header['CRVAL2']))*np.sin(np.radians(dec))-a*np.sin(np.radians(b.header['CRVAL2'])))
@@ -582,15 +615,15 @@ def finding_chart_all():
         finding_chart(i)
 
 def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsingle=True,ING=False,MLO=False,KPNO=False,BOK=False):
-    galsize=0.033
-    i = npointing-1
+    galsize=15
+    i = npointing
 
     
     center_ra = pointing_ra[i]+offset_ra
     center_dec = pointing_dec[i] + offset_dec
     if BOK:
-        center_ra += 10./60 # 10' east
-        center_dec += -10/60.
+        center_ra += -30./60 # 10' east
+        center_dec += 20/60.
     #print('center ra, dec = ',center_ra,center_dec)
     if plotsingle:
         if delta_image > .3:
@@ -599,6 +632,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
         else:
             plt.figure(figsize=(6,6))
     ax=plt.gca()
+
     pos = coords.SkyCoord(center_ra,center_dec,frame='icrs',unit='degree')
     # delta_image is the half width of the image
     # delta_imagex and delta_imagey are the full width of the image in x and y directions, respectively
@@ -621,17 +655,19 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     #print(image_dimension)
     #print(delta_imagex, delta_imagey)
     xout = SkyView.get_images(pos,survey=['DSS2 Red'],height=delta_imagex*u.degree,width=delta_imagey*u.degree)#,pixels=[image_dimension,image_dimension])
-    #xout = SkyView.get_images(pos,survey=['DSS'],pixels=[image_dimension, image_dimension])#,cache=False)#height=delta_imagex*u.degree,width=delta_imagey*u.degree)
-    #print('finished SkyView')
-    #print(xout)
-    #print(xout[0][0].data)
     b=xout[0][0]
-    ax.imshow(xout[0][0].data,interpolation='none',aspect='equal',cmap='gray_r',\
-              extent=[b.header['CRVAL1']-(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],\
-                      b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],\
-                      b.header['CRVAL2']+(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2'],\
-                      b.header['CRVAL2']-(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2']])
-
+    bwcs = WCS(b.header)
+    ax = plt.subplot(projection=bwcs)
+    ax.imshow(xout[0][0].data,interpolation='none',aspect='equal',cmap='gray_r',origin='lower')
+    #          extent=[b.header['CRVAL1']-(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],\
+    #                  b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],\
+    #                  b.header['CRVAL2']+(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2'],\
+    #                  b.header['CRVAL2']-(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2']])
+    ax.invert_yaxis()
+    xra,ydec = ax.coords
+    xra.set_major_formatter('d.ddd')
+    ydec.set_major_formatter('d.ddd')    
+    fits.writeto('latestim.fits',xout[0][0].data,header=b.header,overwrite=True)
     if ING:
         # add footprint of WFC chips
         plot_INT_footprint(center_ra,center_dec)
@@ -644,7 +680,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
         rect= plt.Rectangle((center_ra-delta_image,center_dec-delta_image), 0.5, 0.5,fill=False, color='k')
         plt.gca().add_artist(rect)
     elif BOK:
-        plot_BOK_footprint(center_ra,center_dec)
+        plot_BOK_footprint(center_ra,center_dec,header=b.header)
     #add_cameras()
     # find galaxies on FOV
     #for MLO plot galaxies outside the field of view to help with tweaking the pointing
@@ -652,19 +688,31 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
         source_pad = 8./60.
         gals = (v.main['RA'] > (pos.ra.value-(delta_imagex/2.+source_pad))) & (v.main['RA'] < (pos.ra.value+delta_imagex/2 + source_pad)) & (v.main['DEC'] > (pos.dec.value-(delta_imagey/2. + source_pad))) & (v.main['DEC'] < (pos.dec.value+delta_imagey/2. + source_pad))
     else:
-        gals = (v.main['RA'] > (pos.ra.value-delta_imagex/2.)) & (v.main['RA'] < (pos.ra.value+delta_imagex/2)) & (v.main['DEC'] > (pos.dec.value-delta_imagey/2.)) & (v.main['DEC'] < (pos.dec.value+delta_imagey/2.))
+        print(center_ra,center_dec,delta_imagex,delta_imagey)
+        ramin=(center_ra - delta_imagex/2.)
+        ramax=(center_ra + delta_imagex/2.)
+        decmin=(center_dec - delta_imagey/2.)
+        decmax=(center_dec + delta_imagey/2.)
+        #print(ramin,ramax,decmin,decmax)
+        ran,decn=fix_project(v.main['RA'],v.main['DEC'],b)        
+        gals = (ran > ramin) & (ran < ramax) & \
+            (decn > decmin) & (decn < decmax)
 
-    #print('pointing ',i+1,' ngal = ',np.sum(gals))
+    print('pointing ',v.main['VFID'][i],' ngal = ',np.sum(gals))
     gindex=np.arange(len(v.main['RA']))[gals]
+    galnames = v.main['VFID'][gindex]
     #print('Pointing %02d Galaxies'%(npointing),': ',v.main['VFID'][gals])
     #print('Pointing %02d Galaxies'%(npointing),': ',v.main['vr'][gals])
+    
     for j in gindex:
-        ran,decn=fix_project(v.main['RA'][j],v.main['DEC'][j],b)
+
+        ran,decn=bwcs.wcs_world2pix(v.main['RA'][j],v.main['DEC'][j],1)        
+        #print("RA=({:.6f},{:.6f}), DEC=({:.6f},{:.6f})".format(v.main['RA'][j],ran,v.main['DEC'][j],decn) )       
         rect= plt.Rectangle((ran-galsize/2.,decn-galsize/2.), galsize, galsize,fill=False, color='c')
         plt.gca().add_artist(rect)
         s='{}\n vr={:.0f}'.format(v.main['VFID'][j],v.main['vr'][j])
-        plt.text(ran,decn+galsize/2.,s,fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='bottom')
-        plt.text(ran,decn-galsize/2.,v.main['NEDname'][j],fontsize=10,clip_on=True,horizontalalignment='center',verticalalignment='top')
+        plt.text(ran,decn+galsize/2.,s,fontsize=8,clip_on=True,horizontalalignment='center',verticalalignment='bottom')
+        plt.text(ran,decn-galsize/2.,v.main['NEDname'][j],fontsize=8,clip_on=True,horizontalalignment='center',verticalalignment='top')
         if COflag[j]:
             size=galsize-.005
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='g')
@@ -686,7 +734,15 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     if moretargets:
         plt.title('LM-Pointing {}: {}'.format(pointing_id[i],pos.to_string('hmsdms')))
     else:
-        plt.title('Pointing {}: {}'.format(pointing_id[i],pos.to_string('hmsdms')))
+        gals_in_fov="VFIDs:"
+        for i,g in enumerate(galnames):
+            
+            if i < len(galnames)-1:
+                gals_in_fov += "{},".format(g.replace('VFID',""))
+            else:
+                gals_in_fov += "{}".format(g.replace('VFID',""))
+                                            
+        plt.title('Pointing {}: {}\n{}'.format(pointing_id[i],pos.to_string('hmsdms'),gals_in_fov))
     plt.xlabel('RA (deg)')
     plt.ylabel('DEC (deg)')
     plt.gca().invert_yaxis()
@@ -730,7 +786,7 @@ def plot_INT_footprint(center_ra,center_dec):
     plt.gca().add_artist(rect)
     
 
-def plot_BOK_footprint(center_ra,center_dec):
+def plot_BOK_footprint(center_ra,center_dec,header=None):
     #using full detector sizes for now because
     pscale = .45
     xdim_pix = 4096
@@ -748,7 +804,14 @@ def plot_BOK_footprint(center_ra,center_dec):
         doffsetx,doffsety = d
         #print(doffsetx,doffsety)
         #print(center_ra+doffsetx,center_dec+doffsety)
-        rect= plt.Rectangle((center_ra+doffsetx,center_dec+doffsety), detector_dra, detector_ddec,fill=False, color='k')
+        if header is not None:
+            hwcs = WCS(header)
+            centerx,centery = hwcs.wcs_world2pix(center_ra+doffsetx,center_dec+doffsety,1)
+            dx = detector_dra/header['CDELT1']#/np.cos(np.radians(header['CRVAL2']))
+            dy = detector_ddec/header['CDELT2']#/np.cos(np.radians(header['CRVAL2']))
+            rect= plt.Rectangle((centerx,centery), dx, dy,fill=False, color='k')
+        else:
+            rect= plt.Rectangle((center_ra+doffsetx,center_dec+doffsety), detector_dra, detector_ddec,fill=False, color='k')
         plt.gca().add_artist(rect)
 
     # adding guide camera
@@ -781,10 +844,11 @@ def finding_chart_with_guide_stars(npointing,offset_ra=0.,offset_dec=0.):
     finding_chart(npointing, delta_image=.75,offset_ra=offset_ra, offset_dec=offset_dec,plotsingle=False)
     plt.savefig(outfile_prefix+'Pointing%02d-guiding.png'%(npointing))
 
-def make_all_platinum(KPNO=False,ING=False,MLO=False,BOK=False,startnumber=0):    
+def make_all_platinum(KPNO=False,ING=False,MLO=False,BOK=False,startnumber=0):
+
     for i in range(startnumber,len(pointing_ra)):
         plt.close('all')
-        platinum_finding_chart(i+1,KPNO=KPNO,ING=ING,MLO=MLO,BOK=BOK)
+        platinum_finding_chart(i,KPNO=KPNO,ING=ING,MLO=MLO,BOK=BOK)
 
 def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=False,MLO=False,BOK=False):
     if KPNO:
@@ -878,7 +942,7 @@ def show_guide_camera(npointing,south_camera=True,offset_ra=0,offset_dec=0,plots
 
 
         
-def airmass_plotsv2(KPNO=False,ING=False,MLO=False):
+def airmass_plotsv2(pointing_id,KPNO=False,ING=False,MLO=False):
 
     observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
 
@@ -890,6 +954,8 @@ def airmass_plotsv2(KPNO=False,ING=False,MLO=False):
         end_time = Time('2017-03-12 14:00:00')
         start_time = Time('2020-02-24 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
         end_time = Time('2020-02-24 14:00:00')
+        start_time = Time('2021-03-14 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
+        end_time = Time('2021-03-14 14:00:00')
         
     elif MLO:
         print('plotting airmass curves for MLO')
@@ -925,22 +991,25 @@ def airmass_plotsv2(KPNO=False,ING=False,MLO=False):
         partial = True
 
     print(nplots)
+    ngal=0
     for j in range(nplots):
-        print('nplots = ',nplots)
-        plt.figure()
+        print('plot {} of {}'.format(j+1,nplots))
+        plt.figure(figsize=(8,6))
         legend_list = []
         if j == (nplots - 1):
             lastplot = remainder
         else:
             lastplot = 8
         for i in range(lastplot):
-            print('\t galaxy number = ',i)
+            #print('\t galaxy number = ',i)
             pointing_center = coords.SkyCoord(pointing_ra[8*j+i]*u.deg, pointing_dec[8*j+i]*u.deg, frame='icrs')
             if i == 3:
                 plot_airmass(pointing_center,observer_site,observing_time,brightness_shading=True)
             else:
                 plot_airmass(pointing_center,observer_site,observing_time)
-            legend_list.append('Pointing %02d'%(8*j+i+1))
+            legend_list.append('Pointing {}'.format(pointing_id[ngal]))
+            ngal+= 1 
+        
     
         plt.legend(legend_list)
         #plt.ylim(0.9,2.5)
@@ -948,7 +1017,7 @@ def airmass_plotsv2(KPNO=False,ING=False,MLO=False):
         plt.subplots_adjust(bottom=.15)
         #plt.axvline(x=7*u.hour,ls='--',color='k')
         plt.axhline(y=2,ls='--',color='k')
-        plt.savefig(outfile_directory+'airmass-%02d.png'%(j+1))
+        plt.savefig(outfile_prefix+'airmass-%02d.png'%(j+1))
         
 
     ##     delta_hours = np.linspace(0, 12, 100)*u.hour
@@ -975,8 +1044,13 @@ def airmass_plots(KPNO=False,ING=False,MLO=False):
         observer_site = Observer.at_site("Kitt Peak", timezone="US/Mountain")
         start_time = Time('2017-03-12 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
         end_time = Time('2017-03-12 14:00:00')
+        
         start_time = Time('2020-02-24 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
         end_time = Time('2020-02-24 14:00:00')
+
+        # 2021 Mar run
+        start_time = Time('2021-03-13 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
+        end_time = Time('2021-03-13 14:00:00')
         
     elif MLO:
         print('plotting airmass curves for MLO')
@@ -1168,3 +1242,5 @@ def ngcfilament():
     plt.gca().invert_xaxis()
     #return filament
 
+def dither_BOK(ra,dec,pointing):
+    for i in range(len(ra)):
