@@ -644,11 +644,11 @@ def convert_angle_2ra(angle,dec,dec2=None):
     # cos(A) = (cos(a)-cos(b)*cos(c))/[sin(b)*sin(c)]
 
     a = np.radians(angle)
-    b = np.radians(dec)
+    b = np.radians(90-dec)
     if dec2 is None:
-        c = np.radians(dec)
+        c = np.radians(90-dec)
     else:
-        c = np.radians(dec2)
+        c = np.radians(90-dec2)
     delta_longitude_radians = np.arccos( (np.cos(a)-np.cos(b)*np.cos(c))/\
                                     (np.sin(b)*np.sin(c)))
     return np.degrees(delta_longitude_radians)
@@ -712,7 +712,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     #                  b.header['CRVAL1']+(b.header['NAXIS1']-b.header['CRPIX1'])*b.header['CDELT1'],\
     #                  b.header['CRVAL2']+(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2'],\
     #                  b.header['CRVAL2']-(b.header['NAXIS2']-b.header['CRPIX2'])*b.header['CDELT2']])
-    ax.invert_yaxis()
+    #ax.invert_yaxis()
     xra,ydec = ax.coords
     xra.set_major_formatter('d.ddd')
     ydec.set_major_formatter('d.ddd')    
@@ -794,7 +794,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
         plt.title('Pointing {}: {}\n{}'.format(pointing_id[i],pos.to_string('hmsdms'),gals_in_fov))
     plt.xlabel('RA (deg)')
     plt.ylabel('DEC (deg)')
-    plt.gca().invert_yaxis()
+    #plt.gca().invert_xaxis()
     if plotsingle:
         plt.savefig(outfile_directory+telescope_run+'-Pointing-{}.png'.format(v.main['VFID'][i]))
 
@@ -842,33 +842,43 @@ def plot_BOK_footprint(center_ra,center_dec,header=None):
     # gap is 500", approximate 1060 pixels
     gap_dec = 500./3600
     gap_ra = convert_angle_2ra(gap_dec,center_dec)
-    #print('new gap = {:.2f} arcsec'.format(gap*3600))
+    print('gap_ra = {:.2f} arcsec'.format(gap_ra*3600))
+    print('gap_dec = {:.2f} arcsec'.format(gap_dec*3600))    
     
     detector_dra = xdim_pix*pscale/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
     detector_ddec = xdim_pix*pscale/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
-
+    #print(detector_dra)
     # convert detector width in deg to deg of RA        
-    detector_ra_width = convert_angle_2ra(detector_dra,center_dec)    
+    detector_ra_width = convert_angle_2ra(detector_dra,center_dec)
+    #detector_ra_width = detector_dra/np.cos(np.radians(center_dec))
+    print('detector_ra_width = {:.2f}'.format(detector_ra_width))
     offset_width_ra = detector_ra_width+gap_ra/2
     offset_width_dec = detector_ddec + gap_dec/2
     detector_offsets = [(-1*offset_width_ra,gap_dec/2),\
                         (-1*offset_width_ra,-1*offset_width_dec),\
-                        (gap_ra/2,gap_dec/2),\
-                        (gap_ra/2,-1*offset_width_dec)]
+                        (1*gap_ra/2,gap_dec/2),\
+                        (1*gap_ra/2,-1*offset_width_dec)]
     # draw footprint of chip 4
-    for d in detector_offsets:
+    labels = ['1','2','3','4']
+    for i,d in enumerate(detector_offsets):
         doffsetx,doffsety = d
-        #print(doffsetx,doffsety)
+        print(doffsetx,doffsety)
         #print(center_ra+doffsetx,center_dec+doffsety)
         if header is not None:
             hwcs = WCS(header)
             # convert ra and dec of bottom left corner of ccd to x and y pixel values
-            centerx,centery = hwcs.wcs_world2pix(center_ra+doffsetx,\
+            centerx,centery = hwcs.wcs_world2pix(center_ra,\
+                                                 center_dec,1)
+            plt.plot(centerx,centery,'rx')
+
+            box_lower_x,box_lower_y = hwcs.wcs_world2pix(center_ra+doffsetx,\
                                                  center_dec+doffsety,1)
-            dx = detector_ra_width/header['CDELT1']#/np.cos(np.radians(header['CRVAL2']))
+            plt.plot(box_lower_x,box_lower_y,'bx')
+            plt.text(box_lower_x,box_lower_y,labels[i],fontsize=14)            
+            dx = detector_dra/header['CDELT1']#/np.cos(np.radians(header['CRVAL2']))
             dy = detector_ddec/header['CDELT2']#/np.cos(np.radians(header['CRVAL2']))
             #print(centerx,centery,dx,dy)
-            rect= plt.Rectangle((centerx,centery), dx, dy,fill=False, color='k')
+            rect= plt.Rectangle((box_lower_x,box_lower_y), dx, dy,fill=False, color='k')
             
         else:
             rect= plt.Rectangle((center_ra+doffsetx,center_dec+doffsety), detector_dra, detector_ddec,fill=False, color='k')
