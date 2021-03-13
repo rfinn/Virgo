@@ -5,7 +5,7 @@ from astropy import units as u
 import numpy as np
 from matplotlib import pyplot as plt
 
-def bok_dither_make(exptime,objroot,ra,dec,dithsize = 50,nexp=1):
+def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1):
 
     '''Written by Gregory Rudnick 10 March 2021
     
@@ -17,8 +17,6 @@ def bok_dither_make(exptime,objroot,ra,dec,dithsize = 50,nexp=1):
     Current version hardcodes output for two filters
 
     INPUT PARAMETERS:
-
-    exptime: the exposure time in seconds
 
     objroot: the root of the object name.  This will have a dither identifier appended
 
@@ -72,22 +70,33 @@ def bok_dither_make(exptime,objroot,ra,dec,dithsize = 50,nexp=1):
     radithdeg = ra + radith /  np.cos(decrad)   #account for cos(dec) term in ra offset
     decdithdeg = dec + decdith
 
+    #plot dithers
+    #plt.figure()
+    #plt.plot(radithdeg,decdithdeg,'ro')
+    #plt.show()
+    
     #convert to sexigesimal
     RAdithhms = Angle(radithdeg,unit='deg').to_string(unit=u.hour,sep='')
     DECdithhms = Angle(decdithdeg,unit='deg').to_string(unit=u.degree,sep='')
 
-    #output prefix
-    outfile_pre = "dither_" + objroot + "_t" + str(exptime) + "_nexp" + str(nexp) + "_dsize" + str(dithsize)
 
+    exptime = {
+        "r" : 180.0,
+        "Ha+4nm" : 300.0
+        }
     filts = ["r", "Ha+4nm"]
     #output files
     for filt in filts:
+        #output prefix
+        outfile_pre = "dither_" + objroot + "_t" + str(exptime[filt]) + "_nexp" + str(nexp) + "_dsize" + str(dithsize)
+
         outfile = outfile_pre + "_filt_" + filt + ".txt"
         fo = open(outfile, "w")
 
         #compute dithers, assumed to be the same for each filter
         for idith,val in enumerate(radith):
-            dithname = objroot + '_filt_' + filt + '_dith' + str(idith)
+            filtname = filt.replace('+4nm','4')
+            dithname = objroot + '_' + filtname
 
             #make strings for positions
             rastr = "{:0>9.2f}".format(float(RAdithhms[idith]))
@@ -100,7 +109,7 @@ def bok_dither_make(exptime,objroot,ra,dec,dithsize = 50,nexp=1):
             print(rastr,decstr)
             #print(idith,RAdithhms[idith],DECdithhms[idith])
             #write to each filter
-            fo.write('obs {} object {} {} {} {} {} 2000.0\n'.format(exptime,dithname,nexp,filt,rastr,decstr))
+            fo.write('obs {} object {} {} {} {} {} 2000.0\n'.format(exptime[filt],dithname,nexp,filt,rastr,decstr))
        
         fo.close()
 
