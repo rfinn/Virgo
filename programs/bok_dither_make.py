@@ -5,7 +5,7 @@ from astropy import units as u
 import numpy as np
 from matplotlib import pyplot as plt
 
-def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1):
+def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1):
 
     '''Written by Gregory Rudnick 10 March 2021
     
@@ -25,6 +25,8 @@ def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1):
     dithsize: the dimensions of the side of the box containing the dithers (arcsec).
 
     nexp: the number of exposures at each dither position
+
+    nloop: the number of repeats of the dither pattern, with a dithsize/4 offset between each set
 
     OUTPUT
 
@@ -47,17 +49,30 @@ def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1):
     #include small additions to some offset points to make sure that we aren't
     #offsetting directly along rows and column
     dithpad = 5.0
-    radith = np.array([0.0,
-                           dithsize/2.0,
-                           -dithsize/2.0,
-                           -dithsize/2.0 - dithpad,
-                           dithsize/2.0 + dithpad])
 
-    decdith = np.array([0.0,
-                            dithsize/2.0,
-                            dithsize/2.0 + dithpad,
-                           -dithsize/2.0,
-                           -dithsize/2.0 - dithpad])
+    #what is the offset between adjacent loops in arcsec
+    loopoffset = 20.0
+    
+    radith = np.array([])
+    decdith = np.array([])
+    
+    radithbase = np.array([0.0,
+                               dithsize/2.0,
+                               -dithsize/2.0,
+                               -dithsize/2.0 - dithpad,
+                               dithsize/2.0 + dithpad])
+
+    decdithbase = np.array([0.0,
+                                dithsize/2.0,
+                                dithsize/2.0 + dithpad,
+                                -dithsize/2.0,
+                                -dithsize/2.0 - dithpad])
+    
+    for iloop in range (nloop):
+        
+        radith = np.append(radith, radithbase + iloop * loopoffset)
+
+        decdith = np.append(decdith, decdithbase + iloop * loopoffset)
 
     #convert to degrees
     radith /= 3600.0
@@ -71,15 +86,20 @@ def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1):
     decdithdeg = dec + decdith
 
     #plot dithers
-    #plt.figure()
-    #plt.plot(radithdeg,decdithdeg,'ro')
-    #plt.show()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    fig.subplots_adjust(top=0.85)
+
+    ax.plot(radithdeg,decdithdeg,'ro')
+    for i in range(len(radithdeg)):
+        ax.text(radithdeg[i],decdithdeg[i],i)
+    plt.savefig('test.png')
     
     #convert to sexigesimal
     RAdithhms = Angle(radithdeg,unit='deg').to_string(unit=u.hour,sep='')
     DECdithhms = Angle(decdithdeg,unit='deg').to_string(unit=u.degree,sep='')
 
-
+    #exposure time for each
     exptime = {
         "r" : 180.0,
         "Ha+4nm" : 300.0
