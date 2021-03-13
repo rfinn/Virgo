@@ -122,6 +122,12 @@ if INGrun:
     telescope_run = '2019May/INT-2019May-227filter-'
     telescope_run = '2019May/INT-2019May-197filter-'
 elif BOKrun:
+    finding_chart_dir = os.path.join(outfile_directory,'2021Mar','finding-charts','')
+    if not os.path.exists(finding_chart_dir):
+        os.mkdir(finding_chart_dir)
+    airmass_dir = os.path.join(outfile_directory,'2021Mar','airmass','')
+    if not os.path.exists(finding_chart_dir):
+        os.mkdir(finding_chart_dir)
     telescope_run = '2021Mar/BOK-2021Mar-'
     #telescope_run = '2021Apr/INT-2019May-197filter-'
 else:
@@ -132,6 +138,7 @@ else:
     outfile_directory = outfile_directory+run
 
 outfile_prefix = outfile_directory+telescope_run
+
 
 max_pointing = None
 
@@ -594,16 +601,58 @@ def plotall(delta=1.5,nrow=3,ncol=3):
         plt.savefig(outfile_prefix+'plotall-%i.png'%(nfig))
         
 def fix_project(ra,dec,b):
-    ''' accounting for projection onto tangent plane?   '''
+    ''' correction for cosine(dec) term  '''
+
+    # a = cos(dec)*cos(delta_ra)
     a = np.cos(np.radians(dec))*np.cos(np.radians(ra-b.header['CRVAL1']))
-    f = 1./b.header['CDELT2']*(180./np.pi)/(np.sin(np.radians(b.header['CRVAL2']))*np.sin(np.radians(dec))+a*np.cos(np.radians(b.header['CRVAL2'])))
+    # f 
+    f = 1./b.header['CDELT2']*(180./np.pi)/\
+        (np.sin(np.radians(b.header['CRVAL2']))*np.sin(np.radians(dec))+a*np.cos(np.radians(b.header['CRVAL2'])))
+
+    # -f * cos(dec)*sin(dec)-cos(dec)*cos(delta_ra)*sin(dec)
     decn = -f*(np.cos(np.radians(b.header['CRVAL2']))*np.sin(np.radians(dec))-a*np.sin(np.radians(b.header['CRVAL2'])))
+
+    # -f * cos(dec)*sin(delta_ra)
     ran = -f*np.cos(np.radians(dec))*np.sin(np.radians(ra-b.header['CRVAL1']))
 
     ran = b.header['CRVAL1']+(ran)*b.header['CDELT1']
     decn = b.header['CRVAL2']-(decn)*b.header['CDELT2']    
-    return ran,decn
-        
+    return ran,dec
+
+def convert_angle_2ra(angle,dec,dec2=None):
+    ''' 
+    DESCRIPTION:
+    converts offset in deg to offset in ra;
+    assumes angle, ra and dec are in deg;
+    assumes both points are at the same declination by default;
+    you can specify a second declination using dec2
+
+    INPUT:
+    * angle = angular offset in degrees
+    * dec = declination of pointing in degrees
+    * dec2 = optional, if angle does not correspond to a line of contant declination
+
+    RETURNS:
+    * equivalent angle in degrees of right ascension
+    '''
+    # a = angle in deg
+    # b = 90 - dec
+    # c = 90 - dec2, if different from dec
+    # A = offset in longitude/RA
+    # cos(a) = cos(b)*cos(c) + sin(b)*sin(c)*cos(A)
+    # inverting gives
+    # cos(A) = (cos(a)-cos(b)*cos(c))/[sin(b)*sin(c)]
+
+    a = np.radians(angle)
+    b = np.radians(dec)
+    if dec2 is None:
+        c = np.radians(dec)
+    else:
+        c = np.radians(dec2)
+    delta_longitude_radians = np.arccos( (np.cos(a)-np.cos(b)*np.cos(c))/\
+                                    (np.sin(b)*np.sin(c)))
+    return np.degrees(delta_longitude_radians)
+    
 def finding_chart_all():
     if max_pointing != None:
         pointing_range = range(1,max_pointing+1)
@@ -791,14 +840,21 @@ def plot_BOK_footprint(center_ra,center_dec,header=None):
     pscale = .45
     xdim_pix = 4096
     # gap is 500", approximate 1060 pixels
-    gap = 500./3600
+    gap_dec = 500./3600
+    gap_ra = convert_angle_2ra(gap_dec,center_dec)
+    #print('new gap = {:.2f} arcsec'.format(gap*3600))
+    
     detector_dra = xdim_pix*pscale/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
     detector_ddec = xdim_pix*pscale/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
-    offset_width = detector_dra+gap/2
-    detector_offsets = [(-1*offset_width,gap/2),\
-                        (-1*offset_width,-1*offset_width),\
-                        (gap/2,gap/2),\
-                        (gap/2,-1*offset_width)]
+
+    # convert detector width in deg to deg of RA        
+    detector_ra_width = convert_angle_2ra(detector_dra,center_dec)    
+    offset_width_ra = detector_ra_width+gap_ra/2
+    offset_width_dec = detector_ddec + gap_dec/2
+    detector_offsets = [(-1*offset_width_ra,gap_dec/2),\
+                        (-1*offset_width_ra,-1*offset_width_dec),\
+                        (gap_ra/2,gap_dec/2),\
+                        (gap_ra/2,-1*offset_width_dec)]
     # draw footprint of chip 4
     for d in detector_offsets:
         doffsetx,doffsety = d
@@ -806,10 +862,14 @@ def plot_BOK_footprint(center_ra,center_dec,header=None):
         #print(center_ra+doffsetx,center_dec+doffsety)
         if header is not None:
             hwcs = WCS(header)
-            centerx,centery = hwcs.wcs_world2pix(center_ra+doffsetx,center_dec+doffsety,1)
-            dx = detector_dra/header['CDELT1']#/np.cos(np.radians(header['CRVAL2']))
+            # convert ra and dec of bottom left corner of ccd to x and y pixel values
+            centerx,centery = hwcs.wcs_world2pix(center_ra+doffsetx,\
+                                                 center_dec+doffsety,1)
+            dx = detector_ra_width/header['CDELT1']#/np.cos(np.radians(header['CRVAL2']))
             dy = detector_ddec/header['CDELT2']#/np.cos(np.radians(header['CRVAL2']))
+            #print(centerx,centery,dx,dy)
             rect= plt.Rectangle((centerx,centery), dx, dy,fill=False, color='k')
+            
         else:
             rect= plt.Rectangle((center_ra+doffsetx,center_dec+doffsety), detector_dra, detector_ddec,fill=False, color='k')
         plt.gca().add_artist(rect)
@@ -1244,3 +1304,4 @@ def ngcfilament():
 
 def dither_BOK(ra,dec,pointing):
     for i in range(len(ra)):
+        pass
