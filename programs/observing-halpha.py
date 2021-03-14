@@ -12,11 +12,9 @@ PURPOSE:
 
 USEAGE:
 
-source activate py36
-
 start ipython in github/Virgo/
 
-%run programs/kpno-halpha.p3.py
+%run programs/observing-halpha.py
 
 
 To make airmass plots:
@@ -30,7 +28,7 @@ To make airmass plots:
 
 To make finding charts:
 
-   platinum_finding_chart(1,MLO=True,ING=False) # makes 1
+   platinum_finding_chart(0,MLO=True,ING=False) # makes 1
 
    make_all_platinum(MLO=True, KPNO=False,ING=False)
 
@@ -42,8 +40,9 @@ make_plot()
 To plot one galaxy:
 zoomin(1)
 
-To plot all galaxies that we need to observe:
-plotall(delta=1)
+OUTPUT:
+* airmass plots are saved in the airmass_dir
+* finding chart plots are saved in the finding_chart_dir
 
 
 UPDATES
@@ -126,7 +125,7 @@ elif BOKrun:
     if not os.path.exists(finding_chart_dir):
         os.mkdir(finding_chart_dir)
     airmass_dir = os.path.join(outfile_directory,'2021Mar','airmass','')
-    if not os.path.exists(finding_chart_dir):
+    if not os.path.exists(airmass_dir):
         os.mkdir(finding_chart_dir)
     telescope_run = '2021Mar/BOK-2021Mar-'
     #telescope_run = '2021Apr/INT-2019May-197filter-'
@@ -188,7 +187,11 @@ need_obs = v.main['COflag'] & (~v.main['HAobsflag'] | (v.ha['FILT_COR'] > 2.))
 HIflag = v.main['A100flag']
 
 obs_mass_flag = need_obs
-bok_duplicates = ['VFID0607','VFID0611']
+bok_duplicates = ['VFID0607','VFID0611','VFID1979','VFID1955',\
+                  'VFID2315','VFID2368','VFID2766','VFID2797',\
+                  'VFID3457','VFID3459','VFID4835','VFID6132'\
+                  'VFID6379','VFID6406','VFID6438'\
+                  ]
 for vf in bok_duplicates:
     obs_mass_flag[v.main['VFID'] == vf] = False
 '''
@@ -292,21 +295,6 @@ pointing_offsets_dec = np.zeros(len(pointing_ra))
 ##################################################
 ############ low mass extension of leo filaments
 ##################################################
-
-try:
-    id='VFID0783'
-    pointing_offsets_ra[vfdict[id]] = 0/60
-    pointing_offsets_dec[vfdict[id]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
-
-
-try:
-    id=64369
-    pointing_offsets_ra[vfdict[id]] = 0./60
-    pointing_offsets_dec[vfdict[id]] = 0./60
-except KeyError:
-    print('nsa id not found in list of pointings')
 
 
 #######################
@@ -434,12 +422,71 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID1168':[0,-4],\
                'VFID1213':[-12,-5],\
                'VFID1277':[5,-7],\
-               'VFID1538':[-5,7],\
+               'VFID1304':[-10,-5],\
+               'VFID1376':[0,8],\
+               'VFID1534':[-7,7],\
+               'VFID1538':[-6,8],\
                'VFID1573':[9,-14],\
                'VFID1819':[9,10],\
                'VFID1821':[9,12],\
-               'VFID1832':[0,9]
-               #'VFID1832':[0,9],\               
+               'VFID1832':[0,9],\
+               'VFID1901':[14,-5],\
+               'VFID1944':[0,-7],\
+               'VFID1956':[0,-4],\
+               'VFID2303':[0,-10],\
+               'VFID2098':[-5,-10],\
+               'VFID2162':[-3,-7],\
+               'VFID2171':[-6,-7],\
+               'VFID2259':[-5,-7],\
+               'VFID2303':[9,-11],\
+               'VFID2357':[-7,0],\
+               'VFID2484':[0,3],\
+               'VFID2488':[4,3],\
+               'VFID2562':[0,5],\
+               'VFID2593':[7,-4.5],\
+               'VFID2601':[10,6],\
+               'VFID2661':[-5,-6],\
+               'VFID2704':[7,4],\
+               'VFID2762':[5,1.5],\
+               'VFID2797':[8,0],\
+               'VFID2821':[10,8],\
+               'VFID2911':[5,-2],\
+               'VFID2947':[8,-2],\
+               'VFID2997':[8,0],\
+               'VFID3098':[10,0],\
+               'VFID3119':[-3,0],\
+               'VFID3299':[14,0],\
+               'VFID3391':[10,-10],\
+               'VFID3454':[14,-6],\
+               'VFID3598':[-4,-10],\
+               'VFID3714':[5,5],\
+               'VFID3780':[5,12],\
+               'VFID3948':[10,0],\
+               'VFID4025':[10,0],\
+               'VFID4257':[13,0],\
+               'VFID4279':[5,-8],\
+               'VFID4796':[2,2],\
+               'VFID4894':[7,10],\
+               'VFID5541':[10,-8],\
+               'VFID5695':[12,-8],\
+               'VFID5726':[50,0],\
+               'VFID5922':[10,-5],\
+               'VFID5981':[20,-2],\
+               'VFID6042':[15,-13],\
+               'VFID6065':[2,12],\
+               'VFID6115':[62,-8],\
+               'VFID6127':[15,7],\
+               'VFID6165':[20,-13],\
+               'VFID6253':[2.5,7],\
+               'VFID6293':[8,-5],\
+               'VFID6305':[0,5],\
+               'VFID6369':[54.,-6.5],\
+               'VFID6397':[40,5],\
+               'VFID6425':[-1,3],\
+               'VFID6426':[50,3],\
+               'VFID6503':[50,12],\
+               'VFID6599':[10,12],\
+               'VFID6620':[0,10],\
                
            }
 
@@ -763,25 +810,25 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
         plt.text(ran,decn+galsize/2.,s,fontsize=8,clip_on=True,horizontalalignment='center',verticalalignment='bottom')
         plt.text(ran,decn-galsize/2.,v.main['NEDname'][j],fontsize=8,clip_on=True,horizontalalignment='center',verticalalignment='top')
         if COflag[j]:
-            size=galsize-.005
+            size=galsize-5
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='g')
             plt.gca().add_artist(rect)
-        if noCOflag[j]:
-            size=galsize-.005
-            #rect= plt.Circle((ran-size/2.,decn-size/2.), size,fill=False, color='g')
-            rect= plt.Circle((ran,decn), size,fill=False, color='g')
-            plt.gca().add_artist(rect)
+        #if noCOflag[j]:
+        #    size=galsize-.005
+        #    #rect= plt.Circle((ran-size/2.,decn-size/2.), size,fill=False, color='g')
+        #    rect= plt.Circle((ran,decn), size,fill=False, color='g')
+        #    plt.gca().add_artist(rect)
         if HIflag[j]:
-            size=galsize+.005
+            size=galsize+5
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='b')
             plt.gca().add_artist(rect)
         if ha_obs[j]:
-            size=galsize+2*.005
+            size=galsize+10
             rect= plt.Rectangle((ran-size/2.,decn-size/2.), size, size,fill=False, color='r')
             plt.gca().add_artist(rect)
         #plt.legend(['filament','CO','Halpha'])
     if moretargets:
-        plt.title('LM-Pointing {}: {}'.format(pointing_id[i],pos.to_string('hmsdms')))
+        plt.title('LM-Pointing {}: {}'.format(pointing_id[npointing],pos.to_string('hmsdms')))
     else:
         gals_in_fov="VFIDs:"
         for i,g in enumerate(galnames):
@@ -791,12 +838,12 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
             else:
                 gals_in_fov += "{}".format(g.replace('VFID',""))
                                             
-        plt.title('Pointing {}: {}\n{}'.format(pointing_id[i],pos.to_string('hmsdms'),gals_in_fov))
+        plt.title('Pointing {}: {}\n{}'.format(pointing_id[npointing],pos.to_string('hmsdms'),gals_in_fov))
     plt.xlabel('RA (deg)')
     plt.ylabel('DEC (deg)')
     #plt.gca().invert_xaxis()
     if plotsingle:
-        plt.savefig(outfile_directory+telescope_run+'-Pointing-{}.png'.format(v.main['VFID'][i]))
+        plt.savefig(finding_chart_dir+'-Pointing-{}.png'.format(pointing_id[npointing]))
 
 def plot_INT_footprint(center_ra,center_dec):
     #using full detector sizes for now because 
@@ -842,8 +889,8 @@ def plot_BOK_footprint(center_ra,center_dec,header=None):
     # gap is 500", approximate 1060 pixels
     gap_dec = 500./3600
     gap_ra = convert_angle_2ra(gap_dec,center_dec)
-    print('gap_ra = {:.2f} arcsec'.format(gap_ra*3600))
-    print('gap_dec = {:.2f} arcsec'.format(gap_dec*3600))    
+    #print('gap_ra = {:.2f} arcsec'.format(gap_ra*3600))
+    #print('gap_dec = {:.2f} arcsec'.format(gap_dec*3600))    
     
     detector_dra = xdim_pix*pscale/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
     detector_ddec = xdim_pix*pscale/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
@@ -851,7 +898,7 @@ def plot_BOK_footprint(center_ra,center_dec,header=None):
     # convert detector width in deg to deg of RA        
     detector_ra_width = convert_angle_2ra(detector_dra,center_dec)
     #detector_ra_width = detector_dra/np.cos(np.radians(center_dec))
-    print('detector_ra_width = {:.2f}'.format(detector_ra_width))
+    #print('detector_ra_width = {:.2f}'.format(detector_ra_width))
     offset_width_ra = detector_ra_width+gap_ra/2
     offset_width_dec = detector_ddec + gap_dec/2
     detector_offsets = [(-1*offset_width_ra,gap_dec/2),\
@@ -862,7 +909,7 @@ def plot_BOK_footprint(center_ra,center_dec,header=None):
     labels = ['1','2','3','4']
     for i,d in enumerate(detector_offsets):
         doffsetx,doffsety = d
-        print(doffsetx,doffsety)
+        #print(doffsetx,doffsety)
         #print(center_ra+doffsetx,center_dec+doffsety)
         if header is not None:
             hwcs = WCS(header)
@@ -873,8 +920,8 @@ def plot_BOK_footprint(center_ra,center_dec,header=None):
 
             box_lower_x,box_lower_y = hwcs.wcs_world2pix(center_ra+doffsetx,\
                                                  center_dec+doffsety,1)
-            plt.plot(box_lower_x,box_lower_y,'bx')
-            plt.text(box_lower_x,box_lower_y,labels[i],fontsize=14)            
+            #plt.plot(box_lower_x,box_lower_y,'bx')
+            #plt.text(box_lower_x,box_lower_y,labels[i],fontsize=14)            
             dx = detector_dra/header['CDELT1']#/np.cos(np.radians(header['CRVAL2']))
             dy = detector_ddec/header['CDELT2']#/np.cos(np.radians(header['CRVAL2']))
             #print(centerx,centery,dx,dy)
@@ -934,10 +981,10 @@ def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=F
         fig = plt.figure(figsize = (8,8.))
         finding_chart(npointing,offset_ra=offset_ra,offset_dec=offset_dec,plotsingle=False,ING=ING,MLO=MLO,KPNO=KPNO,BOK=BOK)
     if moretargets:
-        plt.savefig(outfile_directory+telescope_run+'-Pointing-{}-lowMass.png'.format(pointing_id[i]))
+        plt.savefig(finding_chart_dir+'-Pointing-{}-lowMass.png'.format(pointing_id[npointing]))
     else:
         #print('saving file ',outfile_directory+telescope_run+'Pointing-{}.png'.format(pointing_id[npointing]))
-        plt.savefig(outfile_directory+telescope_run+'Pointing-{}.png'.format(pointing_id[npointing]))
+        plt.savefig(finding_chart_dir+'Pointing-{}.png'.format(pointing_id[npointing]))
 
 def guide_cameras(npointing,offset_ra=0,offset_dec=0):
     i = npointing - 1
@@ -1087,7 +1134,7 @@ def airmass_plotsv2(pointing_id,KPNO=False,ING=False,MLO=False):
         plt.subplots_adjust(bottom=.15)
         #plt.axvline(x=7*u.hour,ls='--',color='k')
         plt.axhline(y=2,ls='--',color='k')
-        plt.savefig(outfile_prefix+'airmass-%02d.png'%(j+1))
+        plt.savefig(airmass_dir+'airmass-%02d.png'%(j+1))
         
 
     ##     delta_hours = np.linspace(0, 12, 100)*u.hour
