@@ -5,7 +5,7 @@ from astropy import units as u
 import numpy as np
 from matplotlib import pyplot as plt
 
-def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1,exptime_r = 120.0, exptime_Ha = 180.0):
+def bok_dither_make(objroot,ra,dec,dithsize = 60,nexp=1, nloop = 1,exptime = 120.0, filt = "r" ):
 
     '''Written by Gregory Rudnick 10 March 2021
     
@@ -27,6 +27,8 @@ def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1,exptime_r = 1
     nexp: the number of exposures at each dither position
 
     nloop: the number of repeats of the dither pattern, with a dithsize/4 offset between each set
+
+    filt: the filter.  Currently only accepts "r" and "Ha+4nm"
 
     OUTPUT
 
@@ -92,7 +94,7 @@ def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1,exptime_r = 1
 
     ax.plot(radithdeg,decdithdeg,'ro')
     ax.plot(radithdeg,decdithdeg,'b-')
-    imfile = "dither_" + objroot + "_t" + "_nexp" + str(nexp) + "_dsize" + str(dithsize) + ".png"
+    imfile = "dither_" + objroot + "_t" + str(exptime) + "_nexp" + str(nexp) + "_nloop" + str(nloop) + "_dsize" + str(dithsize) + "_filt_" + filt + ".png"
     for i in range(len(radithdeg)):
         ax.text(radithdeg[i],decdithdeg[i],i)
     plt.savefig(imfile)
@@ -102,21 +104,23 @@ def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1,exptime_r = 1
     DECdithhms = Angle(decdithdeg,unit='deg').to_string(unit=u.degree,sep='')
 
     #exposure time for each
-    exptime = {
-        "r" : exptime_r,
-        "Ha+4nm" : exptime_Ha
-        }
-    filts = ["r", "Ha+4nm"]
+    #exptime = {
+     #   "r" : exptime_r,
+     #   "Ha+4nm" : exptime_Ha
+      #  }
+    #filts = ["r", "Ha+4nm"]
+
     #output files
-    for filt in filts:
-        #output prefix
-        outfile_pre = "dither_" + objroot + "_t" + str(exptime[filt]) + "_nexp" + str(nexp) + "_dsize" + str(dithsize)
+    #for filt in filts:
+    #output prefix
+    #outfile_pre = "dither_" + objroot + "_t" + str(exptime[filt]) + "_nexp" + str(nexp) + "_dsize" + str(dithsize)
+    outfile_pre = "dither_" + objroot + "_t" + str(exptime) + "_nexp" + str(nexp)+ "_nloop" + str(nloop) + "_dsize" + str(dithsize)
 
-        outfile = outfile_pre + "_filt_" + filt + ".txt"
-        fo = open(outfile, "w")
+    outfile = outfile_pre + "_filt_" + filt + ".txt"
+    fo = open(outfile, "w")
 
-        #compute dithers, assumed to be the same for each filter
-        for idith,val in enumerate(radith):
+    #compute dithers, assumed to be the same for each filter
+    for idith,val in enumerate(radith):
             filtname = filt.replace('+4nm','4')
             dithname = objroot + '_' + filtname
 
@@ -131,9 +135,10 @@ def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1,exptime_r = 1
             print(rastr,decstr)
             #print(idith,RAdithhms[idith],DECdithhms[idith])
             #write to each filter
-            fo.write('obs {} object {} {} {} {} {} 2000.0\n'.format(exptime[filt],dithname,nexp,filt,rastr,decstr))
+            #fo.write('obs {} object {} {} {} {} {} 2000.0\n'.format(exptime[filt],dithname,nexp,filt,rastr,decstr))
+            fo.write('obs {} object {} {} {} {} {} 2000.0\n'.format(exptime,dithname,nexp,filt,rastr,decstr))
        
-        fo.close()
+    fo.close()
 
 
     
