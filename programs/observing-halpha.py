@@ -190,7 +190,7 @@ obs_mass_flag = need_obs
 bok_duplicates = ['VFID0607','VFID0611','VFID1979','VFID1955',\
                   'VFID2315','VFID2368','VFID2766','VFID2797',\
                   'VFID3457','VFID3459','VFID4835','VFID6132'\
-                  'VFID6379','VFID6406','VFID6438'\
+                  'VFID6379','VFID6406','VFID6438','VFID101'\
                   ]
 for vf in bok_duplicates:
     obs_mass_flag[v.main['VFID'] == vf] = False
@@ -433,12 +433,11 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID1901':[14,-5],\
                'VFID1944':[0,-7],\
                'VFID1956':[0,-4],\
-               'VFID2303':[0,-10],\
                'VFID2098':[-5,-10],\
                'VFID2162':[-3,-7],\
                'VFID2171':[-6,-7],\
                'VFID2259':[-5,-7],\
-               'VFID2303':[9,-11],\
+               'VFID2303':[25,-15],\
                'VFID2357':[-7,0],\
                'VFID2484':[0,3],\
                'VFID2488':[4,3],\
@@ -720,6 +719,9 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     if BOK:
         center_ra += -30./60 # 10' east
         center_dec += 20/60.
+
+        # shift to bottom right chip
+        center_ra += 0.5 # shift by 0.5 deg
     #print('center ra, dec = ',center_ra,center_dec)
     if plotsingle:
         if delta_image > .3:
@@ -884,16 +886,17 @@ def plot_INT_footprint(center_ra,center_dec):
 
 def plot_BOK_footprint(center_ra,center_dec,header=None):
     #using full detector sizes for now because
-    pscale = .45
-    xdim_pix = 4096
+    pscale = .455
+    xdim_pix = 4032
+    ydim_pix = 4096
     # gap is 500", approximate 1060 pixels
-    gap_dec = 500./3600
-    gap_ra = convert_angle_2ra(gap_dec,center_dec)
+    gap_dec = 60./3600
+    gap_ra = convert_angle_2ra(160./3600,center_dec)
     #print('gap_ra = {:.2f} arcsec'.format(gap_ra*3600))
     #print('gap_dec = {:.2f} arcsec'.format(gap_dec*3600))    
     
     detector_dra = xdim_pix*pscale/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
-    detector_ddec = xdim_pix*pscale/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+    detector_ddec = ydim_pix*pscale/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
     #print(detector_dra)
     # convert detector width in deg to deg of RA        
     detector_ra_width = convert_angle_2ra(detector_dra,center_dec)
