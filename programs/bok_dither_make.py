@@ -5,7 +5,7 @@ from astropy import units as u
 import numpy as np
 from matplotlib import pyplot as plt
 
-def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1):
+def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1,exptime_r = 120.0, exptime_Ha = 180.0):
 
     '''Written by Gregory Rudnick 10 March 2021
     
@@ -91,9 +91,11 @@ def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1):
     fig.subplots_adjust(top=0.85)
 
     ax.plot(radithdeg,decdithdeg,'ro')
+    ax.plot(radithdeg,decdithdeg,'b-')
+    imfile = "dither_" + objroot + "_t" + "_nexp" + str(nexp) + "_dsize" + str(dithsize) + ".png"
     for i in range(len(radithdeg)):
         ax.text(radithdeg[i],decdithdeg[i],i)
-    plt.savefig('test.png')
+    plt.savefig(imfile)
     
     #convert to sexigesimal
     RAdithhms = Angle(radithdeg,unit='deg').to_string(unit=u.hour,sep='')
@@ -101,8 +103,8 @@ def bok_dither_make(objroot,ra,dec,dithsize = 50,nexp=1, nloop = 1):
 
     #exposure time for each
     exptime = {
-        "r" : 180.0,
-        "Ha+4nm" : 300.0
+        "r" : exptime_r,
+        "Ha+4nm" : exptime_Ha
         }
     filts = ["r", "Ha+4nm"]
     #output files
