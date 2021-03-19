@@ -46,7 +46,7 @@ OUTPUT:
 
 
 UPDATES
-* 2021-02-26: doing major rewrite to use virgo v1 tables, in prep for Bok Mar/Apr 2021 runs
+* 2021-02-26: doing major rewrite to use virgo v1 tables, in prep for Mar/Apr 2021 runs
 
 USEFUL SITES FOR SKY CHART
 
@@ -192,8 +192,18 @@ bok_duplicates = ['VFID0607','VFID0611','VFID1979','VFID1955',\
                   'VFID3457','VFID3459','VFID4835','VFID6132'\
                   'VFID6379','VFID6406','VFID6438','VFID101'\
                   ]
-for vf in bok_duplicates:
+
+#for vf in bok_duplicates:
+#    obs_mass_flag[v.main['VFID'] == vf] = False
+
+
+# those observed at bok already
+observed_2021Mar = ['VFID2303','VFID1728','VFID2593','VFID1538','VFID2357',\
+                    'VFID2821','VFID1572']#,'VFID0501'
+
+for vf in observed_2021Mar:
     obs_mass_flag[v.main['VFID'] == vf] = False
+
 '''
 ########################################
 ######  DEFINE FILAMENTS  #######
@@ -256,6 +266,49 @@ v1=1000
 v2=3000
 mylabel='$ v_r \ (km/s) $'
 
+def convert_angle_2ra(angle,dec,dec2=None):
+    ''' 
+    DESCRIPTION:
+    converts offset in deg to offset in ra;
+    assumes angle, ra and dec are in deg;
+    assumes both points are at the same declination by default;
+    you can specify a second declination using dec2
+
+    INPUT:
+    * angle = angular offset in degrees
+    * dec = declination of pointing in degrees
+    * dec2 = optional, if angle does not correspond to a line of contant declination
+
+    RETURNS:
+    * equivalent angle in degrees of right ascension
+    '''
+    # a = angle in deg
+    # b = 90 - dec
+    # c = 90 - dec2, if different from dec
+    # A = offset in longitude/RA
+    # cos(a) = cos(b)*cos(c) + sin(b)*sin(c)*cos(A)
+    # inverting gives
+    # cos(A) = (cos(a)-cos(b)*cos(c))/[sin(b)*sin(c)]
+
+    a = np.radians(angle)
+    b = np.radians(90-dec)
+    if dec2 is None:
+        c = np.radians(90-dec)
+    else:
+        c = np.radians(90-dec2)
+    delta_longitude_radians = np.arccos( (np.cos(a)-np.cos(b)*np.cos(c))/\
+                                    (np.sin(b)*np.sin(c)))
+    return np.degrees(delta_longitude_radians)
+    
+def finding_chart_all():
+    if max_pointing != None:
+        pointing_range = range(1,max_pointing+1)
+    else:
+        pointing_range = range(1,len(pointing_ra)+1)
+                               
+    for i in pointing_range:
+        plt.close('all')
+        finding_chart(i)
 
 ########################################
 ###### POINTING INFO FROM MAY 2017 #####
@@ -412,6 +465,7 @@ offsets_INT = {#84889:[3.,2.],
 # shifts in arcmin
 offsets_BOK = {'VFID0377':[-10,0],\
                'VFID0422':[-2,0],\
+               'VFID0501':[0,-5],\
                'VFID0603':[-7,-1],\
                'VFID0776':[-7,-7],\
                'VFID0783':[-5,0],\
@@ -426,35 +480,38 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID1376':[0,8],\
                'VFID1534':[-7,7],\
                'VFID1538':[-6,8],\
-               'VFID1573':[9,-14],\
+               'VFID1573':[18,-25],\
+               'VFID1728':[5,0],\
+               'VFID1756':[5,-5],\
                'VFID1819':[9,10],\
                'VFID1821':[9,12],\
                'VFID1832':[0,9],\
                'VFID1901':[14,-5],\
-               'VFID1944':[0,-7],\
+               'VFID1944':[9,-9],\
                'VFID1956':[0,-4],\
-               'VFID2098':[-5,-10],\
+               'VFID2098':[0,-10],\
                'VFID2162':[-3,-7],\
                'VFID2171':[-6,-7],\
                'VFID2259':[-5,-7],\
                'VFID2303':[25,-15],\
-               'VFID2357':[-7,0],\
-               'VFID2484':[0,3],\
-               'VFID2488':[4,3],\
-               'VFID2562':[0,5],\
-               'VFID2593':[7,-4.5],\
-               'VFID2601':[10,6],\
+               'VFID2357':[2,-5],\
+               'VFID2484':[16,-5],\
+               'VFID2488':[3,6],\
+               'VFID2562':[5,0],\
+               'VFID2593':[7,-8.5],\
+               'VFID2601':[17,6],\
                'VFID2661':[-5,-6],\
-               'VFID2704':[7,4],\
+               'VFID2704':[12,4],\
                'VFID2762':[5,1.5],\
                'VFID2797':[8,0],\
-               'VFID2821':[10,8],\
+               'VFID2821':[10,0],\
                'VFID2911':[5,-2],\
-               'VFID2947':[8,-2],\
+               'VFID2947':[8,-10],\
                'VFID2997':[8,0],\
                'VFID3098':[10,0],\
                'VFID3119':[-3,0],\
-               'VFID3299':[14,0],\
+               'VFID3272':[18,-8],\
+               'VFID3299':[29,5],\
                'VFID3391':[10,-10],\
                'VFID3454':[14,-6],\
                'VFID3598':[-4,-10],\
@@ -506,6 +563,13 @@ for key in offsets:
 # update pointing centers to account for offsets
 pointing_ra += pointing_offsets_ra
 pointing_dec += pointing_offsets_dec
+
+if BOKrun:
+    pointing_ra += -30./60 # 10' east
+    pointing_dec += 20/60.
+
+    # shift to bottom right chip
+    pointing_ra += convert_angle_2ra(0.5,pointing_dec) # shift by 0.5 deg
 
 
 
@@ -665,49 +729,6 @@ def fix_project(ra,dec,b):
     decn = b.header['CRVAL2']-(decn)*b.header['CDELT2']    
     return ran,dec
 
-def convert_angle_2ra(angle,dec,dec2=None):
-    ''' 
-    DESCRIPTION:
-    converts offset in deg to offset in ra;
-    assumes angle, ra and dec are in deg;
-    assumes both points are at the same declination by default;
-    you can specify a second declination using dec2
-
-    INPUT:
-    * angle = angular offset in degrees
-    * dec = declination of pointing in degrees
-    * dec2 = optional, if angle does not correspond to a line of contant declination
-
-    RETURNS:
-    * equivalent angle in degrees of right ascension
-    '''
-    # a = angle in deg
-    # b = 90 - dec
-    # c = 90 - dec2, if different from dec
-    # A = offset in longitude/RA
-    # cos(a) = cos(b)*cos(c) + sin(b)*sin(c)*cos(A)
-    # inverting gives
-    # cos(A) = (cos(a)-cos(b)*cos(c))/[sin(b)*sin(c)]
-
-    a = np.radians(angle)
-    b = np.radians(90-dec)
-    if dec2 is None:
-        c = np.radians(90-dec)
-    else:
-        c = np.radians(90-dec2)
-    delta_longitude_radians = np.arccos( (np.cos(a)-np.cos(b)*np.cos(c))/\
-                                    (np.sin(b)*np.sin(c)))
-    return np.degrees(delta_longitude_radians)
-    
-def finding_chart_all():
-    if max_pointing != None:
-        pointing_range = range(1,max_pointing+1)
-    else:
-        pointing_range = range(1,len(pointing_ra)+1)
-                               
-    for i in pointing_range:
-        plt.close('all')
-        finding_chart(i)
 
 def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsingle=True,ING=False,MLO=False,KPNO=False,BOK=False):
     galsize=15
@@ -716,12 +737,6 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     
     center_ra = pointing_ra[i]+offset_ra
     center_dec = pointing_dec[i] + offset_dec
-    if BOK:
-        center_ra += -30./60 # 10' east
-        center_dec += 20/60.
-
-        # shift to bottom right chip
-        center_ra += 0.5 # shift by 0.5 deg
     #print('center ra, dec = ',center_ra,center_dec)
     if plotsingle:
         if delta_image > .3:
@@ -796,7 +811,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
         gals = (ran > ramin) & (ran < ramax) & \
             (decn > decmin) & (decn < decmax)
 
-    print('pointing ',v.main['VFID'][i],' ngal = ',np.sum(gals))
+    print('pointing ',v.main['VFID'][npointing],' ngal = ',np.sum(gals))
     gindex=np.arange(len(v.main['RA']))[gals]
     galnames = v.main['VFID'][gindex]
     #print('Pointing %02d Galaxies'%(npointing),': ',v.main['VFID'][gals])
@@ -846,7 +861,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     #plt.gca().invert_xaxis()
     if plotsingle:
         plt.savefig(finding_chart_dir+'-Pointing-{}.png'.format(pointing_id[npointing]))
-
+    return center_ra, center_dec
 def plot_INT_footprint(center_ra,center_dec):
     #using full detector sizes for now because 
     detector_dra = 4100.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
@@ -968,7 +983,7 @@ def make_all_platinum(KPNO=False,ING=False,MLO=False,BOK=False,startnumber=0):
 
     for i in range(startnumber,len(pointing_ra)):
         plt.close('all')
-        platinum_finding_chart(i,KPNO=KPNO,ING=ING,MLO=MLO,BOK=BOK)
+        center_ra,center_dec = platinum_finding_chart(i,KPNO=KPNO,ING=ING,MLO=MLO,BOK=BOK)
 
 def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=False,MLO=False,BOK=False):
     if KPNO:
