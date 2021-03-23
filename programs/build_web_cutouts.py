@@ -310,6 +310,9 @@ class cutout_dir():
             except FileNotFoundError:
                 print('WARNING: can not find ',f)
                 self.pngimages.append(None)
+            except TypeError:
+                print('WARNING: problem making png for ',f)
+                self.pngimages.append(None)
 
     def make_cs_png(self):
         csdata,csheader = fits.getdata(self.csimage,header=True)
@@ -323,7 +326,7 @@ class cutout_dir():
             ax = plt.gca()
             display_image(csdata,stretch='asinh',percentile1=.5,percentile2=p2)
             # mark VF galaxies
-            plot_vf_gals(imx,imy,keepflag,vfmain,ax,galsize=galsize)
+            #plot_vf_gals(imx,imy,keepflag,vfmain,ax,galsize=galsize)
             suffix = "-{}.png".format(p2)
             pngfile = os.path.join(self.outdir,os.path.basename(self.csimage).replace('.fits',suffix))
             plt.xlabel('RA (deg)',fontsize=16)
@@ -609,9 +612,15 @@ class build_html_cutout():
     def write_wise_images(self):
         ''' w1 - w4 images '''
         self.html.write('<h2>WISE Images</h2>\n')                
-        images = self.cutout.pngimages[6:10]
-        images = [os.path.basename(i) for i in images]        
-        labels = ['W1','W2','W3','W4']
+        pngimages = self.cutout.pngimages[6:10]
+        wlabels = ['W1','W2','W3','W4']
+        images=[]
+        labels=[]
+        for i,im in enumerate(pngimages):
+            if im is not None:
+                images.append(os.path.basename(im))
+                labels.append(wlabels[i])
+
         write_table(self.html,images=images,labels=labels)
     
     def write_galex_images(self):
@@ -710,15 +719,34 @@ if __name__ == '__main__':
     run='HDI'
     os.chdir(cutout_source_dir)
     hdiflag = True
+
+
+    # setup for NGC cutouts!
+    #cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-NGC5846/cutouts/'
+    telescope='WIYN'
+    run='MOSAIC'
+    os.chdir(cutout_source_dir)
+    
     
     outdir = homedir+'/research/Virgo/html-dev/cutouts/'
+    #outdir = homedir+'/research/Virgo/html-dev/cutouts/ngc5846-cutouts/'    
 
     # this should contain a list of all the galaxy folders
     flist1 = os.listdir(cutout_source_dir)
 
     flist1.sort()
+    galindex = np.arange(len(flist))
     ngal = 0
-    for i,subdir in enumerate(flist1): # loop through list
+    startgal = None
+    startindex = 0
+    if startgal is not None:
+        for i,f in enumerate(flist1):
+            if f.startswith(startgal):
+                startindex=i
+                print('starting with galaxy ',startgal)
+                break
+    for i in galindex[startindex:]: # loop through list
+        subdir = flist[i]
         print(subdir)
         #if os.path.isdir(subdir) & (subdir.startswith('pointing')) & (subdir.find('-') > -1):
         if os.path.isdir(subdir):

@@ -160,7 +160,7 @@ SGZ = [[-16,-3],
        [-4,0],
        [1,5]]
 
-filaments.append('Canes_B_Filament')
+filaments.append('Virgo_Bootes_Filament')
 SGX.append([5,15])
 SGZ.append([0,10])
 SGY.append([14,18])
@@ -183,7 +183,7 @@ fil_lengths = {'LeoII_A_Filament':13.93,\
                'Ursa_Major_Cloud':15.44,\
                'W-M_Sheet':8.45,\
                'Canes_Venatici_Filament':10.53,\
-               'Canes_B_Filament':10}# just making up a number
+               'Virgo_Bootes_Filament':11.83}# just making up a number
 
 
 def plot_spines():

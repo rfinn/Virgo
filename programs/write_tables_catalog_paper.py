@@ -45,26 +45,26 @@ class latextable(vtables):
 
         '''
         pass
-    def print_table1(self,nlines=10,filename=None,papertableflag=True,startindex=3000):
+    def print_table4(self,nlines=10,filename=None,papertableflag=True,startindex=3000):
         '''write out latex version of table 1 '''
         if filename is None:
-            fname=latextablepath+'table1.tex'
+            fname=latextablepath+'table4.tex'
         else:
             fname = filename 
         outfile = open(fname,'w')
         ### ADD FLAGS FOR CO, HI, ALFALFA
-        outfile.write('\\begin{table*}%[ptbh!]\n')
+        outfile.write('\\begin{sidewaystable*}%[ptbh!]\n')
         outfile.write('\\begin{center}\n')
         outfile.write('\\scriptsize\n')
         outfile.write('\\setlength\\tabcolsep{3.0pt} \n')
         outfile.write('\\tablenum{4} \n')
         outfile.write('\\caption{Main Catalog with Cross IDs\label{tab:main}  } \n')
-        outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
+        outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
         outfile.write('\\hline \n')
         outfile.write('\\toprule \n')
-        outfile.write('VFID   & RA &	DEC &	V$_{helio}$ & V$_{cosmic}$ &  V$_{model}$?  & HL~name & NSAID V0 & NSAID V1 & AGC Name & NED Name & CO Source \\\\ \n')
-        outfile.write('& J2000 & J2000 & $\rm km~s^{-1}$ & $\rm km~s^{-1}$ & Mpc & &  & & && \\\\ \n')
-        outfile.write('(1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11) & (12) \\\\ \n')
+        outfile.write('VFID   & RA &	DEC &	V$_{helio}$ & V$_{cosmic}$ &  V$_{model}$  & HL~name & NSAID V0 & NSAID V1 & AGC Name & NED Name & CO  & HL & NSA & NSAV0  & A100  \\\\ \n')
+        outfile.write('& J2000 & J2000 & $\\rm km~s^{-1}$ & $\\rm km~s^{-1}$ & $\\rm km~s^{-1}$ & & &  & & && & & &\\\\ \n')
+        outfile.write('(1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11) & (12)& (13) & (14) & (15) &(16) \\\\ \n')
         outfile.write('\\midrule \n')
         outfile.write('\\hline \n')
         for i in range(startindex,nlines+startindex): # print first N lines of data
@@ -83,11 +83,13 @@ class latextable(vtables):
             else:
                 nsaid = self.main['NSAID'][i] 
                 
-            format_s = '{0:s} & {1:9.6f} &{2:9.5f} & {3:.0f} & {4:.0f} & {5} &{6}& {7}& {8} & {9}& {10}& {11}\\\\ \n'
+            format_s = '{0:s} & {1:9.6f} &{2:9.5f} & {3:.0f} & {4:.0f} & {5:.0f} &{6}& {7}& {8} & {9}& {10}& {11}&{12}&{13}&{14}&{15}\\\\ \n'
             s = format_s.format(self.main['VFID'][i],self.main['RA'][i],self.main['DEC'][i],\
-                                self.main['vr'][i],self.env['Vcosmic'][i],1,\
+                                self.main['vr'][i],self.env['Vcosmic'][i],self.env['Vmodel'][i],\
                                 self.main['objname'][i],nsaidv0,nsaid,\
-                                agc,self.main['NEDname'][i], self.main['COflag'][i])
+                                agc,self.main['NEDname'][i], self.main['COflag'][i],\
+                                self.main['HLflag'][i],self.main['NSAflag'][i],self.main['NSAV0flag'][i],\
+                                self.main['A100flag'][i])
             if papertableflag:
                 # replace nans with \\nodata
                 s=s.replace('nan','\\nodata')
@@ -99,10 +101,10 @@ class latextable(vtables):
         outfile.write('\\hline \n')
         outfile.write('\\end{tabular} \n')
         outfile.write('\\end{center} \n')
-        outfile.write('\\tablecomments{This table is published in its entirety in the machine-readable format.  A portion is shown here for guidance regarding its form and content.}')        
-        outfile.write('\\end{table*} \n')
+        outfile.write('\\tablecomments{This table is published in its entirety in machine-readable format.  A portion is shown here for guidance regarding its form and content.}')        
+        outfile.write('\\end{sidewaystable*} \n')
         outfile.close()
-    def print_table2(self,nlines=10,filename=None,papertableflag=True,startindex=3000):
+    def print_table5(self,nlines=10,filename=None,papertableflag=True,startindex=3000):
         '''
         write out latex version of table 2
 
@@ -115,33 +117,35 @@ class latextable(vtables):
         net gain of one column
         '''
         if filename is None:
-            fname=latextablepath+'table2.tex'
+            fname=latextablepath+'table5.tex'
         else:
             fname = filename 
         outfile = open(fname,'w')
 
         # ADD 2d MEMBER TO FILAMENTS
         # PUT CLOSEST FILAMENT FIRST
-        outfile.write('\\begin{table*}%[ptbh!]\n')
+        outfile.write('\\begin{sidewaystable*}%[ptbh!]\n')
         outfile.write('\\begin{center}\n')
         outfile.write('\\scriptsize\n')
         outfile.write('\\setlength\\tabcolsep{3.0pt} \n')
         outfile.write('\\tablenum{5} \n')
         outfile.write('\\caption{Environmental Properties of Catalog Galaxies\label{tab:environment}  } \n')
-        outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
+        outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
         outfile.write('\\hline \n')
         outfile.write('\\toprule \n')
         columns = ['VFID','SGX', 'SGY', 'SGZ',\
                    'n5th\_2D', 'err' ,'n5th\_3D','err' ,\
+                   'Nearest Filament',\
+                   '$\\rm D_{Filament}~2D$',\
                    '$\\rm D_{Filament}~3D$',\
-                   'Nearest Filament', 'Filament Memb',\
+                   'Filament Memb',\
                    'Group','Cluster','Pure Field']
         
 
         units = ['','Mpc', 'Mpc', 'Mpc', \
-                 '', '', '', '', \
-                 'Mpc',\
-                 '','',\
+                 '', '', '', '', '',\
+                 'Mpc','Mpc',\
+                 '',\
                  '','','']
         # build the latex for header and units
         outstring = ""
@@ -174,7 +178,7 @@ class latextable(vtables):
         # build the data string 
         outstring = ""
         for i in range(len(columns)):
-            if (i > 0) & (i < 9):
+            if ((i > 0) & (i < 8)) | (i == 9) | (i == 10):
                 outstring += "{:.1f} & "
             # don't add & after the last column
             # also add line end in latex (\\\\) and newline in text file (\n)
@@ -204,9 +208,12 @@ class latextable(vtables):
                                  self.fil['SGX'][i],self.fil['SGY'][i],self.fil['SGZ'][i],\
                                  self.env['n5th_2D'][i],self.env['n5th_2D_err'][i],\
                                  self.env['n5th'][i],self.env['n5th_err'][i],\
+                                 self.fil['filament'][i].replace('_','\_'),\
+                                 self.fil['filament_dist_2D'][i],\
                                  self.fil['filament_dist_3D'][i],\
-                                 self.fil['filament'][i].replace('_','\_'),self.fil['filament_member'][i],\
-                                 self.env['flag_gro'][i],self.env['flag_clus'][i],self.env['flag_fie'][i])
+                                 self.fil['filament_member'][i],\
+                                 int(self.env['flag_gro'][i]),int(self.env['flag_clus'][i]),\
+                                 int(self.env['flag_fie'][i]))
                                  
                                 
             if papertableflag:
@@ -220,8 +227,8 @@ class latextable(vtables):
         outfile.write('\\hline \n')
         outfile.write('\\end{tabular} \n')
         outfile.write('\\end{center} \n')
-        outfile.write('\\tablecomments{This table is published in its entirety in the machine-readable format.  A portion is shown here for guidance regarding its form and content.}')        
-        outfile.write('\\end{table*} \n')
+        outfile.write('\\tablecomments{This table is published in its entirety in machine-readable format.  A portion is shown here for guidance regarding its form and content.}')        
+        outfile.write('\\end{sidewaystable*} \n')
         outfile.close()
 
         

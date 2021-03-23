@@ -93,11 +93,10 @@ class build_html_coadd():
         self.html.write('<style type="text/css">\n')
         self.html.write('table, td, th {padding: 5px; text-align: center; border: 1px solid black}\n')
         self.html.write('</style>\n')
-        self.html.write('<h1>VF Galaxies</h1>\n')        
+        self.html.write('<h1>VF Coadds</h1>\n')        
     def write_coadd_list(self):
         self.html.write('<table width="30%">\n')
         self.html.write('<tr>')
-        colnames = ['Index','Legacy Image<br> and link','Cutouts and <br>Analysis  ','RA','DEC','Recession Vel <br> (km/s)','CO Flag','ALFALFA','Filament member','Nearest Filament']
         colnames = ['Index','COADD']
         for i,l in enumerate(colnames):
             if i == 1:
@@ -107,11 +106,12 @@ class build_html_coadd():
             self.html.write('<th colspan="{}">{}</th>'.format(colspan,l))
         self.html.write('</tr></p>\n')            
 
-        vfindices = np.arange(len(vfmain))
+        #vfindices = np.arange(len(vfmain))
         # write one row for each galaxy
+        print('galnames = ',self.galnames)
         galindex = 1
         for i,g in enumerate(self.galnames):
-
+            print(g)
             jpg_path = os.path.join(self.outdir,'r-coadd.png')
             
             self.html.write('<tr>')
@@ -143,12 +143,14 @@ if __name__ == '__main__':
     # this should contain a list of all the galaxy folders
     flist1 = os.listdir(outdir)
     flist1.sort()
+    print(flist1)
     galnames=[]
     for i,subdir in enumerate(flist1): # loop through list
         
 
         #if os.path.isdir(subdir) & (subdir.startswith('pointing')) & (subdir.find('-') > -1):
-        if (os.path.isdir(subdir)) & (subdir.startswith('VF')):
+        if (os.path.isdir(subdir)):# & (subdir.startswith('VF')):
             #print('adding ',subdir)
             galnames.append(subdir)
+    print('galnames = ',galnames)
     h = build_html_coadd(galnames,outdir)

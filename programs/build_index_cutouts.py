@@ -69,11 +69,14 @@ def legacy_link(ra,dec):
     
 class build_html_cutout():
 
-    def __init__(self,gallist,outdir):
+    def __init__(self,gallist,outdir,co=False):
         ''' pass in instance of cutout_dir class and output directory '''
 
-
-        outfile = os.path.join(outdir,'index.html')
+        self.coflag = co
+        if self.coflag:
+            outfile = os.path.join(outdir,'indexco.html')
+        else:
+            outfile = os.path.join(outdir,'index.html')
         self.outdir = outdir
 
         #print('inside build html')
@@ -97,7 +100,7 @@ class build_html_cutout():
     def write_gal_list(self):
         self.html.write('<table width="90%">\n')
         self.html.write('<tr>')
-        colnames = ['Index','Legacy Image<br> and link','Cutouts and <br>Analysis  ','RA','DEC','Recession Vel <br> (km/s)','CO Flag','ALFALFA','Filament member','Nearest Filament']
+        colnames = ['Index','VFID','Legacy Image<br> and link','Cutouts and <br>Analysis  ','RA','DEC','Recession Vel <br> (km/s)','CO Flag','ALFALFA','Filament member','Nearest Filament']
         for i,l in enumerate(colnames):
             if i == 1:
                 colspan=2
@@ -109,19 +112,23 @@ class build_html_cutout():
         vfindices = np.arange(len(vfmain))
         # write one row for each galaxy
         galindex = 1
+        ids = []
         for i,g in enumerate(self.galnames):
             #print(g)
             vfid = g.split('-')[0]
             vfindex = vfindices[vfmain['VFID'] == vfid][0]
             ra = vfmain['RA'][vfindex]
             dec = vfmain['DEC'][vfindex]
-            
+            if self.coflag & ~vfmain['COflag'][vfindex]:
+                continue
+            ids.append(vfmain['VFID'][vfindex])
             #print(vfindex)
             # get legacy jpg name
 
             jpg_path = os.path.join(self.outdir,g)
             search_path = os.path.join(jpg_path,'*legacy*.jpg')
             #print(search_path)
+            #legacy_jpg = glob.glob(search_path)[0]            
             try:
                 legacy_jpg = glob.glob(search_path)[0]
             except:
@@ -129,10 +136,13 @@ class build_html_cutout():
                 print('\t Skipping galaxy for now')
                 continue
             self.html.write('<tr>')
-            self.html.write('<td>{}</td>'.format(galindex))            
+            self.html.write('<td>{}</td>'.format(galindex))
+            self.html.write('<td>{}</td>'.format(vfid))            
             htmlpage = "{}/{}.html".format(g,g)
             relative_path_2legacyjpg = '{}/{}'.format(g,os.path.basename(legacy_jpg))
             self.html.write('<td colspan="2"><a href="{0}" target="_blank"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(legacy_link(ra,dec),relative_path_2legacyjpg))
+
+            
             self.html.write('<td><a href="{}">{}</td>'.format(htmlpage,g))
             self.html.write('<td>{:.5f}</td>'.format(ra))
             self.html.write('<td>{:.5f}</td>'.format(dec))
@@ -145,7 +155,15 @@ class build_html_cutout():
             self.html.write('</tr>\n')
             galindex += 1
         self.html.write('</table>\n')
-    
+        if self.coflag:
+            print('')
+            print('################  CO STATS  ###############')
+
+        else:
+            print('')
+            print('################  HALPHA STATS  ###############')
+        print('\t number of images = {}'.format(len(ids)))
+        print('\t number of unique targets = {}'.format(len(set(ids))))
     
     def close_html(self):
         self.html.close()
@@ -174,4 +192,6 @@ if __name__ == '__main__':
         if (os.path.isdir(subdir)) & (subdir.startswith('VF')):
             #print('adding ',subdir)
             galnames.append(subdir)
+    print('number of subdirectories = ',len(galnames))
     h = build_html_cutout(galnames,outdir)
+    h = build_html_cutout(galnames,outdir,co=True)
