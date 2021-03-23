@@ -272,7 +272,7 @@ class filament():
             fsize=12
         self.plot_local_density()
         self.plot_local_exp_fit()
-        ftitle = "{} length={:.1f}".format(self.name,self.length)
+        ftitle = "{} (length={:.1f} Mpc)".format(self.name,self.length)
         plt.title(ftitle,fontsize=fsize)
         plt.xlabel(r'$Distance \ (Mpc/h) $',fontsize=fsize)
         plt.ylabel(r'$\rho(r) \ (Mpc/h)^{-3} $',fontsize=fsize)        
@@ -291,6 +291,7 @@ if __name__ == '__main__':
     allerr = []
     allconc = []
     plt.figure(figsize=(10,14))
+    plt.subplots_adjust(hspace=.5,wspace=.3)
     for i in testing:
         f = filament(virgoCommon.filaments[i])
         f.measure_profile(dmax=6)
@@ -306,9 +307,12 @@ if __name__ == '__main__':
         plt.subplot(7,2,i+1)
         f.plot_localdens(plotsingle=False)
         if i < len(testing)-2:
-            plt.xticks([])
+            #plt.xticks([])
             plt.xlabel('')
-        plt.axis([0,6.1,.1,6])
+
+        #plt.axis([0,6.1,.01,9])
+
+        plt.xlim(0.,4)
         plt.gca().set_yscale('log')
         f.measure_concentration()
         alllengths.append(f.length)
