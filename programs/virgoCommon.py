@@ -119,6 +119,7 @@ filaments= ['LeoII_A_Filament','LeoII_B_Filament','Leo_Minor_Filament',\
             'Leo_Minor_B_Filament','Ursa_Major_Cloud',\
             'W-M_Sheet','Canes_Venatici_Filament']
 
+#names = [‘Leo Minor’, ‘Ursa Major Cloud’, ‘Canes Venatici’,  ‘LeoII B’, ‘LeoII A’, ‘Virgo III’, ‘Leo Minor B’, ‘W-M Sheet’, ‘Bootes’, ‘Coma Berenices’, ‘NGC5353/4 ’, ‘Serpens’, ‘Draco’, ] 
 
 SGX =[ [-1,12],
        [0,16],

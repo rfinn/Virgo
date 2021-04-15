@@ -684,6 +684,7 @@ class catalog:
             #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
             #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
             infile = '/home/rfinn/research/Virgo/halpha-tables/halpha-05Jul2020.fits'
+            infile = '/home/rfinn/research/Virgo/halpha-tables-20210311/halphagui-output-combined-2021-Mar-25.fits'
 
         else:
             infile = halphafile

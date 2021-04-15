@@ -121,13 +121,16 @@ if INGrun:
     telescope_run = '2019May/INT-2019May-227filter-'
     telescope_run = '2019May/INT-2019May-197filter-'
 elif BOKrun:
-    finding_chart_dir = os.path.join(outfile_directory,'2021Mar','finding-charts','')
+    runid = '2021Mar'
+    runid = '2021Apr'
+    finding_chart_dir = os.path.join(outfile_directory,runid,'finding-charts','')
     if not os.path.exists(finding_chart_dir):
         os.mkdir(finding_chart_dir)
-    airmass_dir = os.path.join(outfile_directory,'2021Mar','airmass','')
+    airmass_dir = os.path.join(outfile_directory,runid,'airmass','')
     if not os.path.exists(airmass_dir):
-        os.mkdir(finding_chart_dir)
+        os.mkdir(airmass_dir)
     telescope_run = '2021Mar/BOK-2021Mar-'
+    telescope_run = '2021Apr/BOK-2021Apr-'    
     #telescope_run = '2021Apr/INT-2019May-197filter-'
 else:
     telescope_run = '2019June/MLO-2019June-'
@@ -187,21 +190,64 @@ need_obs = v.main['COflag'] & (~v.main['HAobsflag'] | (v.ha['FILT_COR'] > 2.))
 HIflag = v.main['A100flag']
 
 obs_mass_flag = need_obs
-bok_duplicates = ['VFID0607','VFID0611','VFID1979','VFID1955',\
-                  'VFID2315','VFID2368','VFID2766','VFID2797',\
-                  'VFID3457','VFID3459','VFID4835','VFID6132'\
-                  'VFID6379','VFID6406','VFID6438','VFID101'\
-                  ]
 
-#for vf in bok_duplicates:
-#    obs_mass_flag[v.main['VFID'] == vf] = False
 
 
 # those observed at bok already
+# the log says 2303, but it's 2302
+
 observed_2021Mar = ['VFID2303','VFID1728','VFID2593','VFID1538','VFID2357',\
-                    'VFID2821','VFID1572']#,'VFID0501'
+                    'VFID2821','VFID1537','VFID1572','VFID3299']#,'VFID0501'
+
 
 for vf in observed_2021Mar:
+    obs_mass_flag[v.main['VFID'] == vf] = False
+
+
+# these are targets that are in the FOV of another pointing,
+# so we don't need to do them separately
+
+# first is 1728
+bok_duplicates = ['VFID1683',\
+                  # VFID2303
+                  'VFID2315',\
+                  # VFID 2593
+                  'VFID2562','VFID2589','VFID2593','VFID2600','VFID2612'\
+                  # VFID 1538
+                  'VFID1463','VFID1473','VFID1475',\
+                  # VFID 2357
+                  'VFID2355','VFID2357','VFID2368',\
+                  # VFID 2821
+                  'VFID2771',\
+                  # VFID1573
+                  'VFID1548','VFID1552','VFID1561','VFID1574',\
+                  'VFID1580','VFID1589','VFID1590','VFID1591',\
+                  'VFID1595','VFID1596','VFID1597','VFID1606',\
+                  'VFID1607','VFID1630',\
+                  #VFID5541
+                  'VFID5399','VFID5408','VFID5413','VFID5564',\
+                  # VFID 0638
+                  'VFID0568',\
+                  # VFID1901
+                  'VFID1834',\
+                  # VFID1844
+                  'VFID1822',\
+                  # VFID0422
+                  'VFID0377','VFID0385',\
+                  # VFID3780
+                  'VFID3739',\
+                  # VFID0520
+                  'VFID0469','VFID0474','VFID0487','VFID0496',\
+                  'VFID0531','VFID0538',\
+                  
+                  ]
+#                  ['VFID0607','VFID0611','VFID1979','VFID1955',\
+#                  'VFID2315','VFID2368','VFID2766','VFID2797',\
+#                  'VFID3457','VFID3459','VFID4835','VFID6132',\
+#                  'VFID6379','VFID6406','VFID6438','VFID101'\
+#                  ]
+    
+for vf in bok_duplicates:
     obs_mass_flag[v.main['VFID'] == vf] = False
 
 '''
@@ -516,7 +562,7 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID3454':[14,-6],\
                'VFID3598':[-4,-10],\
                'VFID3714':[5,5],\
-               'VFID3780':[5,12],\
+               'VFID3780':[15,8],\
                'VFID3948':[10,0],\
                'VFID4025':[10,0],\
                'VFID4257':[13,0],\
@@ -543,7 +589,11 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID6503':[50,12],\
                'VFID6599':[10,12],\
                'VFID6620':[0,10],\
-               
+               'VFID2368':[15,2],\
+               'VFID5541':[15,3],\
+               'VFID0638':[15,5],\
+               'VFID0422':[10,2],\
+               'VFID0520':[0,-3]                              
            }
 
 # change this to use the offsets for the desired telescope
@@ -1091,6 +1141,9 @@ def airmass_plotsv2(pointing_id,KPNO=False,ING=False,MLO=False):
         end_time = Time('2020-02-24 14:00:00')
         start_time = Time('2021-03-14 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
         end_time = Time('2021-03-14 14:00:00')
+        # April 2021 Run
+        start_time = Time('2021-04-15 01:00:00') # UTC time, so 1:00 UTC = 6 pm AZ mountain time
+        end_time = Time('2021-04-15 14:00:00')
         
     elif MLO:
         print('plotting airmass curves for MLO')
