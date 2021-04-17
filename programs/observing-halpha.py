@@ -184,26 +184,49 @@ ha_obs = v.main['HAobsflag']
 ha_detect = v.main['HAobsflag'] & v.main['HAflag']
 
 # galaxies that have NOT been observed in Halpha, but have been observed in CO
-need_obs = v.main['COflag'] & (~v.main['HAobsflag'] | (v.ha['FILT_COR'] > 2.))
+need_obs = (v.main['COflag'] & ~v.main['HAobsflag']) | (v.main['HAobsflag'] & (v.ha['FILT_COR'] > 2.))
 
 
 HIflag = v.main['A100flag']
 
 obs_mass_flag = need_obs
 
-
+print(sum(obs_mass_flag))
 
 # those observed at bok already
 # the log says 2303, but it's 2302
 
 observed_2021Mar = ['VFID2303','VFID1728','VFID2593','VFID1538','VFID2357',\
-                    'VFID2821','VFID1537','VFID1572','VFID3299']#,'VFID0501'
+                    'VFID2821','VFID1573','VFID1572','VFID3299']#,'VFID0501'
 
 
 for vf in observed_2021Mar:
-    obs_mass_flag[v.main['VFID'] == vf] = False
+    flag = v.main['VFID'] == vf
+    if sum(flag) > 0:
+        i = np.arange(len(v.main))[flag]
+        #print(i,vf,': before setting flag, obs_mass_flag = ',obs_mass_flag[i])
+        obs_mass_flag[i] = False
+    else:
+        print('trouble in paradise')
+        print(vf)
+        sys.exit()
+
+print('after removing targets from bok mar run: ',sum(obs_mass_flag))
+observed_2021Apr = ['VFID2947','VFID1901','VFID5541','VFID0638','VFID0422',\
+                    'VFID1844','VFID2911','VFID2997']#,'VFID0501'
+
+for vf in observed_2021Apr:
+    flag = v.main['VFID'] == vf
+    if sum(flag) > 0:
+        i = np.arange(len(v.main))[flag]
+        obs_mass_flag[i] = False
+    else:
+        print('trouble in paradise')
+        print(vf)
+        sys.exit()
 
 
+print('after removing targets from bok apr run: ',sum(obs_mass_flag))
 # these are targets that are in the FOV of another pointing,
 # so we don't need to do them separately
 
@@ -212,7 +235,7 @@ bok_duplicates = ['VFID1683',\
                   # VFID2303
                   'VFID2315',\
                   # VFID 2593
-                  'VFID2562','VFID2589','VFID2593','VFID2600','VFID2612'\
+                  'VFID2562','VFID2589','VFID2593','VFID2600','VFID2612',\
                   # VFID 1538
                   'VFID1463','VFID1473','VFID1475',\
                   # VFID 2357
@@ -239,7 +262,15 @@ bok_duplicates = ['VFID1683',\
                   # VFID0520
                   'VFID0469','VFID0474','VFID0487','VFID0496',\
                   'VFID0531','VFID0538',\
-                  
+                  # VFID2911
+                  'VFID2867','VFID2897','VFID2898','VFID2926',\
+                  # VFID2997
+                  'VFID2921','VFID2931','VFID2999',\
+                  # VFID4894
+                  'VFID4670','VFID4720','VFID4752','VFID4774',\
+                  'VFID4827','VFID4835',\
+                  # VFID6253
+                  'VFID6165','VFID6195','VFID6242',\
                   ]
 #                  ['VFID0607','VFID0611','VFID1979','VFID1955',\
 #                  'VFID2315','VFID2368','VFID2766','VFID2797',\
@@ -247,9 +278,21 @@ bok_duplicates = ['VFID1683',\
 #                  'VFID6379','VFID6406','VFID6438','VFID101'\
 #                  ]
     
+#for vf in bok_duplicates:
 for vf in bok_duplicates:
-    obs_mass_flag[v.main['VFID'] == vf] = False
+    flag = v.main['VFID'] == vf
+    if sum(flag) > 0:
+        i = np.arange(len(v.main))[flag]
+        #print(i,vf,': before setting flag, obs_mass_flag = ',obs_mass_flag[i])        
+        obs_mass_flag[i] = False
+    else:
+        print('trouble in paradise')
+        print(vf)
+        sys.exit()
 
+
+
+print('after removing galaxies that were in FOV of main targets from bok mar/apr runs: ',sum(obs_mass_flag))
 '''
 ########################################
 ######  DEFINE FILAMENTS  #######
@@ -312,6 +355,9 @@ v1=1000
 v2=3000
 mylabel='$ v_r \ (km/s) $'
 
+########################################
+###### FUNCTIONS
+########################################
 def convert_angle_2ra(angle,dec,dec2=None):
     ''' 
     DESCRIPTION:
@@ -368,6 +414,7 @@ pointing_id = v.main['VFID'][obs_mass_flag]
 pointing_mag = 22.5 - 2.5 * np.log10(v.nsav0['NMGY'][:,4][obs_mass_flag])
 pointing_vr = v.main['vr'][obs_mass_flag]
 
+print('after cutting table to keep remaining targets: ',len(pointing_ra))
 
 # sort by RA
 sorted_indices = np.argsort(pointing_ra)
@@ -377,6 +424,9 @@ pointing_id = pointing_id[sorted_indices]
 pointing_mag = pointing_mag[sorted_indices]
 pointing_vr = pointing_vr[sorted_indices]
 vfdict = dict((a,b) for a,b in zip(pointing_id,np.arange(len(pointing_id))))
+
+
+print('after sorting arrays by RA: ',len(pointing_ra))
 
 ########################################
 ### OFFSETS TO GET MULTIPLE GALAXIES ###
@@ -510,9 +560,11 @@ offsets_INT = {#84889:[3.,2.],
            }
 # shifts in arcmin
 offsets_BOK = {'VFID0377':[-10,0],\
-               'VFID0422':[-2,0],\
+               'VFID0422':[10,2],\
                'VFID0501':[0,-5],\
+               'VFID0520':[0,-6],\
                'VFID0603':[-7,-1],\
+               'VFID0638':[15,5],\
                'VFID0776':[-7,-7],\
                'VFID0783':[-5,0],\
                'VFID0788':[15,6],\
@@ -530,22 +582,25 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID1728':[5,0],\
                'VFID1756':[5,-5],\
                'VFID1819':[9,10],\
-               'VFID1821':[9,12],\
+               'VFID1821':[10,-17],\
                'VFID1832':[0,9],\
                'VFID1901':[14,-5],\
                'VFID1944':[9,-9],\
                'VFID1956':[0,-4],\
+               'VFID2068':[10,-3],\
                'VFID2098':[0,-10],\
                'VFID2162':[-3,-7],\
                'VFID2171':[-6,-7],\
                'VFID2259':[-5,-7],\
                'VFID2303':[25,-15],\
                'VFID2357':[2,-5],\
-               'VFID2484':[16,-5],\
+               'VFID2368':[15,2],\
+               'VFID2484':[16,-6],\
                'VFID2488':[3,6],\
                'VFID2562':[5,0],\
                'VFID2593':[7,-8.5],\
                'VFID2601':[17,6],\
+               'VFID2621':[2,3],\
                'VFID2661':[-5,-6],\
                'VFID2704':[12,4],\
                'VFID2762':[5,1.5],\
@@ -553,13 +608,15 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID2821':[10,0],\
                'VFID2911':[5,-2],\
                'VFID2947':[8,-10],\
-               'VFID2997':[8,0],\
+               'VFID2997':[11,4],\
                'VFID3098':[10,0],\
+               'VFID3106':[7,0],\
                'VFID3119':[-3,0],\
                'VFID3272':[18,-8],\
                'VFID3299':[29,5],\
                'VFID3391':[10,-10],\
                'VFID3454':[14,-6],\
+               'VFID3459':[8,-7],\
                'VFID3598':[-4,-10],\
                'VFID3714':[5,5],\
                'VFID3780':[15,8],\
@@ -567,9 +624,9 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID4025':[10,0],\
                'VFID4257':[13,0],\
                'VFID4279':[5,-8],\
-               'VFID4796':[2,2],\
-               'VFID4894':[7,10],\
-               'VFID5541':[10,-8],\
+               'VFID4796':[17,-2],\
+               'VFID4894':[14,4],\
+               'VFID5541':[15,3],\
                'VFID5695':[12,-8],\
                'VFID5726':[50,0],\
                'VFID5922':[10,-5],\
@@ -579,21 +636,18 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID6115':[62,-8],\
                'VFID6127':[15,7],\
                'VFID6165':[20,-13],\
-               'VFID6253':[2.5,7],\
+               'VFID6253':[15,4],\
                'VFID6293':[8,-5],\
                'VFID6305':[0,5],\
                'VFID6369':[54.,-6.5],\
                'VFID6397':[40,5],\
+               'VFID6406':[8,-4],\
                'VFID6425':[-1,3],\
                'VFID6426':[50,3],\
                'VFID6503':[50,12],\
                'VFID6599':[10,12],\
                'VFID6620':[0,10],\
-               'VFID2368':[15,2],\
-               'VFID5541':[15,3],\
-               'VFID0638':[15,5],\
-               'VFID0422':[10,2],\
-               'VFID0520':[0,-3]                              
+               'VFID2911':[12,-3],\
            }
 
 # change this to use the offsets for the desired telescope
@@ -994,11 +1048,21 @@ def plot_BOK_footprint(center_ra,center_dec,header=None):
             dy = detector_ddec/header['CDELT2']#/np.cos(np.radians(header['CRVAL2']))
             #print(centerx,centery,dx,dy)
             rect= plt.Rectangle((box_lower_x,box_lower_y), dx, dy,fill=False, color='k')
+            rect2= plt.Rectangle((box_lower_x,box_lower_y), dx/2, dy/2,fill=False, color='.5')
+            rect3= plt.Rectangle((box_lower_x+dx/2,box_lower_y+dy/2), \
+                                 dx/2, dy/2,fill=False, color='.5')            
             
         else:
             rect= plt.Rectangle((center_ra+doffsetx,center_dec+doffsety), detector_dra, detector_ddec,fill=False, color='k')
-        plt.gca().add_artist(rect)
+            # try to mark amp quadrants
+            rect2= plt.Rectangle((center_ra+doffsetx,center_dec+doffsety), detector_dra/2, detector_ddec/2,fill=False, color='.5')
+            rect3= plt.Rectangle((center_ra+doffsetx+detector_dra/2,\
+                                  center_dec+doffsety+detector_ddec/2), \
+                                 detector_dra/2, detector_ddec/2,fill=False, color='.5')            
 
+        plt.gca().add_artist(rect2)
+        plt.gca().add_artist(rect3)                
+        plt.gca().add_artist(rect)
     # adding guide camera
     #offset_dec = -2*detector_ddec-(22.7+98.1)/3600. # hard to explain
     #offset_ra =  detector_dra/2-(3.18+649.9)/3600.# hard to explain
@@ -1033,7 +1097,8 @@ def make_all_platinum(KPNO=False,ING=False,MLO=False,BOK=False,startnumber=0):
 
     for i in range(startnumber,len(pointing_ra)):
         plt.close('all')
-        center_ra,center_dec = platinum_finding_chart(i,KPNO=KPNO,ING=ING,MLO=MLO,BOK=BOK)
+        #center_ra,center_dec = platinum_finding_chart(i,KPNO=KPNO,ING=ING,MLO=MLO,BOK=BOK)
+        platinum_finding_chart(i,KPNO=KPNO,ING=ING,MLO=MLO,BOK=BOK)        
 
 def platinum_finding_chart(npointing,offset_ra=0.,offset_dec=0.,ING=False,KPNO=False,MLO=False,BOK=False):
     if KPNO:
