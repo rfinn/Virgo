@@ -213,7 +213,7 @@ for vf in observed_2021Mar:
 
 print('after removing targets from bok mar run: ',sum(obs_mass_flag))
 observed_2021Apr = ['VFID2947','VFID1901','VFID5541','VFID0638','VFID0422',\
-                    'VFID1844','VFID2911','VFID2997']#,'VFID0501'
+                    'VFID1844','VFID2997']#,,'VFID2911','VFID0501'
 
 for vf in observed_2021Apr:
     flag = v.main['VFID'] == vf
@@ -606,7 +606,6 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID2762':[5,1.5],\
                'VFID2797':[8,0],\
                'VFID2821':[10,0],\
-               'VFID2911':[5,-2],\
                'VFID2947':[8,-10],\
                'VFID2997':[11,4],\
                'VFID3098':[10,0],\
@@ -647,7 +646,7 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID6503':[50,12],\
                'VFID6599':[10,12],\
                'VFID6620':[0,10],\
-               'VFID2911':[12,-3],\
+               'VFID2911':[11.5,-7],\
            }
 
 # change this to use the offsets for the desired telescope
