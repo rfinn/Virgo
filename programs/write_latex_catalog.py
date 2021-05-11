@@ -66,7 +66,7 @@ class latextable():
     def print_table1(self,nlines=10,filename=None,papertableflag=True):
         '''write out latex version of table 1 '''
         if filename is None:
-            fname=latextablepath+'table1.tex'
+            fname=latextablepath+'catalog1.tex'
         else:
             fname = filename 
         outfile = open(fname,'w')
@@ -80,7 +80,7 @@ class latextable():
         outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
         outfile.write('\\hline \n')
         outfile.write('\\toprule \n')
-        outfile.write('AGC &	Flag &	SDSS objID  & RA &	DEC &	V$_{helio}$ &	D &	$\sigma_D$  &	Ext$_g$	& Ext$_i$	& expAB$_r$  & $\sigma_{expAB_r}$ &	cmodel$_i$ & $\sigma_{cmodel_i}$ \\\\ \n')
+        outfile.write('AGC &	Flag &	SDSS objID  & RA &	DEC &	V$_{r}$ &	D &	$\sigma_D$  &	Ext$_g$	& Ext$_i$	& expAB$_r$  & $\sigma_{expAB_r}$ &	cmodel$_i$ & $\sigma_{cmodel_i}$ \\\\ \n')
         outfile.write('& & & J2000 & J2000 & $km~s^{-1}$ & Mpc & Mpc & mag & mag & & & mag & mag \\\\ \n')
         outfile.write('(1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11) & (12) & (13) & (14)  \\\\ \n')
         outfile.write('\\midrule \n')
@@ -115,7 +115,7 @@ class latextable():
         net gain of one column
         '''
         if filename is None:
-            fname=latextablepath+'table2.tex'
+            fname=latextablepath+'catalog2.tex'
         else:
             fname = filename 
         outfile = open(fname,'w')

@@ -10,6 +10,7 @@ GOAL
 
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy.stats import spearmanr
 import matplotlib.pyplot as plt
 import sys
 import os
@@ -25,14 +26,18 @@ import virgoCommon
 import readtables
 TABLEDIR = '/home/rfinn/research/Virgo/tables-north/v1/'
 TABLEPREFIX = 'vf_north_v1_'
-v = readtables.vtables(TABLEDIR,TABLEPREFIX) 
-v.read_filaments() # sets up v.fil table
-v.read_env() # sets up v.env table
+v = readtables.vtables(TABLEDIR,TABLEPREFIX)
+v.read_all()
+#v.read_filaments() # sets up v.fil table
+#v.read_env() # sets up v.env table
 
 #########################################################
 ####  FUNCTIONS
 #########################################################
 
+def run_spearman(x,y):
+    t = spearmanr(x,y)
+    print('spearman rank test: rho={:.2f}, p={:.4f}'.format(t[0],t[1]))
 def profile_fun(x,x0,a,b):
     """
     PURPOSE:
@@ -157,15 +162,16 @@ class filament():
     def __init__(self,filament_name,marker=None,ls=None,alpha=None):
         ''' take filament name as input '''
         self.filname = filament_name
+        self.name = self.filname.replace('_Filament','').replace('Virgo_','').replace('_',' ')        
         if marker is not None:
             self.marker = marker
         if ls is not None:
             self.ls = ls
         if alpha is not None:
             self.alpha = alpha
-        self.name = filament_name
+
         pass
-    def measure_profile(self,dmin=0.25,dmax=3,stepsize=.2):
+    def measure_profile(self,dmin=0.25,dmax=3,stepsize=.2,magcut=False,samemag=False):
         '''
         PURPOSE: to measures the density profile 
         
@@ -173,6 +179,8 @@ class filament():
         * dmin - first bin for computing density
         * dmax
         * stepsize
+        * magcut - boolean, apply a mag cut when calculating density.
+        * samemag - boolean; True=use the same Mr=-15.7 cut for all; False=use Mr cut tuned to each filament
 
         OUTPUT:
         * self.ngal - number of galaxies in each bin
@@ -196,6 +204,12 @@ class filament():
             return
         for i,d in enumerate(dist):
             flag =  (v.fil[colname] < d) & (v.env['flag_clus'] == 0)
+            flag_mag = v.rphot['M_r']<v.rphot['M_lim_values_fil']
+            if magcut:
+                if samemag:
+                    flag = flag & (v.rphot['M_r'] < -15.7)
+                else:
+                    flag = flag & flag_mag
             self.ngal[i] = sum(flag)
             self.volume[i] = (np.pi*d**2*length)
             self.density[i] = sum(flag)/self.volume[i]
@@ -255,16 +269,20 @@ class filament():
         pass
     def measure_concentration(self):
         self.conc = self.density[4]/self.density[-1]
+        self.conc_err = self.density_err[4]/self.density[-1]        
     def plot_single(self):
         plt.figure(figsize=(10,8))
         self.plot_density()
         self.plot_exp_fit()
         ftitle = "{} length={:.1f}".format(self.name,self.length)
+        # updating to remove length, remove _Filament, replace_ with " "
+        #ftitle = "{} length={:.1f}".format(self.name,self.length)
+        ftitle = "{} length={:.1f}".format(self.name.replace("_Filament","").replace("Virgo_","").replace("_"," "))        
         plt.title(ftitle,fontsize=20)
         plt.xlabel(r'$Distance \ (Mpc/h) $',fontsize=20)
         plt.ylabel(r'$\rho(<r) \ (Mpc/h)^{-3} $',fontsize=20)        
-        plt.legend(fontsize=18)
-    def plot_localdens(self,plotsingle=True):
+        #plt.legend(fontsize=18)
+    def plot_localdens(self,plotsingle=True,showx=False,showy=False):
         if plotsingle:
             plt.figure(figsize=(10,8))
             fsize=20
@@ -272,29 +290,146 @@ class filament():
             fsize=12
         self.plot_local_density()
         self.plot_local_exp_fit()
-        ftitle = "{} (length={:.1f} Mpc)".format(self.name,self.length)
-        plt.title(ftitle,fontsize=fsize)
-        plt.xlabel(r'$Distance \ (Mpc/h) $',fontsize=fsize)
-        plt.ylabel(r'$\rho(r) \ (Mpc/h)^{-3} $',fontsize=fsize)        
-        plt.legend(fontsize=fsize)
+        #ftitle = "{} (length={:.1f} Mpc)".format(self.name,self.length)
+        ftitle = "{}".format(self.name.replace("_Filament","").replace("Virgo_","").replace("_"," "))                
+        #plt.title(ftitle,fontsize=fsize)
+        plt.text(0.95,.85,ftitle,transform=plt.gca().transAxes,horizontalalignment='right',fontsize=12)
+        if showx:
+            plt.xlabel(r'$Distance \ (Mpc/h) $',fontsize=fsize)
+        else:
+            #plt.xticks([])
+            plt.gca().tick_params(labelbottom=False)
+        if showy:
+            plt.ylabel(r'$\rho(r) \ (Mpc/h)^{-3} $',fontsize=fsize)
+        else:
+            plt.yticks([],[])
+        #plt.legend(fontsize=fsize)
+
+class virgofilaments:
+    def __init__(self,filament_list):
+        '''  pass in list of filament instances from main program '''
+        if args.magcut & args.samemag:
+            self.suffix = 'fixedMr'
+        elif args.magcut & ~args.samemag:
+            self.suffix = 'filament_Mr'
+        else:
+            self.suffix = 'no_Mr_cut'
+        self.allfilaments = filament_list
         
+    def plot_scale_length_vs_length(self,ymax=None):
+        ''' plot scale length vs length '''
+        plt.figure(figsize=(8,6))
+
+        # update to use BV colors
+        for i,f in enumerate(allfilaments):
+            plt.plot(f.length,f.par_best_local[0],'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.errorbar(f.length,f.par_best_local[0],yerr=f.err_par_best_local[0],color=virgoCommon.mycolors[i])
+        plt.xlabel("Length (Mpc/h)",fontsize=20)
+        plt.ylabel("Scale length (Mpc/h)",fontsize=20)
+        plt.legend()
+        if ymax is not None:
+            plt.ylim(0,ymax)
+        plt.savefig('scale_length_vs_L_'+self.suffix+'.pdf')
+        plt.savefig('scale_length_vs_L_'+self.suffix+'.png')
+        
+    def plot_central_density_vs_length(self,ymax=None):
+        ''' plot central density vs length '''
+        plt.figure(figsize=(8,6))
+
+        # update to use BV colors
+        for i,f in enumerate(allfilaments):
+            plt.plot(f.length,f.par_best_local[1],'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.errorbar(f.length,f.par_best_local[1],yerr=f.err_par_best_local[1],color=virgoCommon.mycolors[i])
+        plt.xlabel("Length (Mpc/h)",fontsize=20)
+        plt.ylabel("Central Density",fontsize=20)
+        plt.legend()
+        if ymax is not None:
+            plt.ylim(0,ymax)
+        plt.savefig('central_density_vs_L_'+self.suffix+'.pdf')
+        plt.savefig('central_density_vs_L_'+self.suffix+'.png')
+
+    def plot_density_contrast_vs_length(self,ymax=None):
+        ''' plot central density vs length '''
+        plt.figure(figsize=(8,6))
+
+        # update to use BV colors
+        for i,f in enumerate(allfilaments):
+            y = f.par_best_local[1]/f.par_best_local[2]
+            yerr = f.err_par_best_local[1]/f.par_best_local[2]            
+            plt.plot(f.length,y,'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.errorbar(f.length,y,yerr=yerr,color=virgoCommon.mycolors[i])
+        plt.xlabel("Length",fontsize=20)
+        plt.ylabel("Density Contrast",fontsize=20)
+        plt.legend()
+        if ymax is not None:
+            plt.ylim(0,ymax)
+        plt.savefig('density_contrast_vs_L_'+self.suffix+'.pdf')
+        plt.savefig('density_contrast_vs_L_'+self.suffix+'.png')
+
+    def plot_central_density_contrast_vs_length(self,ymax=None):
+        ''' plot central density vs length '''
+        plt.figure(figsize=(8,6))
+
+        # update to use BV colors
+        for i,f in enumerate(allfilaments):
+            y = f.density[4]/f.par_best_local[2]
+            yerr = f.density_err[4]/f.par_best_local[2]            
+            plt.plot(f.length,y,'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.errorbar(f.length,y,yerr=yerr,color=virgoCommon.mycolors[i])
+        plt.xlabel("Length (Mpc/h)",fontsize=20)
+        plt.ylabel("Central Density Contrast",fontsize=20)
+        plt.legend()
+        if ymax is not None:
+            plt.ylim(0,ymax)
+        plt.savefig('central_density_contrast_vs_L_'+self.suffix+'.pdf')
+        plt.savefig('central_density_contrast_vs_L_'+self.suffix+'.png')
+    def plot_concentration_vs_length(self,ymax=None):
+        ''' plot central density vs length '''
+        plt.figure(figsize=(8,6))
+
+        # update to use BV colors
+        for i,f in enumerate(allfilaments):
+            y = f.conc
+            yerr = f.conc_err        
+            plt.plot(f.length,y,'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.errorbar(f.length,y,yerr=yerr,color=virgoCommon.mycolors[i])
+        plt.xlabel("Length (Mpc/h)",fontsize=20)
+        plt.ylabel("Concentration",fontsize=20)
+        plt.legend()
+        if ymax is not None:
+            plt.ylim(0,ymax)
+        plt.savefig('concentration_vs_L_'+self.suffix+'.pdf')
+        plt.savefig('concentration_vs_L_'+self.suffix+'.png')
+
 #########################################################
 ####  MAIN PROGRAM
 #########################################################
 
 if __name__ == '__main__':
+    ###########################
+    ##### SET UP ARGPARSE
+    ###########################
+    import argparse
+    parser = argparse.ArgumentParser(description ='Program to plot radial density profiles of filaments')
+    parser.add_argument('--magcut', dest = 'magcut', default = False,action='store_true', help = 'apply Mr cut when counting galaxies.  default is False')
+    parser.add_argument('--samemag', dest = 'samemag', default = False, action='store_true', help = 'Set this to use the same Mr cut for each galaxy (-15.7).  otherwise use Mr cut that is tuned to each galaxy.')
+    parser.add_argument('--stepsize', dest = 'stepsize', default = 0.2, help = 'Set step size for binning in radial direction.  the default is 0.2')    
+
+    args = parser.parse_args()
+    
     #initiate filament classes
     testing = np.arange(len(virgoCommon.filaments))
     allfilaments = []
     alllengths = []
     allscalelengths = []
+    alldensitycontrasts = []
     allerr = []
     allconc = []
-    plt.figure(figsize=(10,14))
-    plt.subplots_adjust(hspace=.5,wspace=.3)
-    for i in testing:
+    plt.figure(figsize=(10,12))
+    plt.subplots_adjust(hspace=.1,wspace=.15,bottom=.07,left=.1,top=.95,right=.95)
+    for i in range(len(virgoCommon.filaments)):
         f = filament(virgoCommon.filaments[i])
-        f.measure_profile(dmax=6)
+        f.measure_profile(dmax=6,magcut=args.magcut,samemag=args.samemag,stepsize=float(args.stepsize))
         f.calc_local_density()
         #plt.figure()
         #f.plot_density()
@@ -305,7 +440,13 @@ if __name__ == '__main__':
         #plt.title(f.name)
         #f.plot_single()
         plt.subplot(7,2,i+1)
-        f.plot_localdens(plotsingle=False)
+        plotx=True
+        ploty=True
+        if i < (len(testing)-2):
+            plotx=False
+        if i%2 == 1:
+            ploty=False
+        f.plot_localdens(plotsingle=False,showy=ploty,showx=plotx)
         if i < len(testing)-2:
             #plt.xticks([])
             plt.xlabel('')
@@ -320,6 +461,7 @@ if __name__ == '__main__':
         allerr.append(f.err_par_best[0])
         allconc.append(f.conc)
         allfilaments.append(f)
+        alldensitycontrasts.append(f.par_best_local[1]/f.par_best_local[2])
     # measure density profile and fit exp for each filament
     
     # plot profiles

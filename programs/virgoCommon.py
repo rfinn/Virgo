@@ -6,6 +6,16 @@ from matplotlib import pyplot as plt
 mycolors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 from matplotlib.patches import Rectangle
 
+
+# Benedetta's colors
+mycolors = ['firebrick','red','darkorange','gold',\
+            'yellowgreen','lime','aqua','turquoise',\
+            'steelblue','blue','darkviolet','violet','deeppink']
+#def cmap(i):
+#    mycolors = [‘firebrick’, ‘red’, ‘darkorange’, ‘gold’, ‘yellowgreen’, ‘lime’#,‘aqua’, ‘turquoise’,  ‘steelblue’, ‘blue’, ‘darkviolet’,‘violet’, ‘deeppink’]
+#    return mycolors[i]
+
+
 #Get current path so program can tell if this is being run on Kelly's or Rose's computer
 mypath=os.getcwd()
 if mypath.find('rfinn') > -1:
@@ -113,63 +123,77 @@ SGZ = [[-14.26 ,-6.73],
        [0.12   , 1.37]]
 '''
 # from GL's CO paper
-filaments= ['LeoII_A_Filament','LeoII_B_Filament','Leo_Minor_Filament',\
-            'VirgoIII_Filament','NGC5353_4_Filament', 'Virgo_Draco_Filament',\
-            'Virgo_Serpens_Filament', 'Virgo_Coma_Berenices_Filament',\
-            'Leo_Minor_B_Filament','Ursa_Major_Cloud',\
-            'W-M_Sheet','Canes_Venatici_Filament']
+filaments= ['Leo_Minor_Filament',\
+            'Ursa_Major_Cloud',\
+            'Canes_Venatici_Filament',\
+            'LeoII_B_Filament',\
+            'LeoII_A_Filament',\
+            'VirgoIII_Filament',\
+            'Leo_Minor_B_Filament',\
+            'W-M_Sheet',\
+            'Virgo_Bootes_Filament',\
+            'Virgo_Coma_Berenices_Filament',\
+            'NGC5353_4_Filament',\
+            'Virgo_Serpens_Filament',\
+            'Virgo_Draco_Filament']
 
 #names = [‘Leo Minor’, ‘Ursa Major Cloud’, ‘Canes Venatici’,  ‘LeoII B’, ‘LeoII A’, ‘Virgo III’, ‘Leo Minor B’, ‘W-M Sheet’, ‘Bootes’, ‘Coma Berenices’, ‘NGC5353/4 ’, ‘Serpens’, ‘Draco’, ] 
 
-SGX =[ [-1,12],
-       [0,16],
-       [-0.5,7],
-       [-11.5,-3],
-       [-15,15],
-       [13,20.5],
-       [-9,1],
-       [0,16],
-       [4.5,12],
-       [-1,10],
-       [-14,-1],
-       [0,5]]
+SGX ={
+    'LeoII_A_Filament':[-1,12],\
+    'LeoII_B_Filament':[0,16],\
+    'Leo_Minor_B_Filament':[-0.5,7],\
+    'VirgoIII_Filament':[-11.5,-3],\
+    'NGC5353_4_Filament':[-15,15],\
+    'Virgo_Draco_Filament':[13,20.5],\
+    'Virgo_Serpens_Filament':[-9,1],\
+    'Virgo_Coma_Berenices_Filament':[0,16],\
+    'Leo_Minor_B_Filament':[4.5,12],\
+    'Ursa_Major_Cloud':[-1,10],\
+    'W-M_Sheet':[-14,-1],\
+    'Canes_Venatici_Filament':[0,5],\
+    'Virgo_Bootes_Filament':[5,15]    
+    }
 
 
-SGY = [[8,16],
-       [10,15.5],
-       [3,10],
-       [8,19],
-       [16,27],
-       [14,26],
-       [8,20],
-       [7.5,27.5],
-       [17,23],
-       [1,16],
-       [15,26],
-       [6,14]]
+SGY = {'LeoII_A_Filament':[8,16],\
+       'LeoII_B_Filament':[10,15.5],\
+       'Leo_Minor_B_Filament':[3,10],\
+       'VirgoIII_Filament':[8,19],\
+       'NGC5353_4_Filament':[16,27],\
+       'Virgo_Draco_Filament':[14,26],\
+       'Virgo_Serpens_Filament':[8,20],\
+       'Virgo_Coma_Berenices_Filament':[7.5,27.5],\
+       'Leo_Minor_B_Filament':[17,23],\
+       'Ursa_Major_Cloud':[1,16],\
+       'W-M_Sheet':[15,26],\
+       'Canes_Venatici_Filament':[6,14],\
+       'Virgo_Bootes_Filament':[0,10]   
+       }
 
-SGZ = [[-16,-3],
-       [-11,-2],
-       [-6,0],
-       [2,13],
-       [-2,15],
-       [14,24],
-       [10,35],
-       [-6,0],
-       [-8,-4.5],
-       [-1,2.5],
-       [-4,0],
-       [1,5]]
+SGZ = {'LeoII_A_Filament':[-16,-3],\
+       'LeoII_B_Filament':[-11,-2],\
+       'Leo_Minor_B_Filament':[-6,0],\
+       'VirgoIII_Filament':[2,13],\
+       'NGC5353_4_Filament':[-2,15],\
+       'Virgo_Draco_Filament':[14,24],\
+       'Virgo_Serpens_Filament':[10,35],\
+       'Virgo_Coma_Berenices_Filament':[-6,0],\
+       'Leo_Minor_B_Filament':[-8,-4.5],\
+       'Ursa_Major_Cloud':[-1,2.5],\
+       'W-M_Sheet':[-4,0],\
+       'Canes_Venatici_Filament':[1,5],\
+       'Virgo_Bootes_Filament':[14,18]
+       }
 
-filaments.append('Virgo_Bootes_Filament')
-SGX.append([5,15])
-SGZ.append([0,10])
-SGY.append([14,18])
+#filaments.append('Virgo_Bootes_Filament')
+#SGZ.append([0,10])
+#SGY.append([14,18])
 
 
-SGXrange = dict((a,b) for a,b in zip(filaments,SGX))
-SGYrange = dict((a,b) for a,b in zip(filaments,SGY))
-SGZrange = dict((a,b) for a,b in zip(filaments,SGZ))
+SGXrange = SGX #dict((a,b) for a,b in zip(filaments,SGX))
+SGYrange = SGY #dict((a,b) for a,b in zip(filaments,SGY))
+SGZrange = SGZ #dict((a,b) for a,b in zip(filaments,SGZ))
 
 # from paper
 fil_lengths = {'LeoII_A_Filament':13.93,\

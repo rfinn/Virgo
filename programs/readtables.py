@@ -11,8 +11,9 @@ written for version 1 tables
 '''
 import os
 from astropy.table import Table,hstack
-
+import numpy as np
 homedir = os.getenv("HOME")
+H0 = 70.
 
 class vtables:
     def __init__(self,tabledir,tableprefix):
@@ -37,6 +38,7 @@ class vtables:
         self.read_unwise()        
         self.read_halpha()
         self.read_rphot()
+        self.read_legacy()        
     def read_main(self):
         ''' read in main table; store as self.main  '''
         self.main = Table.read(self.tabledir+self.tableprefix+'main.fits')
@@ -112,7 +114,20 @@ class vtables:
     def read_rphot(self):
         ''' read in rband phot  '''
         self.rphot = Table.read(self.tabledir+self.tableprefix+'r_photometry.fits')
-
+    def read_legacy(self):
+        ''' read in rband phot  '''
+        dr9 = Table.read(self.tabledir+self.tableprefix+'legacy_dr9.fits')
+        g = 22.5 - 2.5*np.log10(dr9['FLUX_G'])
+        r = 22.5 - 2.5*np.log10(dr9['FLUX_R'])
+        z = 22.5 - 2.5*np.log10(dr9['FLUX_Z'])
+        d_pc = self.env['Vcosmic']/H0*1.e6
+        const = 5*np.log10(d_pc) - 5
+        MG = g - const
+        MR = r - const
+        MZ = z - const
+        newtab = Table([g,r,z,MG,MR,MZ],names=['g','r','z','Mg','Mr','Mz'])
+        self.dr9 = hstack([dr9,newtab])
+                                 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description ='Read in all virgo filament tables')
