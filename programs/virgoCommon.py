@@ -79,10 +79,10 @@ def myjoinleft(table1,table2,keys=None):
 
 # super galactic coordinate ranges of filaments
 '''
-filaments = ['LeoII_A_Filament','LeoII_B_Filament','Leo_Minor_Filament',\
+filaments = ['LeoII_A_Filament','LeoII_B_Filament','Leo_Minor_B_Filament',\
              'NGC5353_4_Filament','Filament_3','Filament_3b',\
              'VirgoIII_Filament','VirgoIII_Filament_Extension','W-M_Sheet',\
-             'Virgo_Northern_Filament','Ursa_Major_Cloud']
+             'Virgo_Northern_Filament','Ursa_Major_Cloud','Virgo_Bootes_Filament']
 
 
 SGX = [[0.43   , 9.18],   
@@ -123,8 +123,7 @@ SGZ = [[-14.26 ,-6.73],
        [0.12   , 1.37]]
 '''
 # from GL's CO paper
-filaments= ['Leo_Minor_Filament',\
-            'Ursa_Major_Cloud',\
+filaments= ['Ursa_Major_Cloud',\
             'Canes_Venatici_Filament',\
             'LeoII_B_Filament',\
             'LeoII_A_Filament',\

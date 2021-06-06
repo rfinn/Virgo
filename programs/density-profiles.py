@@ -279,8 +279,8 @@ class filament():
         #ftitle = "{} length={:.1f}".format(self.name,self.length)
         ftitle = "{} length={:.1f}".format(self.name.replace("_Filament","").replace("Virgo_","").replace("_"," "))        
         plt.title(ftitle,fontsize=20)
-        plt.xlabel(r'$Distance \ (Mpc/h) $',fontsize=20)
-        plt.ylabel(r'$\rho(<r) \ (Mpc/h)^{-3} $',fontsize=20)        
+        plt.xlabel(r'$r \ (h^{-1}~Mpc) $',fontsize=20)
+        plt.ylabel(r'$\rho(<r) \ (h^{-1}~Mpc)^{-3} $',fontsize=20)        
         #plt.legend(fontsize=18)
     def plot_localdens(self,plotsingle=True,showx=False,showy=False):
         if plotsingle:
@@ -295,12 +295,12 @@ class filament():
         #plt.title(ftitle,fontsize=fsize)
         plt.text(0.95,.85,ftitle,transform=plt.gca().transAxes,horizontalalignment='right',fontsize=12)
         if showx:
-            plt.xlabel(r'$Distance \ (Mpc/h) $',fontsize=fsize)
+            plt.xlabel(r'$r \ (h^{-1}~Mpc) $',fontsize=fsize)
         else:
             #plt.xticks([])
             plt.gca().tick_params(labelbottom=False)
         if showy:
-            plt.ylabel(r'$\rho(r) \ (Mpc/h)^{-3} $',fontsize=fsize)
+            plt.ylabel(r'$\rho \ (h^{-1}~Mpc)^{-3} $',fontsize=fsize)
         else:
             plt.yticks([],[])
         #plt.legend(fontsize=fsize)
@@ -322,10 +322,10 @@ class virgofilaments:
 
         # update to use BV colors
         for i,f in enumerate(allfilaments):
-            plt.plot(f.length,f.par_best_local[0],'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.plot(f.length,f.par_best_local[0],'bo',color=virgoCommon.mycolors[i],markersize=14,label=f.name)
             plt.errorbar(f.length,f.par_best_local[0],yerr=f.err_par_best_local[0],color=virgoCommon.mycolors[i])
-        plt.xlabel("Length (Mpc/h)",fontsize=20)
-        plt.ylabel("Scale length (Mpc/h)",fontsize=20)
+        plt.xlabel("$r \ (h^{-1}~Mpc)$",fontsize=20)
+        plt.ylabel("$r_0 \ (h^{-1}~Mpc)$",fontsize=20)
         plt.legend()
         if ymax is not None:
             plt.ylim(0,ymax)
@@ -338,10 +338,10 @@ class virgofilaments:
 
         # update to use BV colors
         for i,f in enumerate(allfilaments):
-            plt.plot(f.length,f.par_best_local[1],'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.plot(f.length,f.par_best_local[1],'bo',color=virgoCommon.mycolors[i],markersize=14,label=f.name)
             plt.errorbar(f.length,f.par_best_local[1],yerr=f.err_par_best_local[1],color=virgoCommon.mycolors[i])
-        plt.xlabel("Length (Mpc/h)",fontsize=20)
-        plt.ylabel("Central Density",fontsize=20)
+        plt.xlabel("$r \  (h^{-1}~Mpc)$",fontsize=20)
+        plt.ylabel("$a \ (h~Mpc^{-1})^3$",fontsize=20)
         plt.legend()
         if ymax is not None:
             plt.ylim(0,ymax)
@@ -356,7 +356,7 @@ class virgofilaments:
         for i,f in enumerate(allfilaments):
             y = f.par_best_local[1]/f.par_best_local[2]
             yerr = f.err_par_best_local[1]/f.par_best_local[2]            
-            plt.plot(f.length,y,'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.plot(f.length,y,'bo',color=virgoCommon.mycolors[i],markersize=14,label=f.name)
             plt.errorbar(f.length,y,yerr=yerr,color=virgoCommon.mycolors[i])
         plt.xlabel("Length",fontsize=20)
         plt.ylabel("Density Contrast",fontsize=20)
@@ -374,10 +374,10 @@ class virgofilaments:
         for i,f in enumerate(allfilaments):
             y = f.density[4]/f.par_best_local[2]
             yerr = f.density_err[4]/f.par_best_local[2]            
-            plt.plot(f.length,y,'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.plot(f.length,y,'bo',color=virgoCommon.mycolors[i],markersize=14,label=f.name)
             plt.errorbar(f.length,y,yerr=yerr,color=virgoCommon.mycolors[i])
-        plt.xlabel("Length (Mpc/h)",fontsize=20)
-        plt.ylabel("Central Density Contrast",fontsize=20)
+        plt.xlabel("$r \ (h^{-1}~Mpc)$",fontsize=20)
+        plt.ylabel(r"$\rho (r < 1~h^{-1}~Mpc)/b$",fontsize=20)
         plt.legend()
         if ymax is not None:
             plt.ylim(0,ymax)
@@ -391,9 +391,9 @@ class virgofilaments:
         for i,f in enumerate(allfilaments):
             y = f.conc
             yerr = f.conc_err        
-            plt.plot(f.length,y,'bo',color=virgoCommon.mycolors[i],markersize=12,label=f.name)
+            plt.plot(f.length,y,'bo',color=virgoCommon.mycolors[i],markersize=14,label=f.name)
             plt.errorbar(f.length,y,yerr=yerr,color=virgoCommon.mycolors[i])
-        plt.xlabel("Length (Mpc/h)",fontsize=20)
+        plt.xlabel("$Length \ (h^{-1}~Mpc)$",fontsize=20)
         plt.ylabel("Concentration",fontsize=20)
         plt.legend()
         if ymax is not None:

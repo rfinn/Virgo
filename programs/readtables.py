@@ -69,9 +69,11 @@ class vtables:
         pass
     def read_env(self):
         ''' read in GC's env and BV envsummary table; store as self.env  '''
-        tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0.fits')
-        tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
-        self.env = hstack([tab1,tab2])
+        tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0_Mr_max_-15_7.fits')
+        #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
+        tab3 = Table.read(self.tabledir+self.tableprefix+'main_finalenvironments.fits')        
+        #self.env = hstack([tab1,tab2,tab3])
+        self.env = hstack([tab1,tab3])
         pass
     def read_filaments(self):
         ''' read in GC's filament_membership catalog  '''

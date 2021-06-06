@@ -56,6 +56,10 @@ class latextable():
         self.tab2 = self.tab2[0:len(self.tab)] # trim table to keep only A100 rows
         print('length of tab2 = ',len(self.tab2),' should be 31502')
         self.agcdict2=dict((a,b) for a,b in zip(self.tab2['AGC'],np.arange(len(self.tab2['AGC']))))
+        # calculate distance
+
+        # dist
+        self.dist_Virgo
         pass
     def clean_arrays(self):
         '''
@@ -75,7 +79,7 @@ class latextable():
         outfile.write('\\begin{center}\n')
         outfile.write('\\scriptsize\n')
         outfile.write('\\setlength\\tabcolsep{3.0pt} \n')
-        outfile.write('\\tablenum{1} \n')
+        #outfile.write('\\tablenum{1} \n')
         outfile.write('\\caption{Basic Optical Properties of Cross-listed objects in the ALFALFA-SDSS Catalog.\label{tab:catalog1}  } \n')
         outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
         outfile.write('\\hline \n')
@@ -125,7 +129,7 @@ class latextable():
         outfile.write('\\scriptsize \n')
         outfile.write('%\\footnotesize \n')
         outfile.write('\\setlength\\tabcolsep{1.0pt} \n')
-        outfile.write('\\tablenum{2}\n')
+        #outfile.write('\\tablenum{2}\n')
         outfile.write('\\caption{Derived Properties of Cross-listed objects in the ALFALFA-SDSS Catalog.\\label{tab:catalog2}  }\n')
         outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
         outfile.write('\\hline\n')
