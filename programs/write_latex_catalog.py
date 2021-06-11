@@ -5,19 +5,17 @@ GOAL:
 * write out fits tables for full A100 sample
 
 OUTPUT:
-* table1.tex
-  - table 1 from Durbala+2020
+* tab_catalog.tex
+  - table X from Castignani+2021
 
-* table2.tex 
-  - table 2 from Durbala+2020
+* tab_environment.tex 
+  - table X+1 from Castignani+2021
 
 * fits versions of table1 and table2
-  - Durbala2020.table1.DATE.fits
-  - Durbala2020.table2.DATE.fits
 
 USAGE:
 
-python writetables.py
+python write_tables_catalog_paper.py
 
 UPDATES:
 * 2020-08-06
