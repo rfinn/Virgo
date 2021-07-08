@@ -20,9 +20,13 @@ OUTPUT:
   - one for catalog paper
 
 NOTES:
-* when making new version, need to download z0mgs
+* This program is being updated for v2.  
 
-* when making new version, need to rematch to unwise
+* v2 has the same number of galaxies as v1.  
+
+* The main difference is that we have cleaned the tables 
+* and eliminated duplicate columns.
+
 
 '''
 import os
@@ -81,10 +85,18 @@ class catalog:
 
         if NORTH_ONLY:
             self.cat, self.keepnorth_flag = self.keep_north()
+        # V2 change
+        # removing RA, DEC and NEDname as part of basic table
         self.basictable = self.cat['VFID','RA','DEC','NEDname']
+        # keeping NEDname for now b/c that is how I am matching some catalogs
+        #self.basictable_wNED = self.cat['VFID','NEDname']
+        #self.basictable = self.cat['VFID']        
         self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
         self.maintable.rename_column('NSAID_2','NSAIDV0')
         self.maintable.rename_column('NSA0flag','NSAV0flag')
+        
+        self.maintable.rename_column('NSAID','NSAIDV1')
+        self.maintable.rename_column('NSAflag','NSAV1flag')
 
 
         self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],frame='icrs',unit='deg')
@@ -96,6 +108,10 @@ class catalog:
         # clean catalog
         unwise_keepcols = self.unwise.colnames[22:75]
         self.unwise = self.unwise[unwise_keepcols]
+        self.unwise.rename_column('ra_2','ra_unwise')
+        self.unwise.rename_column('dec_2','dec_unwise')
+        # insert the VFID into the first column
+        self.unwise.add_column(self.basictable['VFID'],index=0)
         self.unwise.write(outdir+file_root+'unwise.fits',format='fits',overwrite=True)
     def keep_north(self, cat=None):
         # cut the catalog to keep Dec > -1 only
@@ -106,34 +122,32 @@ class catalog:
         keepnorth = cat['DEC'] > -1.3
         return cat[keepnorth], keepnorth
     def runall(self):
-        #self.catalog_for_z0MGS()
-        if self.version == 'v1':
-            self.catalog_for_z0MGS()
-            self.get_unwise()        
-            self.get_CO()
-            self.get_halpha()        
-            self.get_steer17()
-            self.get_radius()
-            self.get_sfr()
-            self.get_HIdef()
-            self.get_z0MGS_flag()        
-            self.main_table()
-            
-            self.hyperleda_table()
-            self.nsa_table()
-            self.nsa_v0_table()
-            self.agc_table()        
-            self.a100_table()
-            self.a100_sdss_table()
-            self.a100_unwise_table()
-            
-            self.get_size_for_JM()
-            self.ned_table() # NED input, ra, dec, and NEDname
-            self.print_stats()
-            
-        elif self.version == 'v2':
-            
-            pass
+        self.catalog_for_z0MGS()
+        self.get_unwise()        
+        self.get_CO()
+        self.get_halpha()        
+        self.get_steer17()
+        self.get_radius()
+        self.get_sfr()
+        self.get_HIdef()
+        self.get_z0MGS_flag()        
+        self.main_table()
+        
+        self.hyperleda_table()
+        self.nsa_v1_table()
+        self.nsa_v0_table()
+        self.agc_table()        
+        self.a100_table()
+        self.a100_sdss_table()
+
+        # V2 change
+        # not including a100_unwise table
+        self.a100_unwise_table()
+        
+        self.get_size_for_JM()
+        self.ned_table() # NED input, ra, dec, and NEDname
+        self.print_stats()
+        
     def print_stats(self):
         print('Number in sample = ',len(self.cat))
         print('Number with CO data = ',sum(self.coflag))
@@ -500,8 +514,11 @@ class catalog:
         
         self.maintable = self.cat[colnames]
         self.maintable.rename_column('NSAID_2','NSAIDV0')
-        self.maintable.rename_column('NSA0flag','NSAV0flag')        
-        
+        self.maintable.rename_column('NSA0flag','NSAV0flag')
+
+        # V2 change
+        self.maintable.rename_column('NSAflag','NSAV1flag')                
+        self.maintable.rename_column('NSAID','NSAIDV1')        
 
         c1 = Column(self.coflag,name='COflag')
         c1a = Column((self.hatable['HAflag']), name='HAflag')
@@ -523,6 +540,11 @@ class catalog:
         c0= Column(nedname,name='prefix')
         self.maintable.add_column(c0)
 
+        # V2 change
+        # update AGC names for galaxies in AGC but not in ALFALFA
+        
+
+        
         # add a column called "name" for use with the legacy image server
         # this will be the VFID
         c0= Column(self.cat['VFID'],name='name')
@@ -628,8 +650,10 @@ class catalog:
                 print('CO sources with no match in mastertable:')
                 print(self.testtable['NEDname','source_name','VH'][~self.comatchflag])
                 ## plot the positions of CO galaxies that weren't matched to mastertable
-                plt.figure()
-                plt.plot(self.testtable['RA_1'][~self.comatchflag],self.testtable['DEC_1'][~self.comatchflag],'bo')
+                # V2 changes - RA_1 not valid...
+                # don't need the plot so I am commenting this out
+                #plt.figure()
+                #plt.plot(self.testtable['RA_1'][~self.comatchflag],self.testtable['DEC_1'][~self.comatchflag],'bo')
 
 
             except AttributeError:
@@ -725,6 +749,7 @@ class catalog:
                      'CONTSUB_FLAG','MERGER_FLAG','SCATLIGHT_FLAG',\
                      'ASYMR_FLAG','ASYMHA_FLAG','OVERSTAR_FLAG','OVERGAL_FLAG',\
                      'PARTIAL_FLAG','EDGEON_FLAG','NUC_HA']
+
         self.ha.remove_columns(dcolnames)
         print('number of columns after removing cols = ',len(self.ha[0]))
         c0 = Column(np.ones(len(self.ha),'bool'),name='HAobsflag',description='observed in halpha')
@@ -744,10 +769,12 @@ class catalog:
         self.hatable = QTable(np.zeros(len(self.basictable),dtype=self.ha.dtype))
 
         ### ADD VFID FOR ALL
-        self.hatable['VFID'] = self.basictable['VFID']        
-        ### ADD RA FOR ALL
+        self.hatable['VFID'] = self.basictable['VFID']
+
+        # V2 changes - removing RA and DEC from halpha table
+        #### ADD RA FOR ALL
         self.hatable['RA'] = self.basictable['RA']
-        ### ADD DEC FOR ALL
+        #### ADD DEC FOR ALL
         self.hatable['DEC'] = self.basictable['DEC']        
 
         ### ADD HALPHA SOURCES TO THEIR CORRESPONDING ROWS
@@ -836,7 +863,14 @@ class catalog:
         self.z0mgsFlag = ~cat['pgc_name'].mask
         self.z0mgs_cat = cat
         c = Column(self.z0mgsFlag,name='Z0MGSflag')
-        cat.add_column(c)
+        #cat.add_column(c)
+        cat.rename_column('ra','ra_z0mgs')
+        cat.rename_column('dec','dec_z0mgs')
+        cat.rename_column('cntr_01','cntr')
+        cat.rename_column('galid_01','galid')
+        cat.rename_column('major_01','major')         
+        cat.remove_columns(['ra_01','dec_01'])
+        cat.add_column(self.basictable['VFID'],index=0)
         # write out north file
         cat.write(outdir+file_root+'z0mgs.fits',format='fits',overwrite=True)
     def get_steer17(self):
@@ -880,12 +914,17 @@ class catalog:
         self.basic_with_steer.write(outfile, format='fits',overwrite=True)
 
     def hyperleda_table(self):
-        colnames = self.cat.colnames[0:43]
-        
+        # V2 change
+        # removing objname from hyperleda table b/c this is in the main table
+        # colnames = self.cat.colnames[0:43]
+        self.cat.rename_column('vopt_1','vopt')
+        self.cat.rename_column('type_1','type')        
+        colnames = self.cat.colnames[1:43]
+
         self.write_table(colnames,outdir+file_root+'hyperleda.fits',format='fits')
         # write out HL columns in line-matched table
         pass
-    def nsa_table(self):
+    def nsa_v1_table(self):
         # write out NSA columns in line-matched table
         colnames = self.cat.colnames[90:200]
         # RA and DEC get changed to RA_2, DEC_2 during the matching process
@@ -893,10 +932,14 @@ class catalog:
         newcolnames = colnames.copy()
         newcolnames[2] = 'RA'
         newcolnames[3] = 'DEC'
-        self.write_table(colnames,outdir+file_root+'nsa.fits',format='fits',names=newcolnames)
+        self.write_table(colnames,outdir+file_root+'nsa_v1.fits',format='fits',names=newcolnames)
     def nsa_v0_table(self):
         # write out NSA columns in line-matched table
-        colnames = self.cat.colnames[204:348]
+
+        # V2 change
+        # remove NSAflag at the end of this file
+        # colnames = self.cat.colnames[204:348]
+        colnames = self.cat.colnames[204:347]
         # RA and DEC get changed to RA_2, DEC_2 during the matching process
         # changing them back to native NSA values
         newcolnames = colnames.copy()
@@ -907,6 +950,12 @@ class catalog:
         newcolnames[2] = 'RA'
         newcolnames[3] = 'DEC'
         self.write_table(colnames,outdir+file_root+'nsa_v0.fits',format='fits',names=newcolnames)
+    def agc_table(self):
+        '''write out columns from agc catalog'''
+        # write out NSA columns in line-matched table
+        colnames = self.cat.colnames[44:83]
+        self.write_table(colnames,outdir+file_root+'agc.fits',format='fits')
+
     def a100_table(self):
         '''write out columns from a100 catalog, plus HI deficiency'''
         # write out NSA columns in line-matched table
@@ -921,11 +970,6 @@ class catalog:
 
         newtable.add_columns([c0,c1,c2,c3,c4])
         newtable.write(outdir+file_root+'a100.fits',format='fits',overwrite=True)
-    def agc_table(self):
-        '''write out columns from agc catalog'''
-        # write out NSA columns in line-matched table
-        colnames = self.cat.colnames[44:83]
-        self.write_table(colnames,outdir+file_root+'agc.fits',format='fits')
 
     def a100_sdss_table(self):
         # write out NSA columns in line-matched table
@@ -971,6 +1015,37 @@ class catalog:
         else:
             subtable = Table(mycolumns)
         newtable = hstack([self.basictable,subtable])
+
+        # remove RA, DEC and NEDname b/c these are duplicates from main table
+        try:
+            newtable.remove_columns(['RA'])
+        except KeyError:
+            print('no RA column to remove')
+            pass
+        try:
+            newtable.remove_columns(['DEC'])
+        except KeyError:
+            print('no DEC column to remove')            
+            pass
+        try:
+            newtable.remove_columns(['NEDname'])
+        except KeyError:
+            print('no NEDname column to remove')            
+            pass
+        # for NSA tables, their RA went to RA_2
+        try:
+            newtable.remove_columns(['RA_1'])
+            newtable.rename_column('RA_2','RA')            
+        except KeyError:
+            print('no RA_1 column to remove')
+            pass
+        try:
+            newtable.remove_columns(['DEC_1'])
+            newtable.rename_column('DEC_2','DEC')            
+        except KeyError:
+            print('no DEC_1 column to remove')            
+            pass
+        
         newtable.write(outfile,format=format,overwrite=True)
     def write_main_table(self,colnames,outfile,format=None,names=None):
         if format is None:
@@ -1014,7 +1089,7 @@ if __name__ == '__main__':
     ###################################################################
 
     parser = argparse.ArgumentParser(description ='write out subtables for virgo filaments catalog')
-    parser.add_argument('--version',dest = 'version', default='v1',help='version of tables. default is v1')
+    parser.add_argument('--version',dest = 'version', default='v2',help='version of tables. default is v2')
     #parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
     parser.add_argument('--north',dest = 'north', action='store_true',help='keep DEC > -1 galaxies')
     parser.add_argument('--hav1',dest = 'hav1', action='store_true',default=False,help='set this if there is halpha data post transition to virgo v1 catalogs')
@@ -1036,7 +1111,7 @@ if __name__ == '__main__':
     #### INPUT FILES
     ###################################################################
     masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'.fits'
-    masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'_evcc.fits'
+    masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_v1_evcc.fits'
     z0mgs_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_v1_z0mgs_30arcsec_120220.tbl'
     unwise_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_north_v1_unwise_dl_30arcsec_20201205.fits'
     ###################################################################

@@ -52,6 +52,7 @@ class latextable(vtables):
         else:
             fname = filename 
         outfile = open(fname,'w')
+        print(fname)
         ### ADD FLAGS FOR CO, HI, ALFALFA
         outfile.write('\\begin{sidewaystable*}%[ptbh!]\n')
         outfile.write('\\begin{center}\n')
@@ -121,7 +122,7 @@ class latextable(vtables):
         else:
             fname = filename 
         outfile = open(fname,'w')
-
+        print(fname)
         # ADD 2d MEMBER TO FILAMENTS
         # PUT CLOSEST FILAMENT FIRST
         outfile.write('\\begin{sidewaystable*}%[ptbh!]\n')
@@ -233,69 +234,81 @@ class latextable(vtables):
         outfile.close()
 
         
-    def write_full_tables(self):
-        # table to assist with UAT summer research
-        # will add columns that should be useful for lots of projects
-        #
-        # basically all of table 2:
-        # a100
-        # GSWLC mass, sfr
-        # logMstarTaylor, err
-        # logMstarMcGaugh, err
-        # logSFR22, err
-        # logSFRNUV, err
-        # log SFR_NUVIR, err
-        # logMHI, err
-        # g,i
-        #
-        # plus RA, DEC, vhelio, D(err)
+    def write_full_latex_tables(self):
+        ''' write full verion of catalog and environment tables in latex format '''
         dateTimeObj = datetime.now()
         myDate = dateTimeObj.strftime("%d-%b-%Y")
-
-        tab1 = Table([self.tab['AGC'],self.tab['sdssPhotFlag'],self.tab['objID_1'],\
-                      self.tab['RAdeg_Use'],self.tab['DECdeg_Use'],self.tab['Vhelio'],\
-                      self.tab['Dist'],self.tab['sigDist'],\
-                      self.tab['extinction_g'],self.tab['extinction_i'],\
-                      self.tab['expAB_r'],self.expAB_r_err,\
-                      self.tab['cModelMag_i'],self.tab['cModelMagErr_i']],
-                     names=['AGC','sdssPhotFlag','sdss_objid',\
-                            'RA','DEC','Vhelio',\
-                            'Dist','sigDist',\
-                            'extinction_g','extinction_i','expAB_r','expAB_r_err',\
-                            'cModelMag_i','cModelMagErr_i'])
-        tab1.write(tablepath+'durbala2020-table1.'+myDate+'.fits',format='fits',overwrite=True)
+        cat_tab_filename = latextablepath+'castignani2021_cat_table_full.'+myDate+'.tex'
+        env_tab_filename = latextablepath+'castignani2021_env_table_full.'+myDate+'.tex'        
+        print(cat_tab_filename)
+        self.print_cat_table(nlines=len(self.main),filename = cat_tab_filename,startindex=0)
 
 
-        tab2 = Table([self.tab['AGC'],self.tab['gamma_g'],self.tab['gamma_i'],self.tab['absMag_i_corr'],\
-                      self.absMag_i_corr_err,self.tab['gmi_corr'],self.gmi_corr_err,\
-                      self.tab['logMstarTaylor'],self.logMstarTaylor_err,\
-                      self.tab['logMstarMcGaugh'],self.logMstarMcGaugh_err,\
-                      self.gsw_mstar,self.gsw_mstar_err,\
-                      self.sfr22,self.sfr22_err, self.sfrnuvir,self.sfrnuvir_err,\
-                      self.gsw_sfr,self.gsw_sfr_err,\
-                      self.tab['logMH'],self.tab['siglogMH']], \
-                     names=['AGC','gamma_g','gamma_i','absMag_i_corr',\
-                            'absMag_i_corr_err','gmi_corr','gmi_corr_err',\
-                            'logMstarTaylor','logMstarTaylor_err',\
-                            'logMstarMcGaugh','logMstarMcGaugh_err',\
-                            'logMstarGSWLC','logMstarGSWLC_err',\
-                            'logSFR22','logSFR22_err', 'logSFRNUVIR','logSFRNUVIR_err',\
-                            'logSFRGSWLC','logSFRGSWLC_err',\
-                            'logMH','logMH_err'])
 
-        tab2.write(tablepath+'durbala2020-table2.'+myDate+'.fits',format='fits',overwrite=True)
 
-        # machine readable tables for AAS journal
-        #tab1.write(latextablepath+'durbala2020-table1.'+myDate+'.csv',format='csv',overwrite=True)        
-        #tab2.write(latextablepath+'durbala2020-table2.'+myDate+'.csv',format='csv',overwrite=True)
-        #ascii.write(tab1,latextablepath+'durbala2020-table1.'+myDate+'.txt',format='cds',overwrite=True)        
-        #ascii.write(tab2,latextablepath+'durbala2020-table2.'+myDate+'.txt',format='cds',overwrite=True)
+        self.print_env_table(nlines=len(self.main),filename = env_tab_filename,startindex=0)        
 
-        # write out full latex tables for AAS journal
-        self.print_table1(nlines=len(self.tab),filename=latextablepath+'table1_long.'+myDate+'.tex',papertableflag=False)
-        self.print_table2(nlines=len(self.tab),filename=latextablepath+'table2_long.'+myDate+'.tex',papertableflag=False)        
-        shutil.copy(latextablepath+'table1_long.'+myDate+'.tex',latextablepath+'table1_long.tex')
-        shutil.copy(latextablepath+'table2_long.'+myDate+'.tex',latextablepath+'table2_long.tex')        
+     
+        pass
+
+    def write_full_fits_tables(self):
+        ''' write full version of catalog and environment tables in fits format '''
+        dateTimeObj = datetime.now()
+        myDate = dateTimeObj.strftime("%d-%b-%Y")
+        cat_tab_filename = tablepath+'castignani2021_cat_table_full.'+myDate+'.fits'
+        env_tab_filename = tablepath+'castignani2021_env_table_full.'+myDate+'.fits'        
+
+        ####################
+        ### CATALOG TABLE
+        ####################
+        print(cat_tab_filename)        
+        colnames = ['VFID','RA','DEC',\
+                    'v_r','v_cosmic','v_model ',\
+                    'HL_name','NSAID_V0','NSAID_V1','AGC_Name','NED_Name',\
+                    'CO','HL','NSA','NSAV0','A100']
+        colunits = ['','deg','deg',\
+                    'km/s','km/s','km/s',\
+                    '','','','','',\
+                    '','','','','']
+        cat_tab = Table([self.main['VFID'],self.main['RA'],self.main['DEC'],\
+                         self.main['vr'],self.env['Vcosmic'],self.env['Vmodel'],\
+                         self.main['objname'],self.main['NSAIDV0'],self.main['NSAID'],\
+                         self.main['AGC'],self.main['NEDname'], \
+                         self.main['COflag'],self.main['HLflag'],\
+                         self.main['NSAflag'],self.main['NSAV0flag'],\
+                         self.main['A100flag']],names=colnames)
+        cat_tab.write(cat_tab_filename,format='fits',overwrite=True)
+
+        ######################
+        ### ENVIRONMENT TABLE
+        ######################        
+
+        print(env_tab_filename)        
+        colnames = ['VFID','SGX', 'SGY', 'SGZ',\
+                   'n5_2D', 'err_n5_2D' ,'n5_3D','err_n5_3D',\
+                   'Nearest_Filament',\
+                   'D_Filament_2D',\
+                   'D_Filament_3D',\
+                   'Filament_Memb',\
+                   'Group','Cluster','Pure_Field']
+        filament = []
+        for f in self.fil['filament']:
+            filament.append(f.replace('_Filament','').replace('Virgo_',''))
+        env_tab = Table([self.main['VFID'],\
+                         self.fil['SGX'],self.fil['SGY'],self.fil['SGZ'],\
+                         self.env['n5th_2D'],self.env['n5th_2D_err'],\
+                         self.env['n5th'],self.env['n5th_err'],\
+                         filament,\
+                         self.fil['filament_dist_2D'],\
+                         self.fil['filament_dist_3D'],\
+                         self.fil['filament_member'],\
+                         np.array(self.env['flag_gr'],'i'),\
+                         np.array(self.env['flag_clus'],'i'),\
+                         np.array(self.env['flag_pf'],'i')],\
+                        names=colnames)
+        env_tab.write(env_tab_filename,format='fits',overwrite=True)
+        
+
         pass
 if __name__ == '__main__':
 
