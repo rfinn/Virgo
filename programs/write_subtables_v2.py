@@ -125,8 +125,9 @@ class catalog:
         self.catalog_for_z0MGS()
         self.get_unwise()        
         self.get_CO()
-        self.get_halpha()        
-        self.get_steer17()
+        self.get_halpha()
+        # GL is making the steer table now
+        #self.get_steer17()
         self.get_radius()
         self.get_sfr()
         self.get_HIdef()
@@ -1127,6 +1128,8 @@ if __name__ == '__main__':
     file_root = 'vf_'+version+'_'
     if NORTH_ONLY:
         file_root = 'vf_north_'+version+'_'
+        # dropping the north notation b/c we don't plan to expand to south
+        file_root = 'vf_'+version+'_'        
         
     ###################################################################
     #### CREATE TABLE DIRECTORY IF IT DOESN'T EXIST
