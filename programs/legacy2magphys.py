@@ -63,14 +63,23 @@ wise_filters = [W1,W2,W3,W4]
 all_effective_wavelengths += wise_filters
 filters = ['FUV','NUV','G','R','Z','W1','W2','W3','W4']
 # filter IDS from magphys filters.log
-filter_ids = ['123','124','426','427','429','280','281','282','283']
+filter_ids_S = ['123','124','426','427','429','280','281','282','283']
+filter_ids_N = ['123','124','551','552','553','280','281','282','283']
 
 # WRITE OUT FILTERS.DAT
-outfile = '/home/rfinn/research/Virgo/legacy-phot/legacyFilters.dat'
+outfile = '/home/rfinn/research/Virgo/legacy-phot/legacyFiltersN.dat'
 outf = open(outfile,'w')
 outf.write('#name  lambda_eff   filter_id   fit?\n')
 for i,f in enumerate(filters):
-    s = '{}   {}    {}    {}\n'.format(filters[i],all_effective_wavelengths[i],filter_ids[i],1)
+    s = '{}   {}    {}    {}\n'.format(filters[i],all_effective_wavelengths[i],filter_ids_N[i],1)
+    outf.write(s)
+outf.close()
+# WRITE OUT FILTERS.DAT
+outfile = '/home/rfinn/research/Virgo/legacy-phot/legacyFiltersS.dat'
+outf = open(outfile,'w')
+outf.write('#name  lambda_eff   filter_id   fit?\n')
+for i,f in enumerate(filters):
+    s = '{}   {}    {}    {}\n'.format(filters[i],all_effective_wavelengths[i],filter_ids_S[i],1)
     outf.write(s)
 outf.close()
 #filter_table = Table([filters,all_effective_wavelengths,filter_ids,np.ones(len(filters),'i')])
@@ -85,7 +94,11 @@ mtots = ['COG_MTOT_{}'.format(f) for f in filters]
 
 # read in legacy phot
 photfile = '/home/rfinn/research/Virgo/legacy-phot/virgofilaments-legacyphot.fits'
-ephot = Table.read(photfile,1) # first hdu is the elliptical photometry
+
+# changing to extension 2 for file that john sent on Aug 14, 2021
+#ephot = Table.read(photfile,1) # first hdu is the elliptical photometry
+ephot = Table.read(photfile,2) # first hdu is the elliptical photometry
+ephot1 = Table.read(photfile,1) # this one has RA and DEC, which we need to separate N and S
 
 # convert fluxes from nmgy to Jy
 flux_Jy = np.zeros((len(ephot),len(filters)),'d')
@@ -126,9 +139,13 @@ vfmain = Table.read(vffile,1) # first hdu is the elliptical photometry
 
 # store redshift of each galaxy
 redshift = np.zeros(len(ephot),'d')
+redshift_flag = np.ones(len(ephot),'bool')
 for i in range(len(ephot)):
-    vfindex = np.arange(len(vfmain))[vfmain['VFID'] == 'VFID{}'.format(ephot['VF_ID'][i])]
+    #print(ephot['VF_ID'][i])
+    vfindex = np.arange(len(vfmain))[vfmain['VFID'] == 'VFID{:04d}'.format(ephot['VF_ID'][i])]
+    #print(vfindex)
     #print(ephot['VF_ID'][i],vfindex)
+    #if len(vfindex) == 0:
     redshift[i] = vfmain['vr'][vfindex]/3.e5 # divide by speed of light to convert recession velocity to redshift
     
 ###########################################################
@@ -147,8 +164,16 @@ for i in range(len(filters)):
 
 out_table = Table(output_columns)#,names=colnames)
 
-outfile = '/home/rfinn/research/Virgo/legacy-phot/magphysInput.dat'
-out_table.write(outfile,format='ascii',overwrite=True,names=colnames)
+# define north flag to separate grz filters from DES vs BASS+MzLS
+north_flag = ephot1['DEC'] >= 32.375
+
+# write out north phot table
+outfile = '/home/rfinn/research/Virgo/legacy-phot/magphysInputN.dat'
+out_table[north_flag].write(outfile,format='ascii',overwrite=True,names=colnames)
+
+# write out south phot table
+outfile = '/home/rfinn/research/Virgo/legacy-phot/magphysInputS.dat'
+out_table[~north_flag].write(outfile,format='ascii',overwrite=True,names=colnames)
 
 # writing out the first galaxy, bc this is the only one with all non-zero fluxes at sb=23
 #outfile = '/home/rfinn/research/Virgo/legacy-phot/magphysInput-gal1.dat'

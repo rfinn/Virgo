@@ -23,6 +23,12 @@ NOTES:
 * This program is being updated for v2.  
 
 * v2 has the same number of galaxies as v1.  
+  * actually, not true.  
+  * we had one missing galaxies that was supposed to be merged from two input sources, but we got rid of both.
+  * JM found one source that was part of UGC04499
+  * we then matched the catalog to itself, looking for sources w/in 50" of each other. 
+    * we found 5 stars in this comparison, as well as 3 galaxies that need their centers adjusted
+  * we then looked for matches with Dustin Lang's catalog of Tycho and Gaia sources.  found 140 matches w/in 5".  inspected these.  most are the saturated centers of bright galaxies (brings up issue with photometry for these gals..). Found 2 stars that we already had identified using the internal match.  we found another two sources that need to have coords updated.
 
 * The main difference is that we have cleaned the tables 
 * and eliminated duplicate columns.
@@ -154,7 +160,10 @@ class catalog:
         print('Number with CO data = ',sum(self.coflag))
         print('Number with A100 data = %i (%.3f)'%(sum(self.cat['A100flag']),sum(self.cat['A100flag'])/len(self.cat['A100flag'])))
         print('Number with z0MGS matches = %i (%.3f)'%(sum(self.z0mgsFlag),sum(self.z0mgsFlag)/len(self.z0mgsFlag)))
-        print('Number with steer17 matches = %i (%.3f)'%(sum(self.steerFlag),sum(self.steerFlag)/len(self.steerFlag)))
+        try:
+            print('Number with steer17 matches = %i (%.3f)'%(sum(self.steerFlag),sum(self.steerFlag)/len(self.steerFlag)))
+        except AttributeError:
+            print("problem finding steer flag")
         try:
             f = self.unwiseFlag
             print('Number with unwise matches = %i (%.3f)'%(sum(f),sum(f)/len(f)))        
@@ -166,10 +175,13 @@ class catalog:
         nco = sum(self.coflag)
         f = self.coflag & self.z0mgsFlag
         print("\tNumber of CO sources in z0MGS = %i (%.2f)"%(sum(f),sum(f)/nco))
-        f = self.coflag & self.steerFlag
-        print("\tNumber of CO sources in Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
-        f = self.coflag & self.z0mgsFlag & self.steerFlag
-        print("\tNumber of CO sources in z0MGS+Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
+        try:
+            f = self.coflag & self.steerFlag
+            print("\tNumber of CO sources in Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
+            f = self.coflag & self.z0mgsFlag & self.steerFlag
+            print("\tNumber of CO sources in z0MGS+Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
+        except AttributeError:
+            print("no steer flag")
         try:
             f = self.coflag & self.unwiseFlag & (self.cat['NSAflag'] | self.cat['NSA0flag'])
             print("\tNumber of CO sources with unWISE and NSA = %i (%.2f)"%(sum(f),sum(f)/nco))
@@ -525,8 +537,11 @@ class catalog:
         c1a = Column((self.hatable['HAflag']), name='HAflag')
         c1b = Column(self.hatable['HAobsflag'],name='HAobsflag')
         c2 = Column(self.z0mgsFlag,name='Z0MGSflag')
-        c3 = Column(self.steerFlag,name='Steerflag')
-
+        try:
+            c3 = Column(self.steerFlag,name='Steerflag')
+        except AttributeError:
+            print("creating dummy column for steer flag")
+            c3 = Column(np.ones(len(self.z0mgsFlag),'bool'),name='Steerflag')
         # removing unwise for now - need to update code
         
         c4 = Column(self.unwiseFlag,name='unwiseflag')        
@@ -555,6 +570,7 @@ class catalog:
         # - 2MASS
         # - z0MGS
         # - unWISE
+        print('writing main table :',outdir+file_root+'main.fits')
         self.maintable.write(outdir+file_root+'main.fits',format='fits',overwrite=True)
 
         # write out table in csv format
@@ -1137,6 +1153,6 @@ if __name__ == '__main__':
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
-
+    print('outdir = ',outdir)
     c = catalog(masterfile,hav1=args.hav1,version=args.version)
     #c.runall()
