@@ -33,7 +33,7 @@ from datetime import datetime
 
 homedir = os.getenv('HOME')
 tablepath = homedir+'/research/APPSS/tables/'
-tablepath = homedir+'/research/Virgo/tables-north/v1/'
+tablepath = homedir+'/research/Virgo/tables-north/v2/'
 latextablepath = homedir+'/research/Virgo/papers/catalog_paper/'
 
 

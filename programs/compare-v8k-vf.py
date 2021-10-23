@@ -63,9 +63,10 @@ flag2 = (matched_v8k['Dist'] != '      ') & (steer['Steerflag'])
 plt.plot(steer['Dmedian'][flag2],np.array(matched_v8k['Dist'][flag2],'f'),'b.')
 xl = np.linspace(0,70,100)
 plt.plot(xl,xl,'k--')
-plt.xlabel('Median Distance from Steer+2017 (Mpc)')
+plt.xlabel('Distance from Steer+2017 (Mpc)')
 plt.ylabel('Distance from Cosmicflows3 (Mpc)')
 plt.savefig('distance-comparison-v8k-vf.png')
+plt.show()
 # calculate dispersion
 
 diff = steer['Dmedian'][flag2] - np.array(matched_v8k['Dist'][flag2],'f')

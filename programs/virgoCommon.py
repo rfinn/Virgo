@@ -215,7 +215,7 @@ def plot_spines():
     ncolor = 0
     for i,f in enumerate(sfiles):
         spine  = Table.read(f)
-        plt.plot(spine['ra'],spine['dec'],c=mycolors[ncolor],label=os.path.basename(f).replace('filament_spine_','').replace('.fits','').replace('_Filament',''),lw=3)
+        plt.plot(spine['ra'],spine['dec'],c=mycolors[ncolor],label=os.path.basename(f).replace('filament_spine_','').replace('.fits','').replace('_Filament','').replace('Virgo_',''),lw=3)
         ncolor += 1
         if ncolor > len(mycolors)-1:
             ncolor = 0

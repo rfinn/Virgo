@@ -30,11 +30,12 @@ import shutil
 from astropy.io import fits, ascii
 from astropy.table import Table
 from datetime import datetime
-from readtables import vtables
+from readtablesv2 import vtables
 
 homedir = os.getenv('HOME')
 tablepath = homedir+'/research/APPSS/tables/'
 tablepath = homedir+'/research/Virgo/tables-north/v1/'
+tablepath = homedir+'/research/Virgo/tables-north/v2/'
 latextablepath = homedir+'/research/Virgo/papers/catalog_paper/'
 
 
@@ -45,6 +46,17 @@ class latextable(vtables):
 
         '''
         pass
+    def get_pgcname(self):
+        ''' get PGC name to include in table 1 '''
+        pgcfile = Table.read(homedir+'/research/Virgo/ancil-tables/vf_north_v1_hyperleda_pgc.fits')
+        pgcdict = dict((a,b) for a,b in zip(pgcfile['VFID'],pgcfile['pgc']))
+        self.pgcid = np.zeros(len(self.main),'i')
+        for i,vf in enumerate(self.main['VFID_V1']):
+            try:
+                self.pgcid[i] = pgcdict[vf]
+            except KeyError:
+                print('no pgc match for ',vf)
+                
     def print_cat_table(self,nlines=10,filename=None,papertableflag=True,startindex=3000):
         '''write out latex version of table 1 '''
         if filename is None:
@@ -60,36 +72,54 @@ class latextable(vtables):
         outfile.write('\\setlength\\tabcolsep{3.0pt} \n')
         outfile.write('\\tablenum{4} \n')
         outfile.write('\\caption{Main Catalog with Cross IDs\label{tab:main}  } \n')
-        outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
+        # removing separate HL, NSA flags and making entries with nodata equal to -999
+        #outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
+        outfile.write('\\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}\n')
         outfile.write('\\hline \n')
         outfile.write('\\toprule \n')
-        outfile.write('VFID   & RA &	DEC &	$v_{r}$ & $v_{\\rm cosmic}$ &  $v_{\\rm model}$  & HL~name & NSAID V0 & NSAID V1 & AGC Name & NED Name & CO  & HL & NSA & NSAV0  & A100  \\\\ \n')
-        outfile.write('& (deg, J2000) & (deg, J2000) & $\\rm km~s^{-1}$ & $\\rm km~s^{-1}$ & $\\rm km~s^{-1}$ & & &  & & && & & &\\\\ \n')
-        outfile.write('(1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11) & (12)& (13) & (14) & (15) &(16) \\\\ \n')
-        outfile.write('\\midrule \n')
+        outfile.write('VFID   & RA &	DEC &	$v_{r}$ & $v_{\\rm cosmic}$ &  $v_{\\rm model}$  & HL~name & NED Name & PGC & NSA V0 & NSA V1 & AGC  & CO  & A100  \\\\ \n')
+        outfile.write('& (deg, J2000) & (deg, J2000) & $\\rm km~s^{-1}$ & $\\rm km~s^{-1}$ & $\\rm km~s^{-1}$ & & & &  & & && \\\\ \n')
+        #outfile.write('(1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11) & (12)& (13) & (14) & (15) &(16)&(17) \\\\ \n')
+        outfile.write('(1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11) & (12)& (13) & (14) \\\\ \n')
+        #outfile.write('\\midrule \n')
+        outfile.write('\\hline \n')
         outfile.write('\\hline \n')
         for i in range(startindex,nlines+startindex): # print first N lines of data
             # vfid ra dec z
             # replace ids with values of zero as nodata
             if self.main['AGC'][i] == 0:
                 agc = '\\nodata'
+                agc = -999
             else:
-                agc = self.main['AGC'][i] 
+                agc = self.main['AGC'][i]
+                
+            if self.pgcid[i] == -1000:
+                pgc = '\\nodata'
+                pgc = -999                
+            else:
+                pgc = self.pgcid[i]
+                
             if self.main['NSAIDV0'][i] == 0:
                 nsaidv0 = '\\nodata'
+                nsaidv0 = -999                
             else:
                 nsaidv0 = self.main['NSAIDV0'][i] 
-            if self.main['NSAID'][i] == 0:
+            if self.main['NSAIDV1'][i] == 0:
                 nsaid = '\\nodata'
+                nsaid = -999                
             else:
-                nsaid = self.main['NSAID'][i] 
-                
-            format_s = '{0:s} & {1:9.6f} &{2:9.5f} & {3:.0f} & {4:.0f} & {5:.0f} &{6}& {7}& {8} & {9}& {10}& {11}&{12}&{13}&{14}&{15}\\\\ \n'
-            s = format_s.format(self.main['VFID'][i],self.main['RA'][i],self.main['DEC'][i],\
+                nsaid = self.main['NSAIDV1'][i] 
+
+            # removing separate logic flags
+            # replaceing "nodata" with -999
+            #format_s = '{0:s} & {1:9.6f} &{2:9.5f} & {3:.0f} & {4:.0f} & {5:.0f} &{6}& {7}& {8} & {9}& {10}& {11}&{12}&{13}&{14}&{15}&{16}\\\ \n'
+            format_s = '{0:s} & {1:9.6f} &{2:9.5f} & {3:.0f} & {4:.0f} & {5:.0f} &{6}& {7}& {8} & {9}& {10}& {11}&{12}&{13}\\\ \n'
+            s = format_s.format(self.main['VFID'][i].replace('VFID',''),self.main['RA'][i],self.main['DEC'][i],\
                                 self.main['vr'][i],self.env['Vcosmic'][i],self.env['Vmodel'][i],\
-                                self.main['objname'][i],nsaidv0,nsaid,\
-                                agc,self.main['NEDname'][i], self.main['COflag'][i],\
-                                self.main['HLflag'][i],self.main['NSAflag'][i],self.main['NSAV0flag'][i],\
+                                self.main['objname'][i],self.main['NEDname'][i],\
+                                pgc,nsaidv0,nsaid,\
+                                agc, self.main['COflag'][i],\
+                                #self.main['HLflag'][i],self.main['NSAflag'][i],self.main['NSAV0flag'][i],\
                                 self.main['A100flag'][i])
             if papertableflag:
                 # replace nans with \\nodata
@@ -98,11 +128,12 @@ class latextable(vtables):
 
             outfile.write(s)
 
-        outfile.write('\\bottomrule \n')
+        #outfile.write('\\bottomrule \n')
+        outfile.write('\\hline \n')
         outfile.write('\\hline \n')
         outfile.write('\\end{tabular} \n')
         outfile.write('\\end{center} \n')
-        outfile.write('\\tablecomments{This table is published in its entirety in machine-readable format.  A portion is shown here for guidance regarding its form and content.}')        
+        outfile.write('\\tablecomments{This table is published in its entirety in machine-readable format.  A portion is shown here for guidance regarding its form and content.  Galaxies without a corresponding ID in columns $9-12$ are denoted as $-999$.}')        
         outfile.write('\\end{sidewaystable*} \n')
         outfile.close()
     def print_env_table(self,nlines=10,filename=None,papertableflag=True,startindex=3000):
@@ -174,8 +205,9 @@ class latextable(vtables):
                 outstring += "({}) &".format(i+1)
         outfile.write(outstring)
                                                    
-        outfile.write('\\midrule \n')
+        #outfile.write('\\midrule \n')
         outfile.write('\\hline \n')
+        outfile.write('\\hline \n')        
                                                    
         # build the data string 
         outstring = ""
@@ -225,8 +257,9 @@ class latextable(vtables):
 
             outfile.write(s)
 
-        outfile.write('\\bottomrule \n')
+        #outfile.write('\\bottomrule \n')
         outfile.write('\\hline \n')
+        outfile.write('\\hline \n')        
         outfile.write('\\end{tabular} \n')
         outfile.write('\\end{center} \n')
         outfile.write('\\tablecomments{This table is published in its entirety in machine-readable format.  A portion is shown here for guidance regarding its form and content.}')        
@@ -314,11 +347,13 @@ if __name__ == '__main__':
 
     import argparse
     parser = argparse.ArgumentParser(description ='Read in all virgo filament tables')
-    parser.add_argument('--tabledir', dest = 'tabledir', default = '/home/rfinn/research/Virgo/tables-north/v1/', help = 'directory where tables are stored')
-    parser.add_argument('--tableprefix', dest = 'tableprefix', default = 'vf_north_v1_', help = 'prefix for tables; default is vf_north_v1')                               
+    #parser.add_argument('--tabledir', dest = 'tabledir', default = '/home/rfinn/research/Virgo/tables-north/v1/', help = 'directory where tables are stored')
+    #parser.add_argument('--tableprefix', dest = 'tableprefix', default = 'vf_north_v1_', help = 'prefix for tables; default is vf_north_v1')                               
+    parser.add_argument('--tabledir', dest = 'tabledir', default = '/home/rfinn/research/Virgo/tables-north/v2/', help = 'directory where tables are stored')
+    parser.add_argument('--tableprefix', dest = 'tableprefix', default = 'vf_v2_', help = 'prefix for tables; default is vf_v2_')                               
     args = parser.parse_args()
     
     v = latextable(args.tabledir,args.tableprefix)
     v.read_all()
-
+    v.get_pgcname()
     

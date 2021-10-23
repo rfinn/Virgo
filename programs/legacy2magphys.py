@@ -86,6 +86,12 @@ outf.close()
 #filter_table.write(outfile,format='ascii.fast_no_header',overwrite=True,comment=False)
 
 
+##########################################################################################
+###  John suggested using surface brightness magnitudes
+###  this is what we are doing
+###  but we scale the sb fluxes by a factor
+###  based on how the total magnitudes from COG compare with sb mag
+##########################################################################################
 
 sb2fit = (args.sbmag) # could be 23, 24, 25, 26
 fluxes = ['FLUX_SB{}_{}'.format(sb2fit,f) for f in filters]
@@ -120,6 +126,7 @@ for i,f in enumerate(ivars):
 
 ################################################
 ## SCALE FLUXES BY RATIO OF FLUX_MTOT/FLUX_R25
+## use the r-band data for this
 ################################################
 rmag_tot = ephot['COG_MTOT_R']
 flux_tot = 10.**((22.5-rmag_tot)/2.5) # flux in nanomaggies

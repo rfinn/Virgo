@@ -92,33 +92,28 @@ class catalog:
         if NORTH_ONLY:
             self.cat, self.keepnorth_flag = self.keep_north()
         # V2 change
+        self.hav1flag = hav1
+        self.version = version
+
+
+    def def_basictable(self):
         # removing RA, DEC and NEDname as part of basic table
         self.basictable = self.cat['VFID','RA','DEC','NEDname']
         # keeping NEDname for now b/c that is how I am matching some catalogs
         #self.basictable_wNED = self.cat['VFID','NEDname']
-        #self.basictable = self.cat['VFID']        
-        self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
+        #self.basictable = self.cat['VFID']
+
+
+    def def_maintable(self):
+        self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag','VFID_V1']
         self.maintable.rename_column('NSAID_2','NSAIDV0')
         self.maintable.rename_column('NSA0flag','NSAV0flag')
         
         self.maintable.rename_column('NSAID','NSAIDV1')
         self.maintable.rename_column('NSAflag','NSAV1flag')
 
+        #c1 = Column(self.vfids_v1
 
-        self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],frame='icrs',unit='deg')
-        self.hav1flag = hav1
-        self.version = version
-    def get_unwise(self):        
-        self.unwise = Table.read(unwise_cat)
-        self.unwiseFlag = (self.unwise['x'] > 0)
-        # clean catalog
-        unwise_keepcols = self.unwise.colnames[22:75]
-        self.unwise = self.unwise[unwise_keepcols]
-        self.unwise.rename_column('ra_2','ra_unwise')
-        self.unwise.rename_column('dec_2','dec_unwise')
-        # insert the VFID into the first column
-        self.unwise.add_column(self.basictable['VFID'],index=0)
-        self.unwise.write(outdir+file_root+'unwise.fits',format='fits',overwrite=True)
     def keep_north(self, cat=None):
         # cut the catalog to keep Dec > -1 only
         if cat is None:
@@ -127,17 +122,116 @@ class catalog:
             cat = cat
         keepnorth = cat['DEC'] > -1.3
         return cat[keepnorth], keepnorth
+
+    def recenter_coords(self):
+        ''' recenter coords of some galaxies from v1 tables '''
+        new_coords={357:(245.2100,63.1211),\
+                    3765:(170.9218,19.2717),\
+                    4275:(182.3882,14.4823),\
+                    1818:(261.0407,43.4527),\
+                    5199:(145.9635,9.6550)}
+        for id in new_coords.keys():
+            self.cat['RA'][id] = new_coords[id][0]
+            self.cat['DEC'][id] = new_coords[id][1]
+                    
+        pass
+        
+    def remove_stars(self):
+        ''' remove stars that were indentified in the v1 tables '''
+        # did a 90" internal match to v1 catalog and then
+        # reviewed matches using the legacy viewer.
+        
+        # stars and globular clusters
+        stars = [591,2998,4299,4582,4662, 4668,4669,4705,4725,4728,4726,4730,4735,\
+                 4832,4839,5438]
+        # parts of galaxies or extremely questionable
+        shredded = [1241]
+        bad_ids = stars+shredded
+
+        # cutout bad sources
+        keepflag = np.ones(len(self.cat),'bool')
+        for id in bad_ids:
+            keepflag[id]=False
+
+        # we are hereby changing the catalog length,
+        # so that v2 ids are not the same as v1 ids
+        self.cat = self.cat[keepflag]
+        self.v2keepflag = keepflag
+
+        pass
+    
+    def redefine_vfid(self):
+        ''' renumber the VFIDs after the stars are removed '''
+        self.cat.rename_column('VFID','VFID_V1')
+        self.vfid_v2 = ['VFID{:04d}'.format(i) for i in np.arange(len(self.cat))]
+        c = Column(self.vfid_v2,name="VFID")
+        self.cat.add_column(c,index=0)
+                    
+        pass
+    
+
+    def get_unwise(self):        
+        self.unwise = Table.read(unwise_cat)
+        self.unwiseFlag = (self.unwise['x'] > 0)
+        # clean catalog
+        unwise_keepcols = self.unwise.colnames[22:75]
+        self.unwise = self.unwise[unwise_keepcols]
+        self.unwise.rename_column('ra_2','ra_unwise')
+        self.unwise.rename_column('dec_2','dec_unwise')
+
+        # cut to length of v2
+
+        self.unwise = self.unwise[self.v2keepflag]
+        self.unwiseFlag = self.unwiseFlag[self.v2keepflag]
+        
+        # insert the VFID into the first column
+        self.unwise.add_column(self.basictable['VFID'],index=0)
+        self.unwise.write(outdir+file_root+'unwise.fits',format='fits',overwrite=True)
+
+    def get_pgcname(self):
+        ''' get PGC name to include in table 1 '''
+        pgcfile = Table.read(homedir+'/research/Virgo/ancil-tables/vf_north_v1_hyperleda_pgc.fits')
+        pgcdict = dict((a,b) for a,b in zip(pgcfile['VFID'],pgcfile['pgc']))
+        self.pgcname = np.zeros(len(self.cat),'i')
+        for i,vf in enumerate(self.cat['VFID_V1']):
+            try:
+                self.pgcname[i] = pgcdict[vf]
+            except KeyError:
+                print('no pgc match for ',vf)
+        
     def runall(self):
-        self.catalog_for_z0MGS()
-        self.get_unwise()        
-        self.get_CO()
-        self.get_halpha()
+        #self.catalog_for_z0MGS()
+
+        
+        # updates for V2
+        self.recenter_coords()
+        self.remove_stars()
+        self.redefine_vfid()
+        # back to v1 stuff
+        self.def_basictable()
+        #self.def_maintable()
+
+        self.catcoord = SkyCoord(self.cat['RA'],self.cat['DEC'],frame='icrs',unit='deg')
+        
+
+
         # GL is making the steer table now
-        #self.get_steer17()
+        self.get_steer17()
         self.get_radius()
         self.get_sfr()
         self.get_HIdef()
-        self.get_z0MGS_flag()        
+
+        # add pgc name
+        self.get_pgcname()
+        # rematching to z0MGS with new v2 length
+        self.get_z0MGS_flag()
+
+
+        # routines that match to catalog
+        self.get_CO()
+        # updating halpha routine to match to VFID_V1
+        self.get_halpha()
+        self.get_unwise()        
         self.main_table()
         
         self.hyperleda_table()
@@ -149,12 +243,14 @@ class catalog:
 
         # V2 change
         # not including a100_unwise table
-        self.a100_unwise_table()
+        #self.a100_unwise_table()
         
         self.get_size_for_JM()
         self.ned_table() # NED input, ra, dec, and NEDname
         self.print_stats()
-        
+        self.convert_v1_2_v2()
+        self.merge_legacy_phot_tables()
+        self.make_legacy_viewer_table()
     def print_stats(self):
         print('Number in sample = ',len(self.cat))
         print('Number with CO data = ',sum(self.coflag))
@@ -398,6 +494,7 @@ class catalog:
         ### write out to separate table
         sfrtab.write(outdir+file_root+'sfr.fits',format='fits',overwrite=True)
 
+
     def get_HIdef(self):
         '''
         use relationship from Boselli+Gavazzi 2009
@@ -516,13 +613,14 @@ class catalog:
         logh2MHIref = (c + 2*d*logD25kpc)
         self.HIdef_bos = logh2MHIref - self.logMHI
         pass
+
     def main_table(self):
         # write out
         # ra, dec, velocity, HL, NSA id, A100 id
         # NED name
         # make flags to denote if galaxy is in:
         # - CO sample
-        colnames = ['VFID','RA','DEC','vr','radius','radius_flag','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
+        colnames = ['VFID','RA','DEC','vr','radius','radius_flag','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag','VFID_V1']
         #self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag']
         
         self.maintable = self.cat[colnames]
@@ -546,6 +644,9 @@ class catalog:
         
         c4 = Column(self.unwiseFlag,name='unwiseflag')        
         self.maintable.add_columns([c1,c1a,c1b,c2,c3,c4])
+
+        c5 = Column(self.pgcname,name='PGC')
+        self.maintable.add_column(c5,index=7)
         #self.maintable.add_columns([c1,c1a,c1b,c2,c3])
 
         
@@ -563,8 +664,10 @@ class catalog:
         
         # add a column called "name" for use with the legacy image server
         # this will be the VFID
-        c0= Column(self.cat['VFID'],name='name')
-        self.maintable.add_column(c0)
+
+        # made a separate file instead for the legacy viewer
+        #c0= Column(self.cat['VFID'],name='name')
+        #self.maintable.add_column(c0)
 
         
         # - 2MASS
@@ -633,9 +736,10 @@ class catalog:
             self.d2d = d2d
             self.idx = idx
             self.coflag = d2d < 15./3600*u.deg
+        
             # create a new, blank table with same # of lines as mastertable
             # but with columns like the co table
-            newco = Table(np.zeros(len(self.basictable),dtype=self.co.dtype))
+            newco = Table(np.zeros(len(self.cat),dtype=self.co.dtype))
             # add co information into the new table for the galaxies with
             # a match to the CO sample
             # NOTE: this could match multiple galaxies to the same CO source
@@ -704,7 +808,7 @@ class catalog:
         # check for duplicates in the hafile
         unique, counts = duplicates(self.ha,'NSAIDV0')
         print("Halpha sources that are listed multiple times in the halpha file:")
-        print(unique[counts>1])
+        #print(unique[counts>1])
         
         
         # match ha file to the base table using the NSA v0
@@ -736,8 +840,8 @@ class catalog:
 
 
         unique, counts = duplicates(self.ha,'VFID')
-        print("Halpha sources that are listed multiple times in the halpha file:")
-        print(unique[counts>1])
+        #print("Halpha sources that are listed multiple times in the halpha file:")
+        #print(unique[counts>1])
 
         ### REMOVE DUPLICATE ROWS FOR NOW
         ### getting rid of second in each pair for now...
@@ -792,20 +896,24 @@ class catalog:
         #### ADD RA FOR ALL
         self.hatable['RA'] = self.basictable['RA']
         #### ADD DEC FOR ALL
-        self.hatable['DEC'] = self.basictable['DEC']        
+        self.hatable['DEC'] = self.basictable['DEC']
+        self.hatable.add_column(Column(self.cat['VFID_V1'],name='VFID_V1'))
 
         ### ADD HALPHA SOURCES TO THEIR CORRESPONDING ROWS
 
-        ## for halpha measurements that reference the v0 catalogs, match by RA and DEC
-        hav0_coord = SkyCoord(self.ha['RA'],self.ha['DEC'],unit='deg',frame='icrs')
+        ## for halpha measurements that reference the input catalogs, match by RA and DEC
+        ## this will make the matching independent of the version number of the VFID 
+        ha_in_coord = SkyCoord(self.ha['RA'],self.ha['DEC'],unit='deg',frame='icrs')
 
 
         # match steer to vf catalog
-        idx, d2d, d3d = self.catcoord.match_to_catalog_sky(hav0_coord)
+        idx, d2d, d3d = self.catcoord.match_to_catalog_sky(ha_in_coord)
         # consider as matches any galaxies within 30 arcsec
         matchflag = d2d < 20./3600*u.deg
         print('number of Halpha matches = ',sum(matchflag))
 
+        #print(matchflag)
+        #print(idx)
         self.hatable[matchflag] = self.ha[idx[matchflag]]
 
         ############################################################################
@@ -831,10 +939,11 @@ class catalog:
             self.hav1.add_column(c0)
         
             for i in range(len(self.hav1)):
-                flag =(self.hatable['VFID'] == self.hav1['VFID'][i].rstrip())
+                flag =(self.hatable['VFID_V1'] == self.hav1['VFID'][i].rstrip())
                 if sum(flag) > 0:
                     print('found halpha v1 match ',self.hav1['VFID'][i])
-                self.hatable[flag] = self.hav1[i]
+                    print(np.sum(flag),len(self.hav1[i]))
+                    self.hatable[flag] = self.hav1[i]
 
         
         #self.hatable = join(self.basictable,self.ha,keys='VFID',join_type='left')
@@ -846,6 +955,25 @@ class catalog:
         print('setting HAflag')
         self.hatable['HAflag'] = self.haflag
         #self.hatable['HAflag'].description = 'halpha snr > 1'
+
+        ## adding haobs flag for galaxies that were observed with
+        ## bok in 2021A.  they haven't been processed yet, but we
+        ## want to remove them from the list of targets to be observed
+
+        # read in file with list of VFIDs that were observed
+        # set HAobsflag to true for these galaxies
+        htab = Table.read(homedir+'/github/Virgo/observing/ha-observed-bok-21A.txt',format='ascii')
+        for i,v in enumerate(htab['VFID']):
+            flag =(self.hatable['VFID_V1'] == v.rstrip())
+            if sum(flag) > 0:
+                #print('found match to bok obs target')
+                self.hatable['HAobsflag'][flag] = True
+                #print(self.hatable['VFID'][flag],self.hatable['HAobsflag'][flag])
+            else:
+                print('no match to bok obs target ',v)
+        
+
+        print('after matching to spring 2021, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
         print('writing hafile')
         #fits.writeto(outdir+file_root+'ha.fits',np.array(self.hatable),overwrite=True)
         self.hatable.write(outdir+file_root+'ha.fits',format='fits',overwrite=True)
@@ -876,6 +1004,8 @@ class catalog:
         # cut on declination
         if NORTH_ONLY:
             cat = cat[self.keepnorth_flag]
+        # cut for v2
+        cat = cat[self.v2keepflag]
         # create a flag for mastertable
         self.z0mgsFlag = ~cat['pgc_name'].mask
         self.z0mgs_cat = cat
@@ -919,16 +1049,19 @@ class catalog:
 
         self.temp[matchflag] = self.steer[idx[matchflag]]
 
-        # join with basic
-
-        self.basic_with_steer = hstack([self.basictable,self.temp])
-
-        # some of the NED names change over time, so that's not a reliable way to match
-        # all of the galaxies from Benedetta's low vr catalog should 
-        self.steerFlag = self.basic_with_steer['Num. D Measures'] > 0
-        self.basic_with_steer.add_column(Column(self.steerFlag),name='Steerflag')
+        c = Column(self.cat['VFID'],name='VFID')
+        self.temp.add_column(c,index=0)
+        sorted_colnames = ['VFID','Type_NED','raNED','decNED','zNED',\
+                           'Dall','Dall_err','Num. D Measures','Dmin','Dmax',\
+                           'Dmedian','Dmean','Dmedian_Steer','Dmean_Steer']
+        output_colnames = ['VFID','Type_NED','raNED','decNED','zNED',\
+                           'Dall','Dall_err','number_D','Dmin','Dmax',\
+                           'Dmedian','Dmean','Dmedian_Steer','Dmean_Steer']
+        
+        temp_sorted = Table(self.temp[sorted_colnames],names=output_colnames)
         outfile = outdir+file_root+'steer17.fits'            
-        self.basic_with_steer.write(outfile, format='fits',overwrite=True)
+        #self.basic_with_steer.write(outfile, format='fits',overwrite=True)
+        temp_sorted.write(outfile, format='fits',overwrite=True)
 
     def hyperleda_table(self):
         # V2 change
@@ -943,7 +1076,7 @@ class catalog:
         pass
     def nsa_v1_table(self):
         # write out NSA columns in line-matched table
-        colnames = self.cat.colnames[90:200]
+        colnames = self.cat.colnames[91:200]
         # RA and DEC get changed to RA_2, DEC_2 during the matching process
         # changing them back to native NSA values
         newcolnames = colnames.copy()
@@ -957,6 +1090,8 @@ class catalog:
         # remove NSAflag at the end of this file
         # colnames = self.cat.colnames[204:348]
         colnames = self.cat.colnames[204:347]
+        # removing some joint velocity
+        colnames = self.cat.colnames[205:348]        
         # RA and DEC get changed to RA_2, DEC_2 during the matching process
         # changing them back to native NSA values
         newcolnames = colnames.copy()
@@ -970,7 +1105,7 @@ class catalog:
     def agc_table(self):
         '''write out columns from agc catalog'''
         # write out NSA columns in line-matched table
-        colnames = self.cat.colnames[44:83]
+        colnames = self.cat.colnames[46:83]
         self.write_table(colnames,outdir+file_root+'agc.fits',format='fits')
 
     def a100_table(self):
@@ -1018,7 +1153,7 @@ class catalog:
         newtable.add_column(c1)
         newtable.write(outdir+file_root+'nedquery.fits',format='fits',overwrite=True)
 
-    def write_table(self,colnames,outfile,format=None,names=None):
+    def write_table_v1(self,colnames,outfile,format=None,names=None):
         '''function for writing out a subset of columns into a new table.'''
         if format is None:
             format = 'fits'
@@ -1064,6 +1199,23 @@ class catalog:
             pass
         
         newtable.write(outfile,format=format,overwrite=True)
+    def write_table(self,colnames,outfile,format=None,names=None):
+        '''function for writing out a subset of columns into a new table.  does not include basictable'''
+        if format is None:
+            format = 'fits'
+        else:
+            format = format
+        mycolumns = []
+        for c in colnames:
+            mycolumns.append(self.cat[c])
+        if names is not None:
+            subtable = Table(mycolumns,names=names)
+        else:
+            subtable = Table(mycolumns)
+        c = Column(self.cat['VFID'],name='VFID')
+        subtable.add_column(c,index=0)
+        subtable.write(outfile,format=format,overwrite=True)
+        
     def write_main_table(self,colnames,outfile,format=None,names=None):
         if format is None:
             format = 'fits'
@@ -1098,6 +1250,39 @@ class catalog:
     def table_for_halphagui(self):
         # need RA, DEC, redshift, radius
         pass
+
+    def merge_legacy_phot_tables(self):
+        tabledir = os.path.join(homedir,'research','Virgo','tables-moustakas',"")
+        vfdir = os.path.join(homedir,'research','Virgo','tables-north',"v1","")
+        northcat = Table.read(tabledir+'vf_north_v1_main_dr9north.fits')
+        southcat = Table.read(tabledir+'vf_north_v1_main_dr9south.fits')
+        legcat = Table(np.empty(len(northcat),dtype=northcat.dtype))
+        
+        vmain = Table.read(vfdir+"vf_north_v1_main.fits")
+        nflag = vmain['DEC'] >= 32.375
+        legcat[nflag] = northcat[nflag]
+        legcat[~nflag] = southcat[~nflag]
+        legcatv2 = legcat[self.v2keepflag]
+        legcatv2.rename_column('VFID','VFID_V1')
+        c = Column(self.cat['VFID'],name='VFID')
+        legcatv2.add_column(c,index=0)
+        legcatv2.write(outdir+file_root+'legacy_dr9.fits',overwrite=True)
+        
+    def make_legacy_viewer_table(self):
+        legacy_table = Table(self.cat['VFID','RA','DEC','radius'],names=['name','RA','DEC','radius'])
+        legacy_table.write(outdir+file_root+'legacy_viewer.fits',format='fits',overwrite=True)
+            
+    def convert_v1_2_v2(self):
+        # read in the v1 environment tables, remove bad sources, and save for v2
+        prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
+        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
+        alltables = ['main_env_prop_H0_74_0_Mr_max_-15_7.fits','main_finalenvironments.fits',
+                     'main_filament_membership_allgalaxies.fits',
+                     'main_Tempelgroups_infos.fits','matchTempel_groupinfo.fits']
+        for tname in alltables:
+            mytab = Table.read(prefix+tname)
+            mytab[self.v2keepflag].write(out_prefix+tname,format='fits',overwrite=True)
+        
 if __name__ == '__main__':
     ###################################################################
     #### SET UP ARGPARSE
