@@ -120,20 +120,21 @@ class magphys_sed():
         self.fit_file = '{}.fit'.format(galid)
         self.lambda_eff = np.array(wavelengths,'d')
         self.galid = galid
-    def plot_sed(self):
-        fig = plt.figure()
+    def plot_sed(self,plot_unattenuated=True):
+        fig = plt.figure(figsize=(8,6))
+        plt.subplots_adjust(left=.2)
         gs = fig.add_gridspec(2,1, height_ratios=(7,2),left=.1,right=.9,bottom=.2,top=.9,hspace=.1)
         ax = fig.add_subplot(gs[0,0])
         resid_ax = fig.add_subplot(gs[1,0],sharex=ax)
         
-        self.read_sed_file(self.sed_file,ax1=ax)
+        self.read_sed_file(self.sed_file,ax1=ax,plot_unattenuated=plot_unattenuated)
         self.read_fit_file(self.fit_file,ax1=ax,ax2=resid_ax)
 
         ax.set_xlim(.07,100)
         # these are the limits from plot_sed.pro
         # but my y values are offset considerably
         #plt.ylim(7.1,12)
-        ax.set_ylim(5.8,9.5)                
+        ax.set_ylim(7,10.5)                
         ax.set_xscale('log')
         ax.tick_params(axis='x',labelbottom=False)
         resid_ax.set_xscale('log')
@@ -148,7 +149,36 @@ class magphys_sed():
         outfile = 'VFID{}-magphys-sed.png'.format(self.galid)
         
         plt.savefig(outfile)
-    def read_sed_file(self,sed_file,ax1=None):
+    def plot_sed_noresidual(self,plot_unattenuated=True):
+        fig = plt.figure(figsize=(8,6))
+        plt.subplots_adjust(left=.15)
+        ax = plt.gca()
+        #gs = fig.add_gridspec(2,1, height_ratios=(7,2),left=.1,right=.9,bottom=.2,top=.9,hspace=.1)
+        #ax = fig.add_subplot(gs[0,0])
+        #resid_ax = fig.add_subplot(gs[1,0],sharex=ax)
+        
+        self.read_sed_file(self.sed_file,ax1=ax,plot_unattenuated=plot_unattenuated)
+        self.read_fit_file(self.fit_file,ax1=ax,plotresid=False)
+
+        ax.set_xlim(.07,100)
+        # these are the limits from plot_sed.pro
+        # but my y values are offset considerably
+        #plt.ylim(7.1,12)
+        ax.set_ylim(8.5,10.25)                
+        ax.set_xscale('log')
+        #ax.tick_params(axis='x',labelbottom=False)
+        plt.xticks(fontsize=14)
+        plt.yticks(fontsize=14)
+
+        ax.set_xlabel(r'$Wavelength \ (\mu m) \ [observed \ frame]$',fontsize=20)
+        plt.ylabel(r'$log(\lambda L_\lambda/L_\odot) $',fontsize=20)        
+        plt.legend(['model','NGC3938','Predicted'],fontsize=16)#loc='lower left')
+        s = 'VFID{}: logMstar = {:.2f}, logSFR = {:.2f}'.format(self.galid,np.log10(self.mstar),np.log10(self.sfr))
+        #plt.title(s,fontsize=14)
+        outfile = 'VFID{}-magphys-sed-noresidual.png'.format(self.galid)
+        
+        plt.savefig(outfile)
+    def read_sed_file(self,sed_file,ax1=None,plot_unattenuated=True):
         self.sed = Table.read(sed_file,data_start=2,format='ascii')
         self.wave = np.array(self.sed['col1'],'d')
 
@@ -165,10 +195,11 @@ class magphys_sed():
         self.sed_wave_um = self.sed_wave/1.e4 # convert to microns    
 
         ax1.plot(self.sed_wave_um,self.L_at,label='attenuated')
-        ax1.plot(self.sed_wave_um,self.L_un,label='unattenuated')
+        if plot_unattenuated:        
+            ax1.plot(self.sed_wave_um,self.L_un,label='unattenuated')
         
 
-    def read_fit_file(self,fit_file,ax1=None,ax2=None):
+    def read_fit_file(self,fit_file,ax1=None,ax2=None,plotresid=True):
         in1 = open(fit_file,'r')
         fit_lines = in1.readlines()
         # flux is given as L_nu in units of L_sun/Hz
@@ -207,11 +238,61 @@ class magphys_sed():
         #print(yerr)
         ax1.errorbar(self.lambda_eff,L_flux,yerr=yerr,fmt='None',color='b')        
         ax1.plot(self.lambda_eff,L_pflux,'k^',label='Predicted')
-        ax2.plot(self.lambda_eff,resid,'ko',label='residuals')
-        ax2.errorbar(self.lambda_eff,resid,yerr=resid_err,fmt='none',color='k')                
+        if plotresid:
+            ax2.plot(self.lambda_eff,resid,'ko',label='residuals')
+            ax2.errorbar(self.lambda_eff,resid,yerr=resid_err,fmt='none',color='k')                
         self.mstar = mstar
         self.sfr = SFR
 
+    def plot_mstar_hist(self,ymin=0,ymax=1,xmin=8,xmax=12):
+        in1 = open(self.fit_file,'r')
+        fit_lines = in1.readlines()        
+        mstar = parse_pdf(fit_lines[209:269])
+        in1.close()
+
+        plt.figure(figsize=(8,6))
+        plt.subplots_adjust(bottom=.2)
+        plt.subplots_adjust(wspace=.1,hspace=.8)
+        plt.fill_between(mstar[0],mstar[1])
+        plt.axis([xmin,xmax,ymin,ymax])
+        plt.xticks(fontsize=14)
+        plt.yticks(fontsize=14)        
+        plt.xlabel(r'$\rm log_{10}(M_\star/M_\odot)$',fontsize=18)
+        plt.ylabel(r'$\rm PDF$',fontsize=18)        
+
+        outfile = 'VFID{}-mstar-pdfs.png'.format(self.galid)
+        plt.savefig(outfile)
+    def plot_mstar_sfr_hist(self,ymin=0,ymax=1,xmin=8,xmax=12):
+        in1 = open(self.fit_file,'r')
+        fit_lines = in1.readlines()        
+        mstar = parse_pdf(fit_lines[209:269])
+        SFR = parse_pdf(fit_lines[619:679])        
+        in1.close()
+
+        plt.figure(figsize=(8,6))
+        plt.subplots_adjust(wspace=.01,hspace=.8,bottom=.2)
+        plt.subplot(1,2,1)
+        plt.fill_between(mstar[0],mstar[1])
+        plt.axis([xmin,xmax,ymin,ymax])
+        plt.xticks(fontsize=14)
+        plt.yticks(fontsize=14)        
+        plt.xlabel(r'$\rm log_{10}(M_\star/M_\odot)$',fontsize=18)
+        plt.ylabel(r'$\rm PDF$',fontsize=18)        
+        
+        plt.subplot(1,2,2)
+        plt.fill_between(SFR[0],SFR[1])
+        #plt.axis([xmin,xmax,ymin,ymax])
+        plt.xticks(fontsize=14)
+        plt.yticks(fontsize=14)
+        plt.xlim(-.65,.05)
+        plt.ylim(ymin,ymax)
+        plt.yticks([],[])
+        plt.xlabel(r'$\rm log_{10}(SFR/(M_\odot/yr))$',fontsize=18)
+        #plt.ylabel(r'$\rm PDF$',fontsize=18)        
+
+        outfile = 'VFID{}-mstar-sfr-pdfs.png'.format(self.galid)
+        plt.savefig(outfile)
+        
     def plot_histograms(self):
         ''' plot liklihood histograms of fitted parameters   '''
 

@@ -22,16 +22,17 @@ OUTPUT:
 NOTES:
 * This program is being updated for v2.  
 
-* v2 has the same number of galaxies as v1.  
-  * actually, not true.  
-  * we had one missing galaxies that was supposed to be merged from two input sources, but we got rid of both.
+* v2 has different number of galaxies as v1.  
+  * we had one missing galaxies that was supposed to be merged from two input sources, but we got rid of both. (We decided NOT to include this b/c it would open a can of worms to go back to step one...)
   * JM found one source that was part of UGC04499
   * we then matched the catalog to itself, looking for sources w/in 50" of each other. 
     * we found 5 stars in this comparison, as well as 3 galaxies that need their centers adjusted
   * we then looked for matches with Dustin Lang's catalog of Tycho and Gaia sources.  found 140 matches w/in 5".  inspected these.  most are the saturated centers of bright galaxies (brings up issue with photometry for these gals..). Found 2 stars that we already had identified using the internal match.  we found another two sources that need to have coords updated.
+  * v2 has 6780 sources, whereas v1 had 6797
+  * the sources that are eliminated are listed in remove_stars
+* In addition to this difference in 17 sources that have been removed, we have cleaned the tables and eliminated duplicate columns.
 
-* The main difference is that we have cleaned the tables 
-* and eliminated duplicate columns.
+* The v2 catalogs have different VFIDs.  I have included the v1 ids as well.
 
 
 '''
@@ -142,8 +143,9 @@ class catalog:
         # reviewed matches using the legacy viewer.
         
         # stars and globular clusters
-        stars = [591,2998,4299,4582,4662, 4668,4669,4705,4725,4728,4726,4730,4735,\
-                 4832,4839,5438]
+        stars = [591,2998,4299,4582,4662, 4668,\
+                 4669,4705,4725,4728,4726,4730,\
+                 4735,4832,4839,5438]
         # parts of galaxies or extremely questionable
         shredded = [1241]
         bad_ids = stars+shredded
@@ -229,6 +231,7 @@ class catalog:
 
         # routines that match to catalog
         self.get_CO()
+        self.get_CO_paper1()
         # updating halpha routine to match to VFID_V1
         self.get_halpha()
         self.get_unwise()        
@@ -795,6 +798,104 @@ class catalog:
             
 
         # print CO sources that are not in the table
+    def get_CO(self,match_by_coords=False,match_by_name=True):
+        # read in CO mastertable
+        # match to main table
+        cofile = homedir+'/github/Virgo/tables/CO-MasterFile-2018Feb16.fits'
+        # this file has a new column with the exact NED names
+        # can use this to match to mastertable NEDname column
+        cofile = homedir+'/research/Virgo/tables/CO-MasterFile-2018Feb16-fixedNEDnames.fits'
+        ned_column = 'NED_name'
+        # CO file 245 sources
+        # from June 2019
+        cofile = homedir+'/research/Virgo/gianluca_input_tables/galaxy_sample_prop_general_mod.fits'
+
+
+        # match by name
+
+
+        # cut the columns 
+        
+        ned_column='NEDname'
+        self.co = Table(fits.getdata(cofile))
+
+        # replace NED_name of SHOC206b with NED name for SHOC 206a
+        # this is really the same galaxy, just has less common id in CO file
+        # set to MCG +08-16-005;
+        
+        # fix case for UGC09348, until we run the full query again...
+        flag = self.co[ned_column] == 'SHOC206b'
+        if sum(flag > 0):
+            self.co[ned_column][flag] = 'MCG +08-16-005'
+        
+        
+
+        cocoord = SkyCoord(self.co['RA'],self.co['DEC'],unit='deg',frame='icrs')
+        if match_by_coords:
+            # match co coords to mastertable 
+            idx, d2d, d3d = self.catcoord.match_to_catalog_sky(cocoord)
+            self.d2d = d2d
+            self.idx = idx
+            self.coflag = d2d < 15./3600*u.deg
+        
+            # create a new, blank table with same # of lines as mastertable
+            # but with columns like the co table
+            newco = Table(np.zeros(len(self.cat),dtype=self.co.dtype))
+            # add co information into the new table for the galaxies with
+            # a match to the CO sample
+            # NOTE: this could match multiple galaxies to the same CO source
+            newco[self.coflag] = self.co[idx[self.coflag]]
+
+            # join basic table and co table
+
+            self.cotable = hstack([self.basictable,newco])
+
+        if match_by_name:
+            #self.co.rename_column('NED_name','NEDname')
+            #np.searchsorted(names1,names2)
+            
+            # match the basictable and the CO table by matching
+            # entries by the NEDname colums
+            self.cotable = myjoinleft(self.basictable,self.co,keys='NEDname')
+
+            self.coflag = self.cotable['alphaCO'] > .1
+            # having issues with this being a masked array, so
+            # saving mask as the flag...
+            self.coflag = ~self.coflag.mask
+            #self.coflag = self.cotable['COflag']
+
+            # also check to see which CO sources were not matched
+            self.testtable = join(self.co,self.basictable,keys='NEDname',join_type='left')
+            #self.coflag = len(self.co['CO']) > 0
+            try:
+                self.comatchflag = ~self.testtable['VFID'].mask
+                print('CO sources with no match in mastertable:')
+                print(self.testtable['NEDname','source_name','VH'][~self.comatchflag])
+                ## plot the positions of CO galaxies that weren't matched to mastertable
+                # V2 changes - RA_1 not valid...
+                # don't need the plot so I am commenting this out
+                #plt.figure()
+                #plt.plot(self.testtable['RA_1'][~self.comatchflag],self.testtable['DEC_1'][~self.comatchflag],'bo')
+
+
+            except AttributeError:
+                print('all CO sources have been matched. CONGRATULATIONS!!!!!!!')
+                self.comatchflag = np.ones(len(self.testtable))
+        ## print the CO galaxies with no matches in the mastertable 
+        print('number of galaxies with CO matches = ',sum(self.coflag))
+
+        ## look for CO galaxies that were matched to multiple galaxies in the
+        ## mastertable
+        unique, counts = duplicates(self.cotable,'NEDname')
+        print("CO sources that are matched to multiple galaxies in the mastertable:")
+        print(unique[counts>1])
+        
+        
+        self.cotable.add_column(Column(self.coflag),name='COflag')
+        self.cotable.write(outdir+file_root+'co.fits',format='fits',overwrite=True)
+            
+
+        
     def get_halpha_old(self,halphafile=None):
         # read in Halpha observing summary file
         if halphafile is None:

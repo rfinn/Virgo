@@ -17,6 +17,7 @@ flux in Jy: flux_0 flux_0_err flux_1 flux_1_err
 '''
 
 from astropy.table import Table
+from astropy.io import fits
 import os
 import numpy as np
 import speclite.filters
@@ -100,11 +101,14 @@ mtots = ['COG_MTOT_{}'.format(f) for f in filters]
 
 # read in legacy phot
 photfile = '/home/rfinn/research/Virgo/legacy-phot/virgofilaments-legacyphot.fits'
-
+mef_table = fits.open(photfile)
 # changing to extension 2 for file that john sent on Aug 14, 2021
 #ephot = Table.read(photfile,1) # first hdu is the elliptical photometry
-ephot = Table.read(photfile,2) # first hdu is the elliptical photometry
-ephot1 = Table.read(photfile,1) # this one has RA and DEC, which we need to separate N and S
+ephot = Table(mef_table['ELLIPSE'].data) # first hdu is the elliptical photometry
+ephot1 = Table(mef_table['PARENT'].data) # this one has RA and DEC, which we need to separate N and S
+mef_table.close()
+
+
 
 # convert fluxes from nmgy to Jy
 flux_Jy = np.zeros((len(ephot),len(filters)),'d')
@@ -129,6 +133,28 @@ for i,f in enumerate(ivars):
 ## use the r-band data for this
 ################################################
 rmag_tot = ephot['COG_MTOT_R']
+# check to see if rmag_tot = -1; this happens if the John's cog fails
+for i,r in enumerate(rmag_tot):
+    
+    if r == -1:
+        if ephot['FLUX_SB26_R'][i] != 0:
+            scaling_col = 'FLUX_SB26_R'
+            print('COG_MTOT_R = -1 for {} but found {} {}'.format(ephot['GALAXY'][i],scaling_col, ephot['FLUX_SB26_R'][i]))
+        elif ephot['FLUX_SB25_R'][i] != 0:
+            scaling_col = 'FLUX_SB25_R'
+            print('COG_MTOT_R = -1 for {} but found {}'.format(ephot['GALAXY'][i],scaling_col))            
+        elif ephot['FLUX_SB24_R'][i] != 0:
+            scaling_col = 'FLUX_SB24_R'
+            print('COG_MTOT_R = -1 for {} but found {}'.format(ephot['GALAXY'][i],scaling_col))            
+        elif ephot['FLUX_SB23_R'][i] != 0:
+            scaling_col = 'FLUX_SB23_R'
+            print('COG_MTOT_R = -1 for {} but found {}'.format(ephot['GALAXY'][i],scaling_col))            
+        else:
+            print('WARNING: no viable r-band magnitude for {} ({})'.format(ephot['VF_ID'][i],ephot['GALAXY'][i]))
+            # don't reset rmag_tot - this will yield ridiculously high stellar masses
+            continue          
+        rmag_tot[i] = 22.5 - 2.5*np.log10(ephot[scaling_col][i])
+        
 flux_tot = 10.**((22.5-rmag_tot)/2.5) # flux in nanomaggies
 flux_tot_Jy = flux_tot*3.631e-6
 scale_factor = flux_tot_Jy/flux_Jy[:,3]
@@ -182,6 +208,10 @@ out_table[north_flag].write(outfile,format='ascii',overwrite=True,names=colnames
 outfile = '/home/rfinn/research/Virgo/legacy-phot/magphysInputS.dat'
 out_table[~north_flag].write(outfile,format='ascii',overwrite=True,names=colnames)
 
+
+nsf_flag = ephot1['VFID'] == 'VFID1778'
+outfile = '/home/rfinn/research/Virgo/legacy-phot/NSF2021VFID1778.dat'
+out_table[nsf_flag].write(outfile,format='ascii',overwrite=True,names=colnames)
 # writing out the first galaxy, bc this is the only one with all non-zero fluxes at sb=23
 #outfile = '/home/rfinn/research/Virgo/legacy-phot/magphysInput-gal1.dat'
 #ptab = Table(out_table[0])
