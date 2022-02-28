@@ -200,6 +200,24 @@ class catalog:
                 self.pgcname[i] = pgcdict[vf]
             except KeyError:
                 print('no pgc match for ',vf)
+
+    def fix_NED_duplicates(self):
+        '''
+        GOAL: there are 7 pairs of galaxies matched to same NED source
+
+        - in most cases, this is the wrong match for one gal in the pair
+        - going to remove NED name for this galaxy
+        - do this before matching to CO table to avoid duplicate CO entries
+        - one is a merger, so leaving this
+
+        '''
+        VFID_wrong_NEDname = ['VFID0356','VFID3406','VFID5564',\
+                              'VFID4586','VFID6053','VFID3503']
+
+        for vfid in VFID_wrong_NEDname:
+            self.cat['NEDname'][self.cat['VFID'] == vfid]=''
+            
+        pass
         
     def runall(self):
         #self.catalog_for_z0MGS()
@@ -209,6 +227,10 @@ class catalog:
         self.recenter_coords()
         self.remove_stars()
         self.redefine_vfid()
+
+        # remove galaxies matched to wrong NED name
+        self.fix_NED_duplicates()
+        
         # back to v1 stuff
         self.def_basictable()
         #self.def_maintable()
@@ -220,9 +242,14 @@ class catalog:
         # GL is making the steer table now
         self.get_steer17()
         self.get_radius()
-        self.get_sfr()
+
+        # skipping SFR calculations in v2
+        # these will be replace with SED fitting from legacy photometry
+        # self.get_sfr()
+        
         self.get_HIdef()
 
+        
         # add pgc name
         self.get_pgcname()
         # rematching to z0MGS with new v2 length
@@ -251,7 +278,9 @@ class catalog:
         self.get_size_for_JM()
         self.ned_table() # NED input, ra, dec, and NEDname
         self.print_stats()
-        self.convert_v1_2_v2()
+        self.convert_rphot_v1_2_v2()        
+        self.combine_env_v1_2_v2()        
+        #self.convert_v1_2_v2()
         self.merge_legacy_phot_tables()
         self.make_legacy_viewer_table()
     def print_stats(self):
@@ -265,25 +294,25 @@ class catalog:
             print("problem finding steer flag")
         try:
             f = self.unwiseFlag
-            print('Number with unwise matches = %i (%.3f)'%(sum(f),sum(f)/len(f)))        
+            print('Number with unwise matches = %i (%.3f)'%(sum(f.data),sum(f.data)/len(f)))        
             f = self.unwiseFlag & (self.cat['NSAflag'] | self.cat['NSA0flag'])
-            print("Number with unWISE and NSA = %i (%.3f)"%(sum(f),sum(f)/len(f)))
+            print("Number with unWISE and NSA = %i (%.3f)"%(sum(f.data),sum(f.data)/len(f)))
         except AttributeError:
             pass
         print("CO SOURCES")
         nco = sum(self.coflag)
         f = self.coflag & self.z0mgsFlag
-        print("\tNumber of CO sources in z0MGS = %i (%.2f)"%(sum(f),sum(f)/nco))
+        print("\tNumber of CO sources in z0MGS = %i (%.2f)"%(sum(f.data),sum(f.data)/nco))
         try:
             f = self.coflag & self.steerFlag
-            print("\tNumber of CO sources in Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
+            print("\tNumber of CO sources in Steer = %i (%.2f)"%(sum(f.data),sum(f.data)/nco))
             f = self.coflag & self.z0mgsFlag & self.steerFlag
-            print("\tNumber of CO sources in z0MGS+Steer = %i (%.2f)"%(sum(f),sum(f)/nco))
+            print("\tNumber of CO sources in z0MGS+Steer = %i (%.2f)"%(sum(f.data),sum(f.data)/nco))
         except AttributeError:
             print("no steer flag")
         try:
             f = self.coflag & self.unwiseFlag & (self.cat['NSAflag'] | self.cat['NSA0flag'])
-            print("\tNumber of CO sources with unWISE and NSA = %i (%.2f)"%(sum(f),sum(f)/nco))
+            print("\tNumber of CO sources with unWISE and NSA = %i (%.2f)"%(sum(f.data),sum(f.data)/nco))
         except AttributeError:
             print('FYI: no unwise flag')
 
@@ -707,6 +736,11 @@ class catalog:
 
 
     def get_CO(self,match_by_coords=False,match_by_name=True):
+
+        print('\n######################')
+        print('Running get_CO')
+        print('######################\n')
+
         # read in CO mastertable
         # match to main table
         cofile = homedir+'/github/Virgo/tables/CO-MasterFile-2018Feb16.fits'
@@ -798,24 +832,19 @@ class catalog:
             
 
         # print CO sources that are not in the table
-    def get_CO(self,match_by_coords=False,match_by_name=True):
-        # read in CO mastertable
-        # match to main table
-        cofile = homedir+'/github/Virgo/tables/CO-MasterFile-2018Feb16.fits'
-        # this file has a new column with the exact NED names
-        # can use this to match to mastertable NEDname column
-        cofile = homedir+'/research/Virgo/tables/CO-MasterFile-2018Feb16-fixedNEDnames.fits'
-        ned_column = 'NED_name'
+    def get_CO_paper1(self,match_by_coords=False,match_by_name=True):
+
+
+        print('\n######################')
+        print('Running get_CO_paper1')
+        print('######################\n')
+        
         # CO file 245 sources
-        # from June 2019
-        cofile = homedir+'/research/Virgo/gianluca_input_tables/galaxy_sample_prop_general_mod.fits'
+        # from Gianluca
+        cofile = homedir+'/research/Virgo/gianluca_input_tables/galaxy_sample_prop_general_mod_fixedNEDnames.fits'
 
 
         # match by name
-
-
-        # cut the columns 
-        
         ned_column='NEDname'
         self.co = Table(fits.getdata(cofile))
 
@@ -869,8 +898,8 @@ class catalog:
             #self.coflag = len(self.co['CO']) > 0
             try:
                 self.comatchflag = ~self.testtable['VFID'].mask
-                print('CO sources with no match in mastertable:')
-                print(self.testtable['NEDname','source_name','VH'][~self.comatchflag])
+                print('Paper 1 CO sources with no match in mastertable:')
+                print(self.testtable['NEDname','source_name','Vcosmic'][~self.comatchflag])
                 ## plot the positions of CO galaxies that weren't matched to mastertable
                 # V2 changes - RA_1 not valid...
                 # don't need the plot so I am commenting this out
@@ -879,20 +908,31 @@ class catalog:
 
 
             except AttributeError:
-                print('all CO sources have been matched. CONGRATULATIONS!!!!!!!')
+                print('all paper 1 CO sources have been matched. CONGRATULATIONS!!!!!!!')
                 self.comatchflag = np.ones(len(self.testtable))
         ## print the CO galaxies with no matches in the mastertable 
-        print('number of galaxies with CO matches = ',sum(self.coflag))
+        print('number of galaxies with Paper 1 CO matches = ',sum(self.coflag))
 
         ## look for CO galaxies that were matched to multiple galaxies in the
         ## mastertable
         unique, counts = duplicates(self.cotable,'NEDname')
-        print("CO sources that are matched to multiple galaxies in the mastertable:")
+        print("Paper 1 CO sources that are matched to multiple galaxies in the mastertable:")
         print(unique[counts>1])
-        
-        
+
+
+        ## cut the columns 
+        ## remove:
+        ## env variables: n5th,n5th_2D, nCl08, filament_dist
+        remove_columns = ['n5th','n5th_err','n5th_2D','n5th_2D_err','nCI08','nCI08_err',\
+                          'filament_dist_3D','filament_dist_2D',\
+                          'SGX','SGY','SGZ','Vcosmic',
+                          'NEDname', 'source_name', 'objname_HL','id_nsa']
+                          
+                          
+        self.cotable.remove_columns(remove_columns)
+        ## HL
         self.cotable.add_column(Column(self.coflag),name='COflag')
-        self.cotable.write(outdir+file_root+'co.fits',format='fits',overwrite=True)
+        self.cotable.write(outdir+file_root+'paper1.fits',format='fits',overwrite=True)
             
 
         
@@ -928,6 +968,10 @@ class catalog:
         self.hatable.write(outdir+file_root+'ha.fits',format='fits',overwrite=True)
 
     def get_halpha(self,halphafile=None):
+        print('\n######################')
+        print('Running get_halpha')
+        print('######################\n')
+        
         # read in Halpha observing summary file
         if halphafile is None:
             #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
@@ -1038,14 +1082,19 @@ class catalog:
             print('number of columns after removing cols = ',len(self.hav1[0]))
             c0 = Column(np.ones(len(self.hav1),'bool'),name='HAobsflag',description='observed in halpha')
             self.hav1.add_column(c0)
+
+            # add in VFID_V1
+            c0 = Column(self.hav1['VFID'],name='VFID_V1',description='VFID V1')
+            self.hav1.add_column(c0)
         
             for i in range(len(self.hav1)):
                 flag =(self.hatable['VFID_V1'] == self.hav1['VFID'][i].rstrip())
                 if sum(flag) > 0:
-                    print('found halpha v1 match ',self.hav1['VFID'][i])
-                    print(np.sum(flag),len(self.hav1[i]))
+                    #print('found halpha v1 match ',self.hav1['VFID'][i])
+                    VFID_V2 = self.hatable['VFID'][i]
+                    #print(np.sum(flag),len(self.hatable[flag]),len(self.hav1[i]))
                     self.hatable[flag] = self.hav1[i]
-
+                    self.hatable['VFID'][i] = VFID_V2
         
         #self.hatable = join(self.basictable,self.ha,keys='VFID',join_type='left')
         #print('Halpha table lengths')
@@ -1373,16 +1422,93 @@ class catalog:
         legacy_table = Table(self.cat['VFID','RA','DEC','radius'],names=['name','RA','DEC','radius'])
         legacy_table.write(outdir+file_root+'legacy_viewer.fits',format='fits',overwrite=True)
             
-    def convert_v1_2_v2(self):
+    def convert_kourchi_v1_2_v2(self):
         # read in the v1 environment tables, remove bad sources, and save for v2
         prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
         out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
+        
         alltables = ['main_env_prop_H0_74_0_Mr_max_-15_7.fits','main_finalenvironments.fits',
                      'main_filament_membership_allgalaxies.fits',
                      'main_Tempelgroups_infos.fits','matchTempel_groupinfo.fits']
+
+        
         for tname in alltables:
             mytab = Table.read(prefix+tname)
-            mytab[self.v2keepflag].write(out_prefix+tname,format='fits',overwrite=True)
+            mytab[self.v2keepflag].write(out_prefix+tname.replace('_main',''),format='fits',overwrite=True)
+    def convert_rphot_v1_2_v2(self):
+        # read in the v1 environment tables, remove bad sources, and save for v2
+        prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
+        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
+        
+        alltables = ['r_photometry.fits']
+
+        for tname in alltables:
+            mytab = Table.read(prefix+tname)
+            mytab[self.v2keepflag].write(out_prefix+tname.replace('_main',''),format='fits',overwrite=True)
+    def combine_env_v1_2_v2(self):
+        # read in the v1 environment tables, remove bad sources, and save for v2
+        # also need to pare down the columns
+        prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
+        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
+        
+        alltables = ['main_env_prop_H0_74_0_Mr_max_-15_7.fits','main_finalenvironments.fits',
+                     'main_filament_membership_allgalaxies.fits','main_cluster_membership.fits']
+
+
+                     
+        # make a sub table of each table, and then do an hstack
+        env = Table.read(prefix+alltables[0])
+        keepcols = ['VFID','DM','SGX','SGY','SGZ',\
+                    'nCI08','nCI08_err',\
+                    'distSGX_Virgo','distSGY_Virgo','distSGZ_Virgo',\
+                    'n5th_2D','n5th_2D_err','n5th','n5th_err',\
+                    'Vcosmic','Vmodel']
+        envcut = env[keepcols]
+
+        vmedian = Column(env['Dmedian']*74,name='Vmedian')
+        envcut.add_column(vmedian)
+        
+        finalenv = Table.read(prefix+alltables[1])
+        poor_group_memb = finalenv['flag_gr'] == 1
+        rich_group_memb = finalenv['flag_gr'] == 2
+        pure_field_memb = finalenv['flag_pf'] == 1
+        finalenvcut = Table([poor_group_memb,rich_group_memb,pure_field_memb],names=['poor_group_memb','rich_group_memb','pure_field'])
+
+        # rename columns in this one
+        filmemb = Table.read(prefix+alltables[2])
+        filmemb.rename_column('filament_dist_2D','nearest_filament_dist_2D')
+        filmemb.rename_column('filament_dist_3D','nearest_filament_dist_3D')        
+
+        keepcols = ['nearest_filament_dist_2D','nearest_filament_dist_3D','filament',\
+                    'filament_PA','orientation_wrt_filament','filament_member']
+        filmembcut = filmemb[keepcols]
+
+        # rename filament
+        for i in range(len(filmembcut)):
+            filmembcut['filament'][i] = filmembcut['filament'][i].replace('_Filament','').replace('Virgo_','')
+
+        
+        clustermemb = Table.read(prefix+alltables[3])                        
+        clustermemb.remove_column('VFID')
+        clustermemb.remove_column('vr')
+        clustermemb.rename_column('mem','cluster_member')
+
+        envtable = hstack([envcut,finalenvcut,filmembcut,clustermemb])
+        envtable[self.v2keepflag].write(out_prefix+'environment.fits',format='fits',overwrite=True)
+
+        # write out the filament distances in a separate table
+        keepcols = []
+        # list of filaments is in virgoCommon file
+        for f in filaments:
+            keepcols.append('dist_2D_'+f)
+            keepcols.append('dist_3D_'+f)            
+
+        colnames = []
+        for n in keepcols:
+            colnames.append(n.replace('_Filament','').replace('Virgo_',''))
+        fildist = Table(filmemb[keepcols],names=colnames)
+        fildist[self.v2keepflag].write(out_prefix+'filament_distances.fits',format='fits',overwrite=True)
+        
         
 if __name__ == '__main__':
     ###################################################################

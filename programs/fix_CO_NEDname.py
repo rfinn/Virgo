@@ -27,6 +27,10 @@ nedname_field='NEDname'
 # updated catalog
 cofile = homedir+'/research/Virgo/tables/galaxy_sample_prop_general_2020Oct28.fits'
 outfile = homedir+'/research/Virgo/tables/galaxy_sample_prop_general_2020Oct28-fixedNEDnames.fits'
+
+# updated catalog
+cofile = homedir+'/research/Virgo/gianluca_input_tables/galaxy_sample_prop_general_mod.fits'
+outfile = homedir+'/research/Virgo/gianluca_input_tables/galaxy_sample_prop_general_mod_fixedNEDnames.fits'
 nedname_field='NEDname'
 co = Table(fits.getdata(cofile))
 
