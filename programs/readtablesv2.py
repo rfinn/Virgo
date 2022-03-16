@@ -37,7 +37,7 @@ class vtables:
         # these aren't updated for v2 yet
         self.read_env()
         self.read_filaments()
-        self.read_tempel()        
+        #self.read_tempel()        
         #self.read_rphot()
         #self.read_legacy()        
     def read_main(self):
@@ -70,16 +70,17 @@ class vtables:
         pass
     def read_env(self):
         ''' read in GC's env and BV envsummary table; store as self.env  '''
-        tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0_Mr_max_-15_7.fits')
+        #tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0_Mr_max_-15_7.fits')
         #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
-        tab3 = Table.read(self.tabledir+self.tableprefix+'main_finalenvironments.fits')        
+        #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
         #self.env = hstack([tab1,tab2,tab3])
-        self.env = hstack([tab1,tab3])
+        self.env = Table.read(self.tabledir+self.tableprefix+'environment.fits')    
         pass
     def read_filaments(self):
         ''' read in GC's filament_membership catalog  '''
         #self.fil = Table.read(self.tabledir+self.tableprefix+'main_filament_membership.fits')
-        self.fil = Table.read(self.tabledir+self.tableprefix+'main_filament_membership_allgalaxies.fits')
+        #self.fil = Table.read(self.tabledir+self.tableprefix+'main_filament_membership_allgalaxies.fits')
+        self.fil = Table.read(self.tabledir+self.tableprefix+'filament_distances.fits')
 
         pass
                               
@@ -87,7 +88,7 @@ class vtables:
         ''' read in ALFALFA 100 table; store as self.a100, self.a100sdss, self.a100unwise  '''
         self.a100 = Table.read(self.tabledir+self.tableprefix+'a100.fits')
         self.a100sdss = Table.read(self.tabledir+self.tableprefix+'a100_sdssphot.fits')
-        self.a100unwise = Table.read(self.tabledir+self.tableprefix+'a100_unwise.fits')
+        #self.a100unwise = Table.read(self.tabledir+self.tableprefix+'a100_unwise.fits')
         # calculate HI deficiency
         # use the R90 petro
         pass

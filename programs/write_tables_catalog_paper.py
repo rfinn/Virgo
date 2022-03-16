@@ -154,6 +154,13 @@ class latextable(vtables):
             fname = filename 
         outfile = open(fname,'w')
         print(fname)
+
+        # define group flag according to old criteria
+
+        self.groupflag = np.zeros(len(self.main),'i')
+        self.groupflag[self.env['poor_group_memb']] = np.ones(sum(self.env['poor_group_memb']))
+        self.groupflag[self.env['rich_group_memb']] = 2*np.ones(sum(self.env['rich_group_memb']))
+        
         # ADD 2d MEMBER TO FILAMENTS
         # PUT CLOSEST FILAMENT FIRST
         outfile.write('\\begin{sidewaystable*}%[ptbh!]\n')
@@ -208,12 +215,15 @@ class latextable(vtables):
         #outfile.write('\\midrule \n')
         outfile.write('\\hline \n')
         outfile.write('\\hline \n')        
-                                                   
+
+        
         # build the data string 
         outstring = ""
         for i in range(len(columns)):
-            if ((i > 0) & (i < 8)) | (i == 9) | (i == 10):
+            if ((i > 0) & (i < 4)):
                 outstring += "{:.1f} & "
+            elif ((i > 3 ) & (i < 8)) | (i == 9) | (i == 10):
+                outstring += "{:.1e} & "
             # don't add & after the last column
             # also add line end in latex (\\\\) and newline in text file (\n)
             elif i == len(columns)-1:
@@ -239,15 +249,15 @@ class latextable(vtables):
             #       ]
 
             s = outstring.format(self.main['VFID'][i],\
-                                 self.fil['SGX'][i],self.fil['SGY'][i],self.fil['SGZ'][i],\
+                                 self.env['SGX'][i],self.env['SGY'][i],self.env['SGZ'][i],\
                                  self.env['n5th_2D'][i],self.env['n5th_2D_err'][i],\
                                  self.env['n5th'][i],self.env['n5th_err'][i],\
-                                 self.fil['filament'][i].replace('_Filament','').replace('Virgo_','').replace('_','\_'),\
-                                 self.fil['filament_dist_2D'][i],\
-                                 self.fil['filament_dist_3D'][i],\
-                                 int(self.fil['filament_member'][i]),\
-                                 int(self.env['flag_gr'][i]),int(self.env['flag_clus'][i]),\
-                                 int(self.env['flag_pf'][i]))
+                                 self.env['filament'][i].replace('_Filament','').replace('Virgo_','').replace('_','\_'),\
+                                 self.env['nearest_filament_dist_2D'][i],\
+                                 self.env['nearest_filament_dist_3D'][i],\
+                                 int(self.env['filament_member'][i]),\
+                                 int(self.groupflag[i]),int(self.env['cluster_member'][i]),\
+                                 int(self.env['pure_field'][i]))
                                  
                                 
             if papertableflag:
@@ -298,17 +308,17 @@ class latextable(vtables):
         colnames = ['VFID','RA','DEC',\
                     'v_r','v_cosmic','v_model ',\
                     'HL_name','NSAID_V0','NSAID_V1','AGC_Name','NED_Name',\
-                    'CO','HL','NSA','NSAV0','A100']
+                    'CO','HL','NSAV1','NSAV0','A100']
         colunits = ['','deg','deg',\
                     'km/s','km/s','km/s',\
                     '','','','','',\
                     '','','','','']
         cat_tab = Table([self.main['VFID'],self.main['RA'],self.main['DEC'],\
                          self.main['vr'],self.env['Vcosmic'],self.env['Vmodel'],\
-                         self.main['objname'],self.main['NSAIDV0'],self.main['NSAID'],\
+                         self.main['objname'],self.main['NSAIDV0'],self.main['NSAIDV1'],\
                          self.main['AGC'],self.main['NEDname'], \
                          self.main['COflag'],self.main['HLflag'],\
-                         self.main['NSAflag'],self.main['NSAV0flag'],\
+                         self.main['NSAV1flag'],self.main['NSAV0flag'],\
                          self.main['A100flag']],names=colnames)
         cat_tab.write(cat_tab_filename,format='fits',overwrite=True)
 
@@ -323,21 +333,22 @@ class latextable(vtables):
                    'D_Filament_2D',\
                    'D_Filament_3D',\
                    'Filament_Memb',\
-                   'Group','Cluster','Pure_Field']
+                   'Poor_Group','Rich_Group','Cluster','Pure_Field']
         filament = []
-        for f in self.fil['filament']:
+        for f in self.env['filament']:
             filament.append(f.replace('_Filament','').replace('Virgo_',''))
         env_tab = Table([self.main['VFID'],\
-                         self.fil['SGX'],self.fil['SGY'],self.fil['SGZ'],\
+                         self.env['SGX'],self.env['SGY'],self.env['SGZ'],\
                          self.env['n5th_2D'],self.env['n5th_2D_err'],\
                          self.env['n5th'],self.env['n5th_err'],\
                          filament,\
-                         self.fil['filament_dist_2D'],\
-                         self.fil['filament_dist_3D'],\
-                         self.fil['filament_member'],\
-                         np.array(self.env['flag_gr'],'i'),\
-                         np.array(self.env['flag_clus'],'i'),\
-                         np.array(self.env['flag_pf'],'i')],\
+                         self.env['nearest_filament_dist_2D'],\
+                         self.env['nearest_filament_dist_3D'],\
+                         self.env['filament_member'],\
+                         np.array(self.env['poor_group_memb'],'bool'),\
+                         np.array(self.env['rich_group_memb'],'bool'),\
+                         np.array(self.env['cluster_member'],'bool'),\
+                         np.array(self.env['pure_field'],'bool')],\
                         names=colnames)
         env_tab.write(env_tab_filename,format='fits',overwrite=True)
         

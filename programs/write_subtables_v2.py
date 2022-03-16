@@ -1261,7 +1261,7 @@ class catalog:
     def a100_table(self):
         '''write out columns from a100 catalog, plus HI deficiency'''
         # write out NSA columns in line-matched table
-        colnames = self.cat.colnames[352:377]
+        colnames = self.cat.colnames[364:389]
         subtable = Table(self.cat[colnames])
         newtable = hstack([self.basictable,subtable])
         c0 = Column(self.HIdef,name='HIdef')
