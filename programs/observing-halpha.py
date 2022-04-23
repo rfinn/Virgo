@@ -90,7 +90,7 @@ from astroplan.plots import plot_airmass
 
 
 sys.path.append(homedir+'/github/Virgo/programs/')
-import readtables
+import readtablesv2 as readtables
 
 
 ########################################
@@ -165,8 +165,9 @@ moretargets = True
 ######  READ IN DATA TABLES  #######
 ########################################
 
-
-v = readtables.vtables('/home/rfinn/research/Virgo/tables-north/v1/','vf_north_v1_')
+homedir = os.getenv("HOME")
+#v = readtables.vtables(homedir+'/research/Virgo/tables-north/v1/','vf_north_v1_')
+v = readtables.vtables(homedir+'/research/Virgo/tables-north/v2/','vf_v2_')
 v.read_all()
 
  

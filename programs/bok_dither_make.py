@@ -5,7 +5,7 @@ from astropy import units as u
 import numpy as np
 from matplotlib import pyplot as plt
 
-def bok_dither_make(objroot,ra,dec,dithsize = 60,nexp=1, nloop = 1,exptime = 120.0, filt = "r" ):
+def bok_dither_make(objroot,ra,dec,dithsize = 60,nexp=1, nloop = 1,exptime = 120.0, filt = "r",saveplot=True ):
 
     '''Written by Gregory Rudnick 10 March 2021
     
@@ -97,7 +97,8 @@ def bok_dither_make(objroot,ra,dec,dithsize = 60,nexp=1, nloop = 1,exptime = 120
     imfile = "dither_" + objroot + "_t" + str(exptime) + "_nexp" + str(nexp) + "_nloop" + str(nloop) + "_dsize" + str(dithsize) + "_filt_" + filt + ".png"
     for i in range(len(radithdeg)):
         ax.text(radithdeg[i],decdithdeg[i],i)
-    plt.savefig(imfile)
+    if saveplot:
+        plt.savefig(imfile)
     
     #convert to sexigesimal
     RAdithhms = Angle(radithdeg,unit='deg').to_string(unit=u.hour,sep='')

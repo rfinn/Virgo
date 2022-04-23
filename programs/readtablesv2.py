@@ -136,8 +136,11 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description ='Read in all virgo filament tables')
     parser.add_argument('--tabledir', dest = 'tabledir', default = '/home/rfinn/research/Virgo/tables-north/v2/', help = 'directory where tables are stored')
-    parser.add_argument('--tableprefix', dest = 'tableprefix', default = 'vf_v2_', help = 'prefix for tables; default is vf_north_v1')                               
+    parser.add_argument('--tableprefix', dest = 'tableprefix', default = 'vf_v2_', help = 'prefix for tables; default is vf_v2')                               
     args = parser.parse_args()
-    
+
+    if args.tabledir.startswith('/home/rfinn/'):
+        homedir = os.getenv("HOME")
+        args.tabledir = args.tabledir.replace('/home/rfinn',homedir)
     v = vtables(args.tabledir,args.tableprefix) 
     v.read_all()
