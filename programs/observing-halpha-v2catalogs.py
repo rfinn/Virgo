@@ -127,7 +127,7 @@ elif BOKrun:
     finding_chart_dir = os.path.join(outfile_directory,runid,'finding-charts','')
     if not os.path.exists(finding_chart_dir):
         os.mkdir(finding_chart_dir)
-    airmass_dir = os.path.join(outfile_directory,runid,'airmass','')
+    airmass_dir = os.path.join(outfile_directory,runid,'airmassp2','')
     if not os.path.exists(airmass_dir):
         os.mkdir(airmass_dir)
     #telescope_run = '2021Mar/BOK-2021Mar-'
@@ -499,8 +499,9 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     else:
         gals_in_fov="VFIDs:"
         for i,g in enumerate(galnames):
-            
-            if i < len(galnames)-1:
+            if (i == 8) | (i == 16) | (i == 24):
+                gals_in_fov += "{},\n".format(g.replace('VFID',""))
+            elif i < len(galnames)-1:
                 gals_in_fov += "{},".format(g.replace('VFID',""))
             else:
                 gals_in_fov += "{}".format(g.replace('VFID',""))
@@ -1076,13 +1077,17 @@ ha_detect = v.main['HAobsflag'] & v.main['HAflag']
 # also selecting galaxies there were within a prior Halpha image, but they were not
 # at the peak of the transmission curve (below 66% transmission)
 # this cut is kind of arbitrary.  Really, you would like to keep the correction to 10-20%
-need_obs = (v.main['COflag'] & ~v.main['HAobsflag']) | (v.main['HAobsflag'] & (v.ha['FILT_COR'] > 1.5))
+need_obs = (v.main['COflag'] & ~v.main['HAobsflag']) \
+  | (v.main['HAobsflag'] & v.main['COflag'] & (v.ha['FILT_COR'] > 1.2) )
 
 print('number of CO sources that still need observing = {}'.format(sum(need_obs)))
 if BOKrun:
     vrflag = v.main['vr'] > 2000. # prioritize galaxies beyond INT filter
+    # ran out of sources, so moving vel cut down
+    vrflag = (v.main['vr'] > 1600.) &  (v.main['vr'] <= 2000.)
     need_obs = need_obs & vrflag
 
+#need_obs = need_obs
 print('number of CO sources that still need observing w/vr>2000 = {}'.format(sum(need_obs)))    
 HIflag = v.main['A100flag']
 
@@ -1177,7 +1182,11 @@ bok_duplicates = ['VFID1683',\
 #                  'VFID3457','VFID3459','VFID4835','VFID6132',\
 #                  'VFID6379','VFID6406','VFID6438','VFID101'\
 #                  ]
-    
+
+
+# redifining bok_duplicates_Apr2022
+bok_duplicates_Apr2022 = ['VFID2766','VFID1955','VFID1956','VFID0603','VFID0611','VFID0569']
+bok_duplicates = bok_duplicates_Apr2022
 # set observe flag to false for vf in bok_duplicates:
 for vf in bok_duplicates:
     flag = v.main['VFID_V1'] == vf
@@ -1190,7 +1199,8 @@ for vf in bok_duplicates:
         print(vf)
         sys.exit()
 
-print('after removing galaxies that were in FOV of main targets from bok mar/apr runs: ',sum(obs_flag))
+#print('after removing galaxies that were in FOV of main targets from bok mar/apr runs: ',sum(obs_flag))
+print('after removing galaxies that were in FOV of main targets from bok Apr 2022 runs: ',sum(obs_flag))
 
 
 '''
@@ -1278,7 +1288,7 @@ pointing_id = pointing_id[sorted_indices]
 pointing_id_v2 = pointing_id_v2[sorted_indices]
 pointing_mag = pointing_mag[sorted_indices]
 pointing_vr = pointing_vr[sorted_indices]
-print('testing, pointing_id[4] = {}'.format(pointing_id[4]))
+#print('testing, pointing_id[4] = {}'.format(pointing_id[4]))
 # keep track of both v1 and v2 VFIDs - ugh
 vfdict = dict((a,b) for a,b in zip(pointing_id,np.arange(len(pointing_id))))
 vfdict_v2 = dict((a,b) for a,b in zip(pointing_id_v2,np.arange(len(pointing_id))))
@@ -1410,9 +1420,11 @@ offsets_INT = {#84889:[3.,2.],
 # shifts in arcmin
 offsets_BOK = {'VFID0377':[-10,0],\
                'VFID0422':[10,2],\
+               'VFID0483':[-5,0],\
                'VFID0501':[0,-5],\
                'VFID0520':[0,-6],\
                'VFID0603':[-7,-1],\
+               'VFID0607':[0,-10],\
                'VFID0651':[-2,-9],\
                'VFID0638':[15,5],\
                'VFID0720':[-5,-11],\
@@ -1432,18 +1444,22 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID1573':[18,-25],\
                'VFID1728':[5,0],\
                'VFID1756':[5,-5],\
+               'VFID1791':[7,-27],\
                'VFID1819':[9,10],\
                'VFID1821':[10,-17],\
                'VFID1832':[0,9],\
                'VFID1901':[14,-5],\
-               'VFID1944':[9,-9],\
+               'VFID1944':[8,-10],\
                'VFID1956':[0,-4],\
+               'VFID1979':[10,-2],\
                'VFID2068':[10,-3],\
+               'VFID2078':[0,2],\
                'VFID2098':[0,-10],\
-               'VFID2162':[-3,-7],\
+               'VFID2162':[5,-10],\
                'VFID2171':[-6,-7],\
                'VFID2259':[0,-7],\
                'VFID2303':[25,-15],\
+               'VFID2348':[-1,-12],\
                'VFID2357':[2,-5],\
                'VFID2368':[15,2],\
                'VFID2484':[16,-6],\
@@ -1452,9 +1468,10 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID2593':[7,-8.5],\
                'VFID2601':[17,6],\
                'VFID2621':[2,3],\
-               'VFID2661':[2,-9],\
+               'VFID2622':[5,-8],\
+               'VFID2661':[3,-15],\
                'VFID2704':[12,4],\
-               'VFID2762':[5,1.5],\
+               'VFID2762':[10,-12],\
                'VFID2797':[8,0],\
                'VFID2821':[10,0],\
                'VFID2947':[8,-10],\
@@ -1462,20 +1479,22 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID3054':[10,-10],\
                'VFID3098':[10,0],\
                'VFID3106':[7,0],\
-               'VFID3119':[-3,0],\
+               'VFID3119':[3,-10],\
+               'VFID3248':[7,-8],\
                'VFID3272':[18,-8],\
+               'VFID3287':[6,-12],\
                'VFID3299':[29,5],\
-               'VFID3391':[10,-10],\
+               'VFID3391':[10,-12],\
                'VFID3454':[14,-6],\
                'VFID3451':[-12,-12],\
                'VFID3459':[8,-7],\
-               'VFID3598':[-4,-10],\
+               'VFID3598':[-32,-11],\
                'VFID3714':[12,-9],\
                'VFID3780':[15,8],\
-               'VFID3948':[10,0],\
-               'VFID4025':[10,0],\
-               'VFID4257':[13,0],\
-               'VFID4279':[5,-8],\
+               'VFID3948':[10,-10],\
+               'VFID4025':[10,-10],\
+               'VFID4257':[13,4],\
+               'VFID4279':[5,-29],\
                'VFID4796':[20,0],\
                'VFID4894':[14,4],\
                'VFID5541':[15,3],\
@@ -1485,20 +1504,21 @@ offsets_BOK = {'VFID0377':[-10,0],\
                'VFID5981':[20,-2],\
                'VFID6042':[15,-13],\
                'VFID6065':[2,12],\
-               'VFID6115':[62,-8],\
+               'VFID6115':[6,-44.5],\
                'VFID6127':[15,7],\
                'VFID6165':[20,-13],\
                'VFID6253':[15,4],\
-               'VFID6293':[8,-5],\
-               'VFID6305':[0,5],\
+               'VFID6293':[24.5,-7],\
+               'VFID6305':[-25,-10],\
                'VFID6369':[54.,-6.5],\
                #'VFID6397':[40,5],\
                'VFID6406':[8,-4],\
                'VFID6425':[-1,3],\
                'VFID6426':[50,3],\
-               'VFID6503':[50,12],\
-               'VFID6599':[10,12],\
-               'VFID6620':[0,10],\
+               #'VFID6503':[50,12],\
+               'VFID6503':[-20,-24],\
+               'VFID6599':[13,-10],\
+               'VFID6620':[14,-10],\
                #'VFID2911':[11.5,-7],\
                # for alma proposal
                'VFID2911':[7,-11],\
