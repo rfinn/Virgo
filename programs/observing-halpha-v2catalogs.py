@@ -99,15 +99,17 @@ import readtablesv2 as readtables
 ###### otherwise, set to False
 ########################################
 
-INGrun=False
-HDIrun = True
+INGrun=True
+# if looking for extra targets at the end of the night
+# for May 2022 INT run
+extraTargets = True
 
 ########################################
 ###### FOR BOK RUN              
 ###### set BOKrun to True
 ###### otherwise, set to False
 ########################################
-BOKrun = True
+BOKrun = False
 HDIrun = False
 
 
@@ -120,26 +122,29 @@ HDIrun = False
 if INGrun:
     telescope_run = '2019May/INT-2019May-227filter-'
     telescope_run = '2019May/INT-2019May-197filter-'
+    telescope_run = '2022May/INT-2022May-197filter-'
+    runid = '2022May'
 elif BOKrun:
-    runid = '2021Mar'
-    runid = '2021Apr'
-    runid = '2022Apr'
-    finding_chart_dir = os.path.join(outfile_directory,runid,'finding-charts','')
-    if not os.path.exists(finding_chart_dir):
-        os.mkdir(finding_chart_dir)
-    airmass_dir = os.path.join(outfile_directory,runid,'airmassp2','')
-    if not os.path.exists(airmass_dir):
-        os.mkdir(airmass_dir)
     #telescope_run = '2021Mar/BOK-2021Mar-'
     #telescope_run = '2021Apr/BOK-2021Apr-'
     telescope_run = '2022Apr/BOK-2022Apr-'    
     #telescope_run = '2021Apr/INT-2019May-197filter-'
+    runid = '2021Mar'
+    runid = '2021Apr'
+    runid = '2022Apr'
 else:
     telescope_run = '2019June/MLO-2019June-'
     telescope_run = 'KPNO-2020Feb-'
     #telescope_run = '2019May/MLO-2019May-'
     run = '/2020Feb/'
     outfile_directory = outfile_directory+run
+
+finding_chart_dir = os.path.join(outfile_directory,runid,'finding-charts','')
+if not os.path.exists(finding_chart_dir):
+    os.mkdir(finding_chart_dir)
+airmass_dir = os.path.join(outfile_directory,runid,'airmassp2','')
+if not os.path.exists(airmass_dir):
+    os.mkdir(airmass_dir)
 
 outfile_prefix = outfile_directory+telescope_run
 
@@ -433,7 +438,10 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
     fits.writeto('latestim.fits',xout[0][0].data,header=b.header,overwrite=True)
     if ING:
         # add footprint of WFC chips
-        plot_INT_footprint(center_ra,center_dec)
+        print('######################')
+        print('adding footprint of WFC')
+        print('pointin center coords = ',center_ra,center_dec)
+        plot_INT_footprint(center_ra,center_dec,header=b.header)
     elif MLO:
         delta_arcmin = 13.
         rect= plt.Rectangle((center_ra-0.5*delta_imagex,center_dec-0.5*delta_imagey), delta_arcmin/60., delta_arcmin/60.,fill=False, color='k')
@@ -444,7 +452,7 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
         plt.gca().add_artist(rect)
     elif BOK:
         plot_BOK_footprint(center_ra,center_dec,header=b.header)
-    #add_cameras()
+     #add_cameras()
     # find galaxies on FOV
     #for MLO plot galaxies outside the field of view to help with tweaking the pointing
     if MLO:
@@ -506,49 +514,159 @@ def finding_chart(npointing,delta_image = .25,offset_ra=0.,offset_dec=0.,plotsin
             else:
                 gals_in_fov += "{}".format(g.replace('VFID',""))
                                             
-        plt.title('Pointing {}: {}\n{}'.format(pointing_id[npointing],pos.to_string('hmsdms'),gals_in_fov))
+        plt.title('Pointing {}({}): {}\n{}'.format(pointing_id[npointing],pointing_filament[npointing],pos.to_string('hmsdms'),gals_in_fov))
     plt.xlabel('RA (deg)')
     plt.ylabel('DEC (deg)')
     #plt.gca().invert_xaxis()
     if plotsingle:
         plt.savefig(finding_chart_dir+'-Pointing-{}.png'.format(pointing_id[npointing]))
     return center_ra, center_dec
-def plot_INT_footprint(center_ra,center_dec):
+def plot_INT_footprint(center_ra,center_dec,header=None):
+
+    hwcs = WCS(header)
+    # convert ra and dec of bottom left corner of ccd to x and y pixel values
+    centerx,centery = hwcs.wcs_world2pix(center_ra,\
+                                         center_dec,1)
+    plt.plot(centerx,centery,'rx')
+    
     #using full detector sizes for now because 
-    detector_dra = 4100.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
-    detector_ddec = 2048.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+    detector_x_deg = 4100.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+    detector_y_deg = 2048.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+
+    guide_dx,guide_dy = [-7/60/header['CDELT1'], 7/60/header['CDELT2']]
+
+    detector_dra = convert_angle_2ra(detector_x_deg,center_dec)
+    detector_ddec = detector_y_deg
+    #chip order is
+    # 4, 3, 1, 2(side chip), guide camera
+    x_offsets = [0,\
+                 (-1*9.5/3600.),\
+                 (3.18/3600.),\
+                 (-23.8/3600.),\
+                 (-(3.18+649.9)/3600.)+ detector_dra]
+                         
+    
+
+    y_offsets = [-1*detector_ddec/2.,\
+                 detector_ddec+17./3600-detector_ddec/2.,\
+                 -1*detector_ddec-22.7/3600.-detector_ddec/2.,\
+                 detector_ddec/2.-detector_x_deg-19.2/3600.,\
+                 -2*detector_ddec-(22.7+98.1)/3600.]
+
+    left_bottom_x = center_ra + -1*detector_dra/2 + x_offsets
+    left_bottom_y = center_dec + y_offsets
+
+    dra = [detector_x_deg,\
+          detector_x_deg,\
+          detector_x_deg,\
+          detector_x_deg,\
+          guide_dx]
+
+    ddec = [detector_y_deg,\
+            detector_y_deg,\
+            detector_y_deg,\
+            detector_y_deg,\
+            guide_dy]
+
+    angles = [0,0,0,-90,0]
+    
     # draw footprint of chip 4
-    rect= plt.Rectangle((center_ra-detector_dra/2.,center_dec-detector_ddec/2.), detector_dra, detector_ddec,fill=False, color='k')
+    #detector_dra = detector_ra_width
+    for i in range(4):
+                         
+        box_lower_x,box_lower_y = hwcs.wcs_world2pix(left_bottom_x[i],\
+                                                     left_bottom_y[i],\
+                                                     1)
+        dx = dra[i]/header['CDELT1']#/np.cos(np.radians(header['CRVAL2']))
+        dy = ddec[i]/header['CDELT2']#/np.cos(np.radians(header['CRVAL2']))
+        rect= plt.Rectangle((box_lower_x,box_lower_y), dx, dy,angle=angles[i],fill=False, color='k')
+        plt.gca().add_artist(rect)
+
+    
+    # draw footprint of chip 3
+    # assuming chip 3 is NORTH and a smidge WEST of chip 4
+
+    # draw footprint of chip 1
+    # assuming chip 1 is SOUTH and a smidge EAST of chip 4
+    
+
+    # draw footprint of chip 2
+    # assuming chip 2 is WEST of chip 4
+    
+
+    # adding guide camera
+    # hard to explain
+    #offset_ra =  # hard to explain
+    
+
+def plot_INT_footprint_old(center_ra,center_dec,header=None):
+
+    hwcs = WCS(header)
+    # convert ra and dec of bottom left corner of ccd to x and y pixel values
+    centerx,centery = hwcs.wcs_world2pix(center_ra,\
+                                         center_dec,1)
+    plt.plot(centerx,centery,'rx')
+    
+    #using full detector sizes for now because 
+    detector_x_deg = 4100.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+    detector_ddec = 2048.*0.33/3600. # 2154 pixels * 0.33"/pix, /3600 to get deg
+
+    detector_dra = convert_angle_2ra(detector_x_deg,center_dec)
+    detector_dra = detector_x_deg
+    # draw footprint of chip 4
+    #detector_dra = detector_ra_width
+    box_lower_x,box_lower_y = hwcs.wcs_world2pix(center_ra-detector_dra/2.,\
+                                                 center_dec-detector_ddec/2.,1)
+    dx = detector_dra/header['CDELT1']#/np.cos(np.radians(header['CRVAL2']))
+    dy = detector_ddec/header['CDELT2']#/np.cos(np.radians(header['CRVAL2']))
+    rect= plt.Rectangle((box_lower_x,box_lower_y), dx, dy,fill=False, color='k')
     plt.gca().add_artist(rect)
+
+    
     # draw footprint of chip 3
     # assuming chip 3 is NORTH and a smidge WEST of chip 4
     offset_dec = detector_ddec+17./3600. # 17 arcsec gap in RA between 
-    offset_ra = -9.5/3600. # 9.5 arcsec offset toward N
-    rect= plt.Rectangle((center_ra+offset_ra-detector_dra/2.,center_dec+offset_dec-detector_ddec/2.), detector_dra, detector_ddec,fill=False, color='k')
+    offset_ra = -1*9.5/3600. # 9.5 arcsec offset toward N
+    box_lower_x,box_lower_y = hwcs.wcs_world2pix(center_ra+offset_ra-detector_dra/2.,\
+                                                 center_dec+offset_dec-detector_ddec/2.,\
+                                                 1)
+    rect= plt.Rectangle((box_lower_x,box_lower_y), dx, dy,fill=False, color='k')
     plt.gca().add_artist(rect)
 
     # draw footprint of chip 1
     # assuming chip 1 is SOUTH and a smidge EAST of chip 4
     offset_dec = -1*detector_ddec-22.7/3600. # 17 arcsec gap in RA between 
     offset_ra = +3.18/3600. # 9.5 arcsec offset toward N
-    rect= plt.Rectangle((center_ra+offset_ra-detector_dra/2.,center_dec+offset_dec-detector_ddec/2.), detector_dra, detector_ddec,fill=False, color='k')
+    box_lower_x,box_lower_y = hwcs.wcs_world2pix(center_ra+offset_ra-detector_dra/2.,\
+                                                 center_dec+offset_dec-detector_ddec/2.,\
+                                                 1)
+    rect= plt.Rectangle((box_lower_x,box_lower_y), dx, dy,fill=False, color='k')
     plt.gca().add_artist(rect)
+    
 
     # draw footprint of chip 2
     # assuming chip 2 is WEST of chip 4
     offset_dec = detector_ddec/2.-detector_dra-19.2/3600. # hard to explain
     offset_ra =  -.5*detector_dra-23.8/3600.# hard to explain
     # this chip is rotated 90 deg, so detecter_dra and detector_ddec are interchanged
-    rect= plt.Rectangle((center_ra+offset_ra,center_dec+offset_dec), -1.*detector_ddec, detector_dra,fill=False, color='k')
+    box_lower_x,box_lower_y = hwcs.wcs_world2pix(center_ra+offset_ra,\
+                                                 center_dec+offset_dec,\
+                                                 1)
+    rect= plt.Rectangle((box_lower_x,box_lower_y), dy, -1*dx,fill=False, color='k')
     plt.gca().add_artist(rect)
+    
 
     # adding guide camera
     offset_dec = -2*detector_ddec-(22.7+98.1)/3600. # hard to explain
     offset_ra =  detector_dra/2-(3.18+649.9)/3600.# hard to explain
-    # this chip is rotated 90 deg, so detecter_dra and detector_ddec are interchanged
-    rect= plt.Rectangle((center_ra+offset_ra,center_dec+offset_dec), -7./60., 7./60,fill=False, color='k')
+    box_lower_x,box_lower_y = hwcs.wcs_world2pix(center_ra+offset_ra,\
+                                                 center_dec+offset_dec,\
+                                                 1)
+    rect= plt.Rectangle((box_lower_x,box_lower_y), -7/60/header['CDELT1'], 7/60/header['CDELT2'],fill=False, color='k')
+    
     plt.gca().add_artist(rect)
     
+
 
 def plot_BOK_footprint(center_ra,center_dec,header=None):
     #using full detector sizes for now because
@@ -783,6 +901,8 @@ def airmass_plotsv2(pointing_id,KPNO=False,ING=False,MLO=False):
         # for run starting 2019-May-29 at INT
         start_time = Time('2019-05-29 19:00:00') # INT is on UTC
         end_time = Time('2019-05-30 07:00:00')
+        start_time = Time('2022-05-03 19:00:00') # INT is on UTC
+        end_time = Time('2022-05-04 07:00:00')
 
 
 
@@ -1077,18 +1197,29 @@ ha_detect = v.main['HAobsflag'] & v.main['HAflag']
 # also selecting galaxies there were within a prior Halpha image, but they were not
 # at the peak of the transmission curve (below 66% transmission)
 # this cut is kind of arbitrary.  Really, you would like to keep the correction to 10-20%
-need_obs = (v.main['COflag'] & ~v.main['HAobsflag']) \
-  | (v.main['HAobsflag'] & v.main['COflag'] & (v.ha['FILT_COR'] > 1.2) )
 
-print('number of CO sources that still need observing = {}'.format(sum(need_obs)))
 if BOKrun:
+    need_obs = (v.main['COflag'] & ~v.main['HAobsflag']) \
+        | (v.main['HAobsflag'] & v.main['COflag'] & (v.ha['FILT_COR'] > 1.2) )
     vrflag = v.main['vr'] > 2000. # prioritize galaxies beyond INT filter
     # ran out of sources, so moving vel cut down
     vrflag = (v.main['vr'] > 1600.) &  (v.main['vr'] <= 2000.)
     need_obs = need_obs & vrflag
+    print('number of CO sources that still need observing w/vr>2000 = {}'.format(sum(need_obs)))    
+elif INGrun:
+    need_obs = (v.main['COflag'] & ~v.main['HAobsflag']) 
+    vrflag = v.main['vr'] < 2000. # prioritize galaxies beyond INT filter
+    need_obs = need_obs & vrflag
+if extraTargets:
+    need_obs = (v.main['vr'] < 1900.) & v.main['A100flag'] & (v.main['RA'] > 170.) & (v.env['filament_member']) & (v.env['filament'] != 'W-M_Sheet') &  ~v.main['HAobsflag'] & ~v.main['COflag'] & (np.log10(v.nsav0['MASS']) > 8.75)
+    #vrflag =  # prioritize galaxies beyond INT filter
+    #need_obs = need_obs & vrflag
 
+need_obs[v.main['VFID_V1'] == 'VFID3025'] = True
+print('number of CO sources that still need observing = {}'.format(sum(need_obs)))
+    
 #need_obs = need_obs
-print('number of CO sources that still need observing w/vr>2000 = {}'.format(sum(need_obs)))    
+
 HIflag = v.main['A100flag']
 
 obs_flag = need_obs
@@ -1276,6 +1407,7 @@ pointing_id = v.main['VFID_V1'][obs_flag]
 pointing_id_v2 = v.main['VFID'][obs_flag]
 pointing_mag = 22.5 - 2.5 * np.log10(v.nsav0['NMGY'][:,4][obs_flag])
 pointing_vr = v.main['vr'][obs_flag]
+pointing_filament = v.env['filament'][obs_flag]
 
 print('after cutting table to keep remaining targets: ',len(pointing_ra))
 
@@ -1288,6 +1420,7 @@ pointing_id = pointing_id[sorted_indices]
 pointing_id_v2 = pointing_id_v2[sorted_indices]
 pointing_mag = pointing_mag[sorted_indices]
 pointing_vr = pointing_vr[sorted_indices]
+pointing_filament = pointing_filament[sorted_indices]
 #print('testing, pointing_id[4] = {}'.format(pointing_id[4]))
 # keep track of both v1 and v2 VFIDs - ugh
 vfdict = dict((a,b) for a,b in zip(pointing_id,np.arange(len(pointing_id))))
@@ -1414,8 +1547,35 @@ offsets_INT = {#84889:[3.,2.],
 
 
 ##################################################
+###### INT OFFSETS
+##################################################
+
+
+offsets_INT = {'VFID0957':[0,0],\
+               'VFID1010':[-8,-4],\
+               'VFID1168':[5,0],\
+               'VFID1213':[-10,0],\
+               'VFID1277':[0,-3],\
+               'VFID1855':[5,2],\
+               'VFID2171':[-4,-2],\
+               'VFID2935':[4,-8],\
+               'VFID3025':[0,8],\
+               'VFID3098':[0,0],\
+               'VFID3237':[-1,0],\
+               'VFID4086':[8,12],\
+               'VFID5193':[3,3],\
+               'VFID5922':[6,-9],\
+               'VFID4037':[17,2.2],\
+               'VFID4745':[-6,-4],\
+               'VFID5966':[-4,3.5],\
+               'VFID5981':[9,0],\
+               'VFID6620':[4,-2],\
+}
+
+##################################################
 ###### 90PRIME OFFSETS
 ##################################################
+
     
 # shifts in arcmin
 offsets_BOK = {'VFID0377':[-10,0],\

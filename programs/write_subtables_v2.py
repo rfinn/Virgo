@@ -1124,6 +1124,45 @@ class catalog:
         
 
         print('after matching to spring 2021, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
+
+        # read in the list of targets from BOK 2022 Apr run
+        htab = Table.read(homedir+'/github/Virgo/observing/ha-observed-bok-22A.csv',format='csv')
+        print("BOK 22A table colnames = ",htab.colnames)
+
+        for i,v in enumerate(htab['VFID_V1']):
+            #idnumber = v.replace('VFID','')
+            #print(idnumber)
+            flag =(self.hatable['VFID_V1'] == v)
+            if sum(flag) > 0:
+                #print('found match to bok obs target')
+                self.hatable['HAobsflag'][flag] = True
+                #print(self.hatable['VFID'][flag],self.hatable['HAobsflag'][flag])
+            else:
+                print('no match to bok obs target ',v)
+        
+
+        print('after matching to spring 2022, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
+        
+
+        # read in the list of targets from BOK 2022 Apr run
+        htab = Table.read(homedir+'/github/Virgo/observing/ha-observed-int-may-22A.csv',format='csv')
+        print("INT MAY 22A table colnames = ",htab.colnames)
+
+        for i,v in enumerate(htab['VFID_V1']):
+            #idnumber = v.replace('VFID','')
+            #print(idnumber)
+            flag =(self.hatable['VFID_V1'] == v)
+            if sum(flag) > 0:
+                #print('found match to bok obs target')
+                self.hatable['HAobsflag'][flag] = True
+                #print(self.hatable['VFID'][flag],self.hatable['HAobsflag'][flag])
+            else:
+                print('no match to bok obs target ',v)
+        
+
+        print('after matching to spring 2022, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
+        
+        
         print('writing hafile')
         #fits.writeto(outdir+file_root+'ha.fits',np.array(self.hatable),overwrite=True)
         self.hatable.write(outdir+file_root+'ha.fits',format='fits',overwrite=True)
