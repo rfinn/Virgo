@@ -118,6 +118,8 @@ class magphys_sed():
     def __init__(self,galid,wavelengths):
         self.sed_file = '{}.sed'.format(galid)
         self.fit_file = '{}.fit'.format(galid)
+        self.sed_file = '{}.s'.format(galid)
+        self.fit_file = '{}.f'.format(galid)
         self.lambda_eff = np.array(wavelengths,'d')
         self.galid = galid
     def plot_sed(self,plot_unattenuated=True):
@@ -323,11 +325,11 @@ class magphys_sed():
                    'Ld_tot','Tc_ISM','Tw_BC','xi_C_tot','xi_W_tot',\
                    'tau_V_ISM','Mdust','SFR']
         plt.figure(figsize=(8,6))
-        plt.subplots_adjust(wspace=.1,hspace=.8)
+        plt.subplots_adjust(wspace=.08,hspace=.25)
         for i,h in enumerate(allhist):
             plt.subplot(3,5,i+1)
             t = plt.fill_between(h[0],h[1])
-            plt.xlabel(allhist_names[i])
+            plt.text(0.05,0.85,allhist_names[i],transform=plt.gca().transAxes,horizontalalignment='left')
             plt.ylim(0,1)
             if (i == 0) | (i == 5) | (i == 10) :
                 plt.yticks(np.linspace(0,1,3))
