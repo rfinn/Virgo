@@ -31,7 +31,7 @@ Nfilters = os.path.join(legdir,'legacyFiltersN.dat')
 Sfilters = os.path.join(legdir,'legacyFiltersS.dat')
 
 
-outdir = os.path.join(os.getcwd(),'output')
+outdir = os.path.join(os.getcwd(),'output/')
 #homedir+'/research/Virgo/magphysParallel/'
 #outdir = legdir+'/maphysParallel/'
 if not(os.path.exists(outdir)):
