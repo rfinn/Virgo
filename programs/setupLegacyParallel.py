@@ -25,10 +25,10 @@ homedir = os.getenv("HOME")
 legdir = homedir+'/research/Virgo/legacy-phot/'
 
 legdir = os.getcwd()
-Nphot = legdir+'magphysInputN.dat'
-Sphot = legdir+'magphysInputS.dat'
-Nfilters = legdir+'legacyFiltersN.dat'
-Sfilters = legdir+'legacyFiltersS.dat'
+Nphot = os.path.join(legdir,'magphysInputN.dat')
+Sphot = os.path.join(legdir,'magphysInputS.dat')
+Nfilters = os.path.join(legdir,'legacyFiltersN.dat')
+Sfilters = os.path.join(legdir,'legacyFiltersS.dat')
 
 
 outdir = os.path.join(os.getcwd(),'output')
