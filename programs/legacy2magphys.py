@@ -33,8 +33,8 @@ args = parser.parse_args()
 
 filters = ['FUV','NUV','G','R','Z','W1','W2','W3','W4']
 # filter IDS from magphys filters.log
-filter_ids_S = ['123','124','426','427','429','280','281','282','283']
-filter_ids_N = ['123','124','551','552','553','280','281','282','283']
+filter_ids_S = ['123','124','426','427','429','280','281','282','414']
+filter_ids_N = ['123','124','551','552','553','280','281','282','414']
 
 writeFilterFiles = False
 if writeFilterFiles:
@@ -78,9 +78,9 @@ if writeFilterFiles:
         s = '{}   {}    {}    {}\n'.format(filters[i],all_effective_wavelengths[i],filter_ids_N[i],1)
         outf.write(s)
     outf.close()
-    # WRITE OUT FILTERS.DAT
-    outfile = '/home/rfinn/research/Virgo/legacy-phot/legacyFiltersS.dat'
-    outf = open(outfile,'w')
+# WRITE OUT FILTERS.DAT
+outfile = '/home/rfinn/research/Virgo/legacy-phot/legacyFiltersS.dat'
+outf = open(outfile,'w')
     outf.write('#name  lambda_eff   filter_id   fit?\n')
     for i,f in enumerate(filters):
         s = '{}   {}    {}    {}\n'.format(filters[i],all_effective_wavelengths[i],filter_ids_S[i],1)

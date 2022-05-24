@@ -37,6 +37,7 @@ class vtables:
         # these aren't updated for v2 yet
         self.read_env()
         self.read_filaments()
+        self.read_magphys()
         #self.read_tempel()        
         #self.read_rphot()
         #self.read_legacy()        
@@ -131,6 +132,14 @@ class vtables:
         MZ = z - const
         newtab = Table([g,r,z,MG,MR,MZ],names=['g','r','z','Mg','Mr','Mz'])
         self.dr9 = hstack([dr9,newtab])
+    def read_magphys(self):
+        ''' read in GC's env and BV envsummary table; store as self.env  '''
+        #tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0_Mr_max_-15_7.fits')
+        #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
+        #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
+        #self.env = hstack([tab1,tab2,tab3])
+        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_14-May-2022.fits')    
+        pass
                                  
 if __name__ == '__main__':
     import argparse

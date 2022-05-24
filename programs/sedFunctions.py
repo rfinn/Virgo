@@ -118,8 +118,8 @@ class magphys_sed():
     def __init__(self,galid,wavelengths):
         self.sed_file = '{}.sed'.format(galid)
         self.fit_file = '{}.fit'.format(galid)
-        self.sed_file = '{}.s'.format(galid)
-        self.fit_file = '{}.f'.format(galid)
+        #self.sed_file = '{}.s'.format(galid)
+        #self.fit_file = '{}.f'.format(galid)
         self.lambda_eff = np.array(wavelengths,'d')
         self.galid = galid
     def plot_sed(self,plot_unattenuated=True):
@@ -147,8 +147,11 @@ class magphys_sed():
         plt.ylabel(r'$log(\lambda L_\lambda/L_\odot) $',fontsize=14)        
         plt.legend()#loc='lower left')
         s = 'VFID{}: logMstar = {:.2f}, logSFR = {:.2f}'.format(self.galid,np.log10(self.mstar),np.log10(self.sfr))
-        plt.title(s,fontsize=14)
-        outfile = 'VFID{}-magphys-sed.png'.format(self.galid)
+        plt.title(s.replace('VFIDVFID','VFID'),fontsize=14)
+        if self.galid.startswith('VFID'):
+            outfile = '{}-magphys-sed.png'.format(self.galid)
+        else:
+            outfile = 'VFID{}-magphys-sed.png'.format(self.galid)
         
         plt.savefig(outfile)
     def plot_sed_noresidual(self,plot_unattenuated=True):
@@ -175,6 +178,7 @@ class magphys_sed():
         ax.set_xlabel(r'$Wavelength \ (\mu m) \ [observed \ frame]$',fontsize=20)
         plt.ylabel(r'$log(\lambda L_\lambda/L_\odot) $',fontsize=20)        
         plt.legend(['model','NGC3938','Predicted'],fontsize=16)#loc='lower left')
+        
         s = 'VFID{}: logMstar = {:.2f}, logSFR = {:.2f}'.format(self.galid,np.log10(self.mstar),np.log10(self.sfr))
         #plt.title(s,fontsize=14)
         outfile = 'VFID{}-magphys-sed-noresidual.png'.format(self.galid)
@@ -336,6 +340,8 @@ class magphys_sed():
             else:
                 plt.yticks([])
 
-    
-        outfile = 'VFID{}-magphys-pdfs.png'.format(self.galid)
+        if self.galid.startswith('VFID'):
+            outfile = '{}-magphys-pdfs.png'.format(self.galid)
+        else:
+            outfile = 'VFID{}-magphys-pdfs.png'.format(self.galid)
         plt.savefig(outfile)
