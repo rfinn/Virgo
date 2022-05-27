@@ -23,17 +23,17 @@ class vtables:
         pass
     def read_all(self):
         self.read_main()
+        self.read_a100()
+        self.read_agc()        
+        self.read_co()
+        self.read_halpha()
         self.read_hyperleda()
+        self.read_ned()
         self.read_nsav0()
         self.read_nsav1()
         self.read_steer17()
         self.read_z0mgs()
-        self.read_ned()
-        self.read_a100()
-        self.read_agc()
-        self.read_co()
         self.read_unwise()        
-        self.read_halpha()
         # these aren't updated for v2 yet
         self.read_env()
         self.read_filaments()
@@ -43,7 +43,7 @@ class vtables:
             print("WARNING: magphys file not found (this is probably ok)")
         #self.read_tempel()        
         #self.read_rphot()
-        #self.read_legacy()        
+        self.read_legacy()        
     def read_main(self):
         ''' read in main table; store as self.main  '''
         self.main = Table.read(self.tabledir+self.tableprefix+'main.fits')
@@ -123,7 +123,7 @@ class vtables:
         ''' read in rband phot  '''
         self.rphot = Table.read(self.tabledir+self.tableprefix+'r_photometry.fits')
     def read_legacy(self):
-        ''' read in rband phot  '''
+        ''' read in legacy dr9 photometry file; store as self.dr9  '''
         dr9 = Table.read(self.tabledir+self.tableprefix+'legacy_dr9.fits')
         g = 22.5 - 2.5*np.log10(dr9['FLUX_G'])
         r = 22.5 - 2.5*np.log10(dr9['FLUX_R'])
@@ -136,7 +136,7 @@ class vtables:
         newtab = Table([g,r,z,MG,MR,MZ],names=['g','r','z','Mg','Mr','Mz'])
         self.dr9 = hstack([dr9,newtab])
     def read_magphys(self):
-        ''' read in magphys; store as self.magphys  '''
+        ''' read in magphys table; store as self.magphys  '''
         #tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0_Mr_max_-15_7.fits')
         #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
         #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
