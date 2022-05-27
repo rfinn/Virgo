@@ -37,7 +37,10 @@ class vtables:
         # these aren't updated for v2 yet
         self.read_env()
         self.read_filaments()
-        self.read_magphys()
+        try:
+            self.read_magphys()
+        except FileNotFoundError:
+            print("WARNING: magphys file not found (this is probably ok)")
         #self.read_tempel()        
         #self.read_rphot()
         #self.read_legacy()        
@@ -86,9 +89,9 @@ class vtables:
         pass
                               
     def read_a100(self):
-        ''' read in ALFALFA 100 table; store as self.a100, self.a100sdss, self.a100unwise  '''
+        ''' read in ALFALFA 100 table; store as self.a100  '''
         self.a100 = Table.read(self.tabledir+self.tableprefix+'a100.fits')
-        self.a100sdss = Table.read(self.tabledir+self.tableprefix+'a100_sdssphot.fits')
+        #self.a100sdss = Table.read(self.tabledir+self.tableprefix+'a100_sdssphot.fits')
         #self.a100unwise = Table.read(self.tabledir+self.tableprefix+'a100_unwise.fits')
         # calculate HI deficiency
         # use the R90 petro
