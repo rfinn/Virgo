@@ -136,7 +136,7 @@ class vtables:
         newtab = Table([g,r,z,MG,MR,MZ],names=['g','r','z','Mg','Mr','Mz'])
         self.dr9 = hstack([dr9,newtab])
     def read_magphys(self):
-        ''' read in GC's env and BV envsummary table; store as self.env  '''
+        ''' read in magphys; store as self.magphys  '''
         #tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0_Mr_max_-15_7.fits')
         #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
         #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
