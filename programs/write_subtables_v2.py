@@ -1524,9 +1524,7 @@ class catalog:
         prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
         out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
         
-        alltables = ['main_env_prop_H0_74_0_Mr_max_-15_7.fits','main_finalenvironments.fits',
-                     'main_filament_membership_allgalaxies.fits',
-                     'main_Tempelgroups_infos.fits','matchTempel_groupinfo.fits']
+        alltables = ['main_Tempelgroups_infos.fits','matchTempel_groupinfo.fits']
 
         
         for tname in alltables:
