@@ -1121,7 +1121,7 @@ class catalog:
 
         # read in file with list of VFIDs that were observed
         # set HAobsflag to true for these galaxies
-        htab = Table.read(homedir+'/github/Virgo/observing/ha-observed-bok-21A.txt',format='ascii')
+        htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-bok-21A.txt',format='ascii')
         for i,v in enumerate(htab['VFID']):
             flag =(self.hatable['VFID_V1'] == v.rstrip())
             if sum(flag) > 0:
@@ -1135,7 +1135,7 @@ class catalog:
         print('after matching to spring 2021, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
 
         # read in the list of targets from BOK 2022 Apr run
-        htab = Table.read(homedir+'/github/Virgo/observing/ha-observed-bok-22A.csv',format='csv')
+        htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-bok-22A.csv',format='csv')
         print("BOK 22A table colnames = ",htab.colnames)
 
         for i,v in enumerate(htab['VFID_V1']):
@@ -1154,7 +1154,7 @@ class catalog:
         
 
         # read in the list of targets from BOK 2022 Apr run
-        htab = Table.read(homedir+'/github/Virgo/observing/ha-observed-int-may-22A.csv',format='csv')
+        htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-int-may-22A.csv',format='csv')
         print("INT MAY 22A table colnames = ",htab.colnames)
 
         for i,v in enumerate(htab['VFID_V1']):
