@@ -37,6 +37,7 @@ NOTES:
 
 '''
 import os
+import shutil
 import numpy as np
 import time
 import argparse
@@ -103,7 +104,7 @@ class catalog:
         # keeping NEDname for now b/c that is how I am matching some catalogs
         #self.basictable_wNED = self.cat['VFID','NEDname']
         #self.basictable = self.cat['VFID']
-
+        self.vfidtable = self.cat['VFID']
 
     def def_maintable(self):
         self.maintable = self.cat['VFID','RA','DEC','vr','objname','NSAID','NSAID_2','AGC','NEDname','HLflag','NSAflag','NSA0flag','A100flag','VFID_V1']
@@ -269,7 +270,7 @@ class catalog:
         self.nsa_v0_table()
         self.agc_table()        
         self.a100_table()
-        self.a100_sdss_table()
+        #self.a100_sdss_table()
 
         # V2 change
         # not including a100_unwise table
@@ -279,7 +280,15 @@ class catalog:
         self.ned_table() # NED input, ra, dec, and NEDname
         self.print_stats()
         self.convert_rphot_v1_2_v2()        
-        self.combine_env_v1_2_v2()        
+        self.combine_env_v1_2_v2()
+
+        # make names of filament spine files to be consistent with v2
+        # naming conventions
+        self.update_spine_filenames_v1_2_v2()
+
+        # fix table name and convert flag column from 0/1 to boolean
+        self.convert_kourchi_v1_2_v2()
+        
         #self.convert_v1_2_v2()
         self.merge_legacy_phot_tables()
         self.make_legacy_viewer_table()
@@ -1258,7 +1267,7 @@ class catalog:
         # colnames = self.cat.colnames[0:43]
         self.cat.rename_column('vopt_1','vopt')
         self.cat.rename_column('type_1','type')        
-        colnames = self.cat.colnames[1:43]
+        colnames = self.cat.colnames[1:44]
 
         self.write_table(colnames,outdir+file_root+'hyperleda.fits',format='fits')
         # write out HL columns in line-matched table
@@ -1302,14 +1311,28 @@ class catalog:
         # write out NSA columns in line-matched table
         colnames = self.cat.colnames[364:389]
         subtable = Table(self.cat[colnames])
-        newtable = hstack([self.basictable,subtable])
+        newtable = hstack([self.vfidtable,subtable])
         c0 = Column(self.HIdef,name='HIdef')
         c1 = Column(self.HIdef_flag,name='HIdef_flag')        
         c2 = Column(self.HIdef_bos,name='HIdef_bos')
         c3 = Column(self.HIdef_jones,name='HIdef_jon')
         c4 = Column(self.HIdef_jones_bytype,name='HIdef_bytype')        
+        c5 = Column(self.cat['logMstarTaylor'],name='logMstarTaylor')
+        newtable.add_columns([c0,c1,c2,c3,c4,c5])
+        sdsscolnames = self.cat.colnames[394:482]
+        subtable = Table(self.cat[sdsscolnames])
+        newtable = hstack([newtable,subtable])
 
-        newtable.add_columns([c0,c1,c2,c3,c4])
+        # columns to remove
+        remove_cols = ['lnLExp_r','lnLDeV_r','fracDev_g','fracDev_r','fracDev_i',\
+                       'agcnum','icode','pcode','ipcode',\
+                       'flags_u','flags_g','flags_r','flags_i','flags_z','flags',\
+                       'G_Shao','I_Shao','gmi_Shao',\
+                       'gamma_g','gamma_i']
+        for c in remove_cols:
+            newtable.remove_column(c)
+        
+        #newtable.add_columns(self.cat[sdsscolnames])
         newtable.write(outdir+file_root+'a100.fits',format='fits',overwrite=True)
 
     def a100_sdss_table(self):
@@ -1341,6 +1364,41 @@ class catalog:
         c1 = Column(NEDname_nospace,name='NEDname_nospace')
         newtable.add_column(c1)
         newtable.write(outdir+file_root+'nedquery.fits',format='fits',overwrite=True)
+    def update_spine_filenames_v1_2_v2(self):
+        ''' 
+        * read in v1 spine files and update filament names to remove Virgo 
+        * spines are kept in a subfolder of v2 tables
+
+        '''
+        inputfiles = glob.glob(homedir+'/research/Virgo/tables-north/spines/filament*.fits')
+        outdir = homedir+'/research/Virgo/tables-north/v2/spines/'
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+            
+        # remove Virgo from filename
+        for f in inputfiles:
+            spine_file = os.path.basename(f)
+            out_file = os.path.join(outdir,spine_file.replace("_Filament","").replace("Virgo_",""))
+            print('just checking, spine file = ',out_file)
+            shutil.copy(f,out_file)
+
+        # fix up all_filament_spines.fits as well
+        infile =homedir+'/research/Virgo/tables-north/spines/all_filament_spines.fits'
+        outfile = homedir+'/research/Virgo/tables-north/v2/spines/all_filament_spines.fits'
+        alltab = Table.read(infile)
+
+        # replace filament names
+        newfilname = []
+        for fname in alltab['filament']:
+            newfilname.append(f.replace('_Filament','').replace('Virgo_',''))
+        alltab.remove_column('filament')
+
+        c = Column(newfilname,name='filament')
+        alltab.add_column(c)
+        alltab.write(outfile,format='fits',overwrite=True)
+        
+        pass
+
 
     def write_table_v1(self,colnames,outfile,format=None,names=None):
         '''function for writing out a subset of columns into a new table.'''
@@ -1466,14 +1524,30 @@ class catalog:
         prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
         out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
         
-        alltables = ['main_env_prop_H0_74_0_Mr_max_-15_7.fits','main_finalenvironments.fits',
-                     'main_filament_membership_allgalaxies.fits',
-                     'main_Tempelgroups_infos.fits','matchTempel_groupinfo.fits']
+        alltables = ['main_Tempelgroups_infos.fits','matchTempel_groupinfo.fits']
 
         
         for tname in alltables:
             mytab = Table.read(prefix+tname)
-            mytab[self.v2keepflag].write(out_prefix+tname.replace('_main',''),format='fits',overwrite=True)
+            # cut table
+            mytab = mytab[self.v2keepflag]
+            # remove v1 VFIDs
+            mytab.remove_column('VFID')
+            # add v2 VFIDs in first columns
+            mytab.add_column(self.cat['VFID'],index=0)
+            mytab.write(out_prefix+tname.replace('main_',''),format='fits',overwrite=True)
+
+        # BV Kourchi table
+        # change name to include v2, and change last column from 0/1 to boolean
+        # I downloaded the input table from google drive v2 table
+        infile = '/home/rfinn/research/Virgo/tables-north/BV-kourchi-tables/vf_kourkchi_galaxies.fits'
+        ktab = Table.read(infile)
+        # convert Kflag to boolean
+        newflag = np.array(ktab['Kflag'],'bool')
+        ktab.remove_column('Kflag')
+        ktab.add_column(newflag,name='Kflag')
+        outfile = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_kourkchi_galaxies.fits'
+        ktab.write(outfile,format='fits',overwrite=True)
     def convert_rphot_v1_2_v2(self):
         # read in the v1 environment tables, remove bad sources, and save for v2
         prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
@@ -1483,7 +1557,14 @@ class catalog:
 
         for tname in alltables:
             mytab = Table.read(prefix+tname)
-            mytab[self.v2keepflag].write(out_prefix+tname.replace('_main',''),format='fits',overwrite=True)
+            # cut table
+            mytab = mytab[self.v2keepflag]
+            # remove v1 VFIDs
+            mytab.remove_column('VFID')
+            # add v2 VFIDs in first columns
+            mytab.add_column(self.cat['VFID'],index=0)
+            
+            mytab.write(out_prefix+tname.replace('main_',''),format='fits',overwrite=True)
     def combine_env_v1_2_v2(self):
         # read in the v1 environment tables, remove bad sources, and save for v2
         # also need to pare down the columns
@@ -1533,7 +1614,14 @@ class catalog:
         clustermemb.rename_column('mem','cluster_member')
 
         envtable = hstack([envcut,finalenvcut,filmembcut,clustermemb])
-        envtable[self.v2keepflag].write(out_prefix+'environment.fits',format='fits',overwrite=True)
+        # this table has v1 IDs - need to replace with v2
+        # but this table hasn't been cut to v2 length yet
+        envtable.remove_column('VFID')
+        # cut table
+        envtable = envtable[self.v2keepflag]
+        # add in v2 ids
+        envtable.add_column(self.cat['VFID'],index=0)
+        envtable.write(out_prefix+'environment.fits',format='fits',overwrite=True)
 
         # write out the filament distances in a separate table
         keepcols = []
@@ -1546,7 +1634,18 @@ class catalog:
         for n in keepcols:
             colnames.append(n.replace('_Filament','').replace('Virgo_',''))
         fildist = Table(filmemb[keepcols],names=colnames)
-        fildist[self.v2keepflag].write(out_prefix+'filament_distances.fits',format='fits',overwrite=True)
+        # this table has v1 IDs - need to replace with v2
+        # but this table hasn't been cut to v2 length yet
+        
+        #fildist.remove_column('VFID') # apparently this doesn't have VFID
+
+        
+        # cut table
+        fildist = fildist[self.v2keepflag]
+        # add in v2 ids
+        fildist.add_column(self.cat['VFID'],index=0)
+        
+        fildist.write(out_prefix+'filament_distances.fits',format='fits',overwrite=True)
         
         
 if __name__ == '__main__':
