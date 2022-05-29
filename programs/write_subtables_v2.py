@@ -292,6 +292,9 @@ class catalog:
         #self.convert_v1_2_v2()
         self.merge_legacy_phot_tables()
         self.make_legacy_viewer_table()
+
+        self.get_extinction()        
+        
     def print_stats(self):
         print('Number in sample = ',len(self.cat))
         print('Number with CO data = ',sum(self.coflag))
@@ -1646,6 +1649,17 @@ class catalog:
         fildist.add_column(self.cat['VFID'],index=0)
         
         fildist.write(out_prefix+'filament_distances.fits',format='fits',overwrite=True)
+    def get_extinction(self):
+        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'        
+        size = 2*np.ones(len(self.cat),'f')
+        irsa_input = Table([self.cat['RA'],self.cat['DEC'],size],names=['RA','DEC','size'])
+        irsa_input.write(homedir+'/research/Virgo/tables/v2/vf_v2_irsa_input.tbl',format='ipac',overwrite=True)
+
+        # once that is uploaded, download the results to:
+        infile = homedir+'/research/Virgo/tables/v2/vf_v2_irsa_extinction.tbl'
+        etab = Table.read(infile,format='ipac')
+        etab.add_column(self.cat['VFID'],index=0)
+        etab.write(out_prefix+'irsa_extinction.fits',format='fits',overwrite=True)
         
         
 if __name__ == '__main__':
