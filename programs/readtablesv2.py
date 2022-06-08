@@ -43,7 +43,8 @@ class vtables:
             print("WARNING: magphys file not found (this is probably ok)")
         #self.read_tempel()        
         #self.read_rphot()
-        self.read_legacy()        
+        self.read_legacy()
+        self.read_extinction()
     def read_main(self):
         ''' read in main table; store as self.main  '''
         self.main = Table.read(self.tabledir+self.tableprefix+'main.fits')
@@ -143,7 +144,13 @@ class vtables:
         #self.env = hstack([tab1,tab2,tab3])
         self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_03-Jun-2022.fits')    
         pass
-                                 
+
+    def read_extinction(self):
+        ''' read in extinction table '''
+        self.extinct = Table.read(self.tabledir+self.tableprefix+'extinction.fits')        
+        pass
+        
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description ='Read in all virgo filament tables')

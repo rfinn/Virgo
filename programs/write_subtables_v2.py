@@ -1650,6 +1650,15 @@ class catalog:
         
         fildist.write(out_prefix+'filament_distances.fits',format='fits',overwrite=True)
     def get_extinction(self):
+        '''
+        GOAL:
+        * get extinction coefficients for each galaxy
+
+        PROCEDURE:
+        * use extinction coefficients from Legacy (g-W4)
+        * use extinction coefficients from Wyder+2007 for GALEX
+        * get E(B-V) from irsa extiction
+        '''
         out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'        
         size = 2*np.ones(len(self.cat),'f')
         irsa_input = Table([self.cat['RA'],self.cat['DEC'],size],names=['RA','DEC','size'])
@@ -1658,8 +1667,24 @@ class catalog:
         # once that is uploaded, download the results to:
         infile = homedir+'/research/Virgo/tables/v2/vf_v2_irsa_extinction.tbl'
         etab = Table.read(infile,format='ipac')
+        self.etab = etab
+        print('length of etab = ',len(etab),len(self.cat['VFID']))
         etab.add_column(self.cat['VFID'],index=0)
-        etab.write(out_prefix+'irsa_extinction.fits',format='fits',overwrite=True)
+
+        
+        filters = ['FUV','NUV','G','R','Z','W1','W2','W3','W4']
+        
+        Rvalues = np.array([8.24, 8.20, 3.214, 2.165, 1.211, 0.184, 0.113, 0.0241, 0.00910],'d')
+
+        EBV_colnames = ['E_B_V_SandF','E_B_V_SFD']
+        for cname in EBV_colnames:
+            for i,f in enumerate(filters):
+                alambda = np.array(etab[cname])*Rvalues[i]
+                columnname = f"A({f})_{cname.replace('E_B_V_','')}"
+                newcol = Column(alambda,name=columnname,unit='mags')
+                etab.add_column(newcol)
+
+        etab.write(out_prefix+'extinction.fits',format='fits',overwrite=True)
         
         
 if __name__ == '__main__':
