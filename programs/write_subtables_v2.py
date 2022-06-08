@@ -292,6 +292,9 @@ class catalog:
         #self.convert_v1_2_v2()
         self.merge_legacy_phot_tables()
         self.make_legacy_viewer_table()
+
+        self.get_extinction()        
+        
     def print_stats(self):
         print('Number in sample = ',len(self.cat))
         print('Number with CO data = ',sum(self.coflag))
@@ -1121,7 +1124,7 @@ class catalog:
 
         # read in file with list of VFIDs that were observed
         # set HAobsflag to true for these galaxies
-        htab = Table.read(homedir+'/github/Virgo/observing/ha-observed-bok-21A.txt',format='ascii')
+        htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-bok-21A.txt',format='ascii')
         for i,v in enumerate(htab['VFID']):
             flag =(self.hatable['VFID_V1'] == v.rstrip())
             if sum(flag) > 0:
@@ -1135,7 +1138,7 @@ class catalog:
         print('after matching to spring 2021, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
 
         # read in the list of targets from BOK 2022 Apr run
-        htab = Table.read(homedir+'/github/Virgo/observing/ha-observed-bok-22A.csv',format='csv')
+        htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-bok-22A.csv',format='csv')
         print("BOK 22A table colnames = ",htab.colnames)
 
         for i,v in enumerate(htab['VFID_V1']):
@@ -1154,7 +1157,7 @@ class catalog:
         
 
         # read in the list of targets from BOK 2022 Apr run
-        htab = Table.read(homedir+'/github/Virgo/observing/ha-observed-int-may-22A.csv',format='csv')
+        htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-int-may-22A.csv',format='csv')
         print("INT MAY 22A table colnames = ",htab.colnames)
 
         for i,v in enumerate(htab['VFID_V1']):
@@ -1646,6 +1649,17 @@ class catalog:
         fildist.add_column(self.cat['VFID'],index=0)
         
         fildist.write(out_prefix+'filament_distances.fits',format='fits',overwrite=True)
+    def get_extinction(self):
+        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'        
+        size = 2*np.ones(len(self.cat),'f')
+        irsa_input = Table([self.cat['RA'],self.cat['DEC'],size],names=['RA','DEC','size'])
+        irsa_input.write(homedir+'/research/Virgo/tables/v2/vf_v2_irsa_input.tbl',format='ipac',overwrite=True)
+
+        # once that is uploaded, download the results to:
+        infile = homedir+'/research/Virgo/tables/v2/vf_v2_irsa_extinction.tbl'
+        etab = Table.read(infile,format='ipac')
+        etab.add_column(self.cat['VFID'],index=0)
+        etab.write(out_prefix+'irsa_extinction.fits',format='fits',overwrite=True)
         
         
 if __name__ == '__main__':
