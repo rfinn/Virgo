@@ -37,10 +37,10 @@ class vtables:
         # these aren't updated for v2 yet
         self.read_env()
         self.read_filaments()
-        try:
-            self.read_magphys()
-        except FileNotFoundError:
-            print("WARNING: magphys file not found (this is probably ok)")
+        #try:
+        self.read_magphys()
+        #except FileNotFoundError:
+        #    print("WARNING: magphys file not found (this is probably ok)")
         #self.read_tempel()        
         #self.read_rphot()
         self.read_legacy()
@@ -138,7 +138,8 @@ class vtables:
         #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
         #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
         #self.env = hstack([tab1,tab2,tab3])
-        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_03-Jun-2022.fits')    
+        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_02-Jul-2022.fits')
+        self.magphys_noz = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_02-Jul-2022.fits')    
         pass
 
     def read_extinction(self):

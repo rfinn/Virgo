@@ -34,7 +34,23 @@ NOTES:
 
 * The v2 catalogs have different VFIDs.  I have included the v1 ids as well.
 
+***********************************************************************************
+* Aug 2022 - data specialists at NED contacted us and said some of the NED names were wrong on our tables.
+Gianluca and I met on 8/18/2022 to look through catalogs and see what was going on.
 
+Conclusion: if a
+galaxy did not have a HL name, I would query NED using the NSA id.  Unfortunately, I used the NSA V1 ids, rather
+than the NSA V0 ids.  NED does not knowt the V1 id, so NED interprets the name as a NSA v0 id.  This of course
+leads to the wrong galaxy...
+
+Fix:
+we searched again using the NSAID v0 for the NED name for the 219 galaxies for
+which we originally searched using the NSAID v1.  The NED name is stored in
+
+/home/rfinn/research/Virgo/tables-north/vf_v2_correct_NEDname_for_NSAsourcegals.fits
+
+I will update the main table and the nedquery table
+*************************************************************************************
 '''
 import os
 import shutil
@@ -211,13 +227,42 @@ class catalog:
         - do this before matching to CO table to avoid duplicate CO entries
         - one is a merger, so leaving this
 
+        ALSO August 2022 Update
+        - 219 galaxies were matched to NED using the v1 NSAID, but NED thinks this is v0
+        - fixing the NED names for these
+
         '''
         VFID_wrong_NEDname = ['VFID0356','VFID3406','VFID5564',\
                               'VFID4586','VFID6053','VFID3503']
 
         for vfid in VFID_wrong_NEDname:
             self.cat['NEDname'][self.cat['VFID'] == vfid]=''
-            
+
+
+        # DONE - TODO fix NED names for ones that were mismatched with NSA v1 ids
+        # how we do this depends on whether we have cut the catalog yet
+        # the table with corrected NED names
+        #
+        # /home/rfinn/research/Virgo/tables-north/v2_v2_correct_NEDname_for_NSAsourcegals.fits
+        #
+        # has 6780 lines.  Need to make sure self.cat does as well
+
+        # read in table
+        fixedNED = Table.read('/home/rfinn/research/Virgo/tables-north/vf_v2_corrected_NEDname_for_NSAsourcegals.fits')
+        nindices = np.arange(len(fixedNED))[fixedNED['NSAsourceflag']]
+
+        # check to make sure self.cat and fixedNED are same length
+        if len(self.cat) == len(fixedNED):
+            # fix self.cat['NEDinput', 'NEDname', 'NEDra', 'NEDdec']
+
+            for i in nindices:
+                self.cat['NEDinput'][i] = self.cat['NSAID'][i]
+                self.cat['NEDname'][i] = fixedNED['NEDname_NSAV0_input'][i]
+                self.cat['NEDra'][i] = fixedNED['NSAra'][i]
+                self.cat['NEDdec'][i] = fixedNED['NSAdec'][i]
+        else:
+            print('ERROR: NED table and self.cat are not the same length')
+            sys.exit()
         pass
         
     def runall(self):
