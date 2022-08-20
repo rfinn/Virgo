@@ -54,20 +54,21 @@ I will update the main table and the nedquery table
 '''
 import os
 import shutil
+import sys
 import numpy as np
-import time
+#import time
 import argparse
 
 from astropy.io import fits
-from astropy.table import Table, QTable, join, hstack, vstack, Column, MaskedColumn
+from astropy.table import Table, QTable, hstack#, join, vstack, Column, MaskedColumn
 from astropy.coordinates import SkyCoord
 from astropy import constants
 from astropy import units as u
 from astropy.cosmology import WMAP9 as cosmo
 
-from astroquery.ned import Ned
+#from astroquery.ned import Ned
 
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 homedir = os.getenv("HOME")
 #sys.path.append(homedir+'/github/appss/')
 #from join_catalogs import make_new_cats, join_cats
