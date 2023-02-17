@@ -34,24 +34,41 @@ NOTES:
 
 * The v2 catalogs have different VFIDs.  I have included the v1 ids as well.
 
+***********************************************************************************
+* Aug 2022 - data specialists at NED contacted us and said some of the NED names were wrong on our tables.
+Gianluca and I met on 8/18/2022 to look through catalogs and see what was going on.
 
+Conclusion: if a
+galaxy did not have a HL name, I would query NED using the NSA id.  Unfortunately, I used the NSA V1 ids, rather
+than the NSA V0 ids.  NED does not knowt the V1 id, so NED interprets the name as a NSA v0 id.  This of course
+leads to the wrong galaxy...
+
+Fix:
+we searched again using the NSAID v0 for the NED name for the 219 galaxies for
+which we originally searched using the NSAID v1.  The NED name is stored in
+
+/home/rfinn/research/Virgo/tables-north/vf_v2_correct_NEDname_for_NSAsourcegals.fits
+
+I will update the main table and the nedquery table
+*************************************************************************************
 '''
 import os
 import shutil
+import sys
 import numpy as np
-import time
+#import time
 import argparse
 
 from astropy.io import fits
-from astropy.table import Table, QTable, join, hstack, vstack, Column, MaskedColumn
+from astropy.table import Table, QTable, hstack#, join, vstack, Column, MaskedColumn
 from astropy.coordinates import SkyCoord
 from astropy import constants
 from astropy import units as u
 from astropy.cosmology import WMAP9 as cosmo
 
-from astroquery.ned import Ned
+#from astroquery.ned import Ned
 
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 homedir = os.getenv("HOME")
 #sys.path.append(homedir+'/github/appss/')
 #from join_catalogs import make_new_cats, join_cats
@@ -211,13 +228,42 @@ class catalog:
         - do this before matching to CO table to avoid duplicate CO entries
         - one is a merger, so leaving this
 
+        ALSO August 2022 Update
+        - 219 galaxies were matched to NED using the v1 NSAID, but NED thinks this is v0
+        - fixing the NED names for these
+
         '''
         VFID_wrong_NEDname = ['VFID0356','VFID3406','VFID5564',\
                               'VFID4586','VFID6053','VFID3503']
 
         for vfid in VFID_wrong_NEDname:
             self.cat['NEDname'][self.cat['VFID'] == vfid]=''
-            
+
+
+        # DONE - TODO fix NED names for ones that were mismatched with NSA v1 ids
+        # how we do this depends on whether we have cut the catalog yet
+        # the table with corrected NED names
+        #
+        # /home/rfinn/research/Virgo/tables-north/v2_v2_correct_NEDname_for_NSAsourcegals.fits
+        #
+        # has 6780 lines.  Need to make sure self.cat does as well
+
+        # read in table
+        fixedNED = Table.read('/home/rfinn/research/Virgo/tables-north/vf_v2_corrected_NEDname_for_NSAsourcegals.fits')
+        nindices = np.arange(len(fixedNED))[fixedNED['NSAsourceflag']]
+
+        # check to make sure self.cat and fixedNED are same length
+        if len(self.cat) == len(fixedNED):
+            # fix self.cat['NEDinput', 'NEDname', 'NEDra', 'NEDdec']
+
+            for i in nindices:
+                self.cat['NEDinput'][i] = self.cat['NSAID'][i]
+                self.cat['NEDname'][i] = fixedNED['NEDname_NSAV0_input'][i]
+                self.cat['NEDra'][i] = fixedNED['NSAra'][i]
+                self.cat['NEDdec'][i] = fixedNED['NSAdec'][i]
+        else:
+            print('ERROR: NED table and self.cat are not the same length')
+            sys.exit()
         pass
         
     def runall(self):
@@ -277,6 +323,10 @@ class catalog:
         #self.a100_unwise_table()
         
         self.get_size_for_JM()
+        
+        # convert John's legacy ellip phot to line-matched for v2
+        self.get_JMphot_table()
+        
         self.ned_table() # NED input, ra, dec, and NEDname
         self.print_stats()
         self.convert_rphot_v1_2_v2()        
@@ -1516,12 +1566,53 @@ class catalog:
         legcatv2.rename_column('VFID','VFID_V1')
         c = Column(self.cat['VFID'],name='VFID')
         legcatv2.add_column(c,index=0)
+
+        g = 22.5 - 2.5*np.log10(legcatv2['FLUX_G'])
+        r = 22.5 - 2.5*np.log10(legcatv2['FLUX_R'])
+        z = 22.5 - 2.5*np.log10(legcatv2['FLUX_Z'])
+        d_pc = self.env['Vcosmic']/H0*1.e6
+        const = 5*np.log10(d_pc) - 5
+        MG = g - const
+        MR = r - const
+        MZ = z - const
+        newtab = Table([g,r,z,MG,MR,MZ],names=['g','r','z','Mg','Mr','Mz'])
+        legcatv2 = hstack([legcatv2,newtab])
         legcatv2.write(outdir+file_root+'legacy_dr9.fits',overwrite=True)
         
     def make_legacy_viewer_table(self):
         legacy_table = Table(self.cat['VFID','RA','DEC','radius'],names=['name','RA','DEC','radius'])
         legacy_table.write(outdir+file_root+'legacy_viewer.fits',format='fits',overwrite=True)
-            
+
+    def get_JMphot_table(self):
+        '''convert John's custom photometry file to line-matched version   '''
+
+        photfile = '/home/rfinn/research/Virgo/legacy-phot/virgofilaments-v2-legacyphot.fits'
+        mef_table = fits.open(photfile)
+        # changing to extension 2 for file that john sent on Aug 14, 2021
+        #ephot = Table.read(photfile,1) # first hdu is the elliptical photometry
+        ephot = Table(mef_table['ELLIPSE'].data) # first hdu is the elliptical photometry
+        ephot1 = Table(mef_table['PARENT'].data) # this one has RA and DEC, which we need to separate N and S
+
+        mef_table.close()
+        
+        # keep SGA_ID from parent table for now
+
+        ephot.add_column(ephot1['SGA_ID'],index=0)
+        ephot.add_column(np.zeros(len(ephot),'bool'),index=0,name='photFlag')
+
+        # not keeping anything from tractor table
+
+        ### MAKE A TABLE - ALL ZEROS, WITH DATA TYPE LIKE HALPHA TABLE
+        ### AND LENGTH OF BASICTABLE
+
+        phottable = QTable(np.empty(len(self.basictable),dtype=ephot.dtype))
+        phottable[ephot['VF_ID']] = ephot
+        phottable['photFlag'][ephot['VF_ID']] = np.ones(len(ephot),'bool')        
+        phottable.add_column(self.cat['VFID'],index=0)
+        
+        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
+        phottable.write(out_prefix+'legacy_ephot.fits',format='fits',overwrite=True)
+        pass
     def convert_kourchi_v1_2_v2(self):
         # read in the v1 environment tables, remove bad sources, and save for v2
         prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
@@ -1625,7 +1716,7 @@ class catalog:
         # add in v2 ids
         envtable.add_column(self.cat['VFID'],index=0)
         envtable.write(out_prefix+'environment.fits',format='fits',overwrite=True)
-
+        self.env = envtable
         # write out the filament distances in a separate table
         keepcols = []
         # list of filaments is in virgoCommon file
@@ -1681,9 +1772,33 @@ class catalog:
             for i,f in enumerate(filters):
                 alambda = np.array(etab[cname])*Rvalues[i]
                 columnname = f"A({f})_{cname.replace('E_B_V_','')}"
-                newcol = Column(alambda,name=columnname,unit='mags')
+                newcol = Column(alambda,name=columnname,unit='mag')
                 etab.add_column(newcol)
 
+        # add Salime +2016 values
+        # https://iopscience.iop.org/article/10.3847/0067-0049/227/1/2#apjsaa4425s3
+        # section 3.3
+        # they use Peek & Schiminovich (2013) for UV and Yuan+2013 for optical
+        # they use SFD extinction
+        RvaluesS16 = np.array([8.24, 8.20, 3.30, 2.31, 1.29, 0.184, 0.113, 0.0241, 0.00910],'d')
+        ebv = np.array(etab['E_B_V_SFD'])
+        for i,f in enumerate(filters):
+
+            if i == 0:
+                alambda = 10.47 + 8.59*ebv -82.2*ebv**2
+                alambda =  np.minimum(alambda, 0.2)
+            elif i == 1:
+                alambda = 9.36 + 14.3*ebv -82.2*ebv**2
+                alambda =  np.minimum(alambda, 0.2)
+
+            else:
+                alambda = ebv*Rvalues[i]                
+            columnname = f"A({f})_S16"
+            newcol = Column(alambda,name=columnname,unit='mag')
+            etab.add_column(newcol)
+        
+
+        
         etab.write(out_prefix+'extinction.fits',format='fits',overwrite=True)
         
         
