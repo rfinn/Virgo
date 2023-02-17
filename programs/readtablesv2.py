@@ -44,7 +44,7 @@ class vtables:
         #self.read_tempel()        
         #self.read_rphot()
         self.read_legacy()
-        self.read_extinction()
+        #self.read_extinction()
     def read_main(self):
         ''' read in main table; store as self.main  '''
         self.main = Table.read(self.tabledir+self.tableprefix+'main.fits')
