@@ -305,7 +305,7 @@ class catalog:
 
         # routines that match to catalog
         self.get_CO()
-        self.get_CO_paper1()
+        #self.get_CO_paper1()
         # updating halpha routine to match to VFID_V1
         self.get_halpha()
         self.get_unwise()        
@@ -797,7 +797,55 @@ class catalog:
         '''
 
 
-    def get_CO(self,match_by_coords=False,match_by_name=True):
+    def get_CO(self):
+        """
+        I made the first version of this using topcat to do the matching while at Trieste in Apr 2022 with BV.  
+        We found 389 matches within 15"
+
+        We should find the same number of matches when running automatically.
+
+        """
+        match_by_coords=True
+        print('\n######################')
+        print('Running get_CO')
+        print('######################\n')
+
+        # read in CO mastertable
+        cofile = homedir+'/research/Virgo/gianluca_input_tables/for_vf_gastable.fits'
+        self.co = Table(fits.getdata(cofile))
+
+
+        cocoord = SkyCoord(self.co['RA'],self.co['DEC'],unit='deg',frame='icrs')
+        if match_by_coords:
+            # match co coords to mastertable 
+            idx, d2d, d3d = self.catcoord.match_to_catalog_sky(cocoord)
+            self.d2d = d2d
+            self.idx = idx
+            self.coflag = d2d < 15./3600*u.deg
+        
+            # create a new, blank table with same # of lines as mastertable
+            # but with columns like the co table
+            newco = Table(np.zeros(len(self.cat),dtype=self.co.dtype))
+            # add co information into the new table for the galaxies with
+            # a match to the CO sample
+            # NOTE: this could match multiple galaxies to the same CO source
+            newco[self.coflag] = self.co[idx[self.coflag]]
+
+            # join basic table and co table
+
+            self.cotable = hstack([self.basictable,newco])
+
+        ## print the CO galaxies with no matches in the mastertable 
+        print(f'number of galaxies with CO matches = {np.sum(self.coflag)} (should be 389)')
+
+
+        ## look for CO galaxies that were matched to multiple galaxies in the
+        ## mastertable
+        
+        self.cotable.add_column(Column(self.coflag),name='COflag')
+        self.cotable.write(outdir+file_root+'co.fits',format='fits',overwrite=True)
+            
+    def get_CO_old(self,match_by_coords=False,match_by_name=True):
 
         print('\n######################')
         print('Running get_CO')

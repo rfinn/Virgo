@@ -37,18 +37,14 @@ class vtables:
         # these aren't updated for v2 yet
         self.read_env()
         self.read_filaments()
-<<<<<<< HEAD
-        #try:
-        self.read_magphys()
-        self.read_paper1()
+        #self.read_magphys()
+        #self.read_paper1()
         #except FileNotFoundError:
         #    print("WARNING: magphys file not found (this is probably ok)")
-=======
         try:
             self.read_magphys()
         except FileNotFoundError:
             print("WARNING: magphys file not found (this is probably ok)")
->>>>>>> 714ca87d71b7ce20988a13661aa634f75827e46e
         #self.read_tempel()        
         #self.read_rphot()
         self.read_legacy()
@@ -119,7 +115,8 @@ class vtables:
         pass
     def read_co(self):
         ''' read in CO table; store as self.co  '''
-        self.co = Table.read(self.tabledir+self.tableprefix+'co.fits')                               
+        #self.co = Table.read(self.tabledir+self.tableprefix+'co.fits')
+        self.co = Table.read(self.tabledir+self.tableprefix+'CO_HI.fits')
         pass
     def read_unwise(self):
         ''' read in unWISE table; store as self.unwise  '''
