@@ -37,16 +37,23 @@ class vtables:
         # these aren't updated for v2 yet
         self.read_env()
         self.read_filaments()
+<<<<<<< HEAD
         #try:
         self.read_magphys()
         self.read_paper1()
         #except FileNotFoundError:
         #    print("WARNING: magphys file not found (this is probably ok)")
+=======
+        try:
+            self.read_magphys()
+        except FileNotFoundError:
+            print("WARNING: magphys file not found (this is probably ok)")
+>>>>>>> 714ca87d71b7ce20988a13661aa634f75827e46e
         #self.read_tempel()        
         #self.read_rphot()
         self.read_legacy()
-        self.read_legacy_ephot()        
-        self.read_extinction()
+        self.read_ephot()
+        #self.read_extinction()
     def read_main(self):
         ''' read in main table; store as self.main  '''
         self.main = Table.read(self.tabledir+self.tableprefix+'main.fits')
@@ -134,25 +141,34 @@ class vtables:
         self.rphot = Table.read(self.tabledir+self.tableprefix+'r_photometry.fits')
     def read_legacy(self):
         ''' read in legacy dr9 photometry file; store as self.dr9  '''
-        self.dr9 = Table.read(self.tabledir+self.tableprefix+'legacy_dr9.fits')
-
-    def read_legacy_ephot(self):
-        ''' read in legacy elliptical photometry; store as self.ephot  '''
-        self.ephot = Table.read(self.tabledir+self.tableprefix+'legacy_ephot.fits')
-
+        dr9 = Table.read(self.tabledir+self.tableprefix+'legacy_dr9.fits')
+        g = 22.5 - 2.5*np.log10(dr9['FLUX_G'])
+        r = 22.5 - 2.5*np.log10(dr9['FLUX_R'])
+        z = 22.5 - 2.5*np.log10(dr9['FLUX_Z'])
+        d_pc = self.env['Vcosmic']/H0*1.e6
+        const = 5*np.log10(d_pc) - 5
+        MG = g - const
+        MR = r - const
+        MZ = z - const
+        newtab = Table([g,r,z,MG,MR,MZ],names=['g','r','z','Mg','Mr','Mz'])
+        self.dr9 = hstack([dr9,newtab])
     def read_magphys(self):
         ''' read in magphys table; store as self.magphys  '''
         #tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0_Mr_max_-15_7.fits')
         #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
         #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
         #self.env = hstack([tab1,tab2,tab3])
-        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_02-Jul-2022.fits')
-        self.magphys_noz = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_02-Jul-2022.fits')    
+        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_07-Jul-2022.fits')    
         pass
 
     def read_extinction(self):
         ''' read in extinction table '''
         self.extinct = Table.read(self.tabledir+self.tableprefix+'extinction.fits')        
+        pass
+    #added by GHR on 17.April.2023
+    def read_ephot(self):
+        ''' read in elliptical aperture photometry from John '''
+        self.ephot = Table.read(self.tabledir+self.tableprefix+'legacy_ephot.fits')        
         pass
         
 
