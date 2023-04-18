@@ -29,6 +29,7 @@ from astropy.time import Time
 
 homedir = os.getenv("HOME")
 VFMAIN_PATH = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits'
+VFMAIN_PATH = homedir+'/research/Virgo/tables-north/v2/vf_v2_main.fits'
 
 import build_web_common as buildweb
 
@@ -139,8 +140,15 @@ class coadd_image():
         try:
             self.exptime = self.imheader['ORIGEXPT']
         except KeyError:
-            self.exptime = self.imheader['EXPTIME']    
-        self.sefwhm_arcsec = self.imheader['SEFWHM']
+            self.exptime = self.imheader['EXPTIME']
+        try:
+            self.sefwhm_arcsec = self.imheader['SEFWHM']
+        except KeyError:
+            # look at the unshifted image - because I made a boo boo
+            imdata,imheader = fits.getdata(self.imagename.replace('-shifted',''),header=True)            
+            self.sefwhm_arcsec = imheader['SEFWHM']
+            self.imheader.set('SEFWHM',self.sefwhm_arcsec)
+
         try:
             t = self.imheader['DATE-OBS']
             t = Time(t,format='isot')
@@ -234,8 +242,12 @@ class coadd_image():
             # and because I ran the zp calibration from diff directory
             #print('search path = ',os.path.join(self.zpdir,self.intprefix+"*getzp-xyresidual-fitted.png"))
             zpsurf = glob.glob(os.path.join(self.zpdir,self.intprefix+"*getzp*fitted*.png"))[0]
-        self.zpplot_png = os.path.join(self.plotdir,imagebase+"-getzp-xyresidual-fitted.png")
-        os.system('cp '+zpsurf+' '+self.zpplot_png)
+        zpplot_png = os.path.join(self.plotdir,'n'+imagebase+"-getzp-xyresidual-fitted.png")
+        if os.path.exists(self.zzplot_png):
+            os.system('cp '+zpsurf+' '+self.zpplot_png)
+        else:
+            if os.path.exists(zzplot_png):
+                self.zzplot_png = zzplot_png
         pass
     def get_zpplot_secondpass(self):
         ''' get the zp image, first pass'''
@@ -314,14 +326,18 @@ class coadd_image():
                 self.imheader['FILTER'],\
                 "{:.1f}".format(self.zp),\
                 "{:.1f}".format(self.exptime/60),\
-                "{:.2f}".format(self.fwhm_arcsec),\
-                "{:.2f}".format(self.sefwhm_arcsec)]
+                "{:.2f}".format(self.fwhm_arcsec)]
+        if self.sefwhm_arcsec is not None:
+            data.append("{:.2f}".format(self.sefwhm_arcsec))
         return labels,data
     def get_gredshift_filter_curve(self):
         redshift = vmain['vr'][self.keepflag]/3.e5
         header_filter = self.imheader['FILTER']
         #print('filter from header = ',header_filter,self.filter)
         if header_filter.find('ha4') > -1:
+            filter=4
+        if header_filter.find('Ha+4nm') > -1:
+            # TODO - need to check that this is in fact the same filter as on HDI
             filter=4
         elif header_filter.find('Ha6657') > -1:
             filter='intha6657'
@@ -733,6 +749,7 @@ if __name__ == '__main__':
 
     # to rebuild all, set intonlaptop, then hdi, then ngc
     intonlaptop=True
+    bokonlaptop=False   
     laptop=True
     hdi=False
     ngc=False
@@ -745,12 +762,18 @@ if __name__ == '__main__':
         outdir = homedir+'/research/Virgo/html-dev/coadds/'
 
     if laptop:
-        vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
+        # updating April 2023 to use v2 catalogs
+        vtabledir = homedir+'/research/Virgo/tables-north/v2/'
+        vmain = fits.getdata(vtabledir+'vf_v2_main.fits')
         #homedir = '/mnt/qnap_home/rfinn/'
-        VFFIL_PATH = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main_filament_membership_allgalaxies.fits'
+        VFFIL_PATH = vtabledir+'/vf_v2_main_filament_membership_allgalaxies.fits'
+        VFFIL_PATH = vtabledir+'/vf_v2_environment.fits'
         vffil = fits.getdata(VFFIL_PATH)
-        psfdir = homedir+'/data/reduced/psf-images/'
-        outdir = homedir+'/research/Virgo/html-dev/coadds/'
+        #psfdir = homedir+'/data/reduced/psf-images/'
+        #outdir = homedir+'/research/Virgo/html-dev/coadds/'
+        outpathbase = '/media/rfinn/hdata/'
+        psfdir = outpathbase+'psf-images/'
+        outdir = outpathbase+'html_dev/coadds/'
         
     if hdi:
         coadd_dir = homedir+'/data/reduced/virgo-coadds-HDI/'
@@ -764,12 +787,16 @@ if __name__ == '__main__':
     #haimage = coadd_dir+'VF-219.9523+5.4009-INT-20190530-p019-Halpha.fits'
     #hacsimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-CS.fits'
     if intonlaptop:
-        vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')    
+        #vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')    
         coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-feb2019-int/'
-        coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-jun2019-int/'        
+        coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-jun2019-int/'
+        coadd_dir = '/media/rfinn/hdata/coadds/virgo-coadds-int-2022/'                
         zpdir = coadd_dir+'/plots/'                
-        psfdir = homedir+'/data/reduced/psf-images/'
-        outdir = homedir+'/research/Virgo/html-dev/coadds/'
+        #psfdir = homedir+'/data/reduced/psf-images/'
+        #outdir = homedir+'/research/Virgo/html-dev/coadds/'
+    if bokonlaptop:
+        coadd_dir = outpathbase+'coadds/BOK2021pipeline/'                
+        zpdir = coadd_dir+'/plots/'                
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
@@ -792,6 +819,10 @@ if __name__ == '__main__':
         h2files = glob.glob(coadd_dir+'VF*-Ha6657.fits')        
         # combine r and R files
         hfiles = h1files+h2files
+    elif bokonlaptop:
+        allrfiles = glob.glob(coadd_dir+'VF*-r.fits')        
+        hfiles = glob.glob(coadd_dir+'VF*-Ha4.fits')
+
 
     hfiles.sort()
     allrfiles.sort()
@@ -815,7 +846,7 @@ if __name__ == '__main__':
                 print('WHAT IS HAPPENING???')
                 continue
         else:
-            haimage = rimage.replace('-r-','-ha4-').replace('-R-','-ha4-').replace('R.fits','Ha.fits').replace('-r-shifted.fits','-Halpha.fits')
+            haimage = rimage.replace('-r-','-ha4-').replace('-R-','-ha4-').replace('R.fits','Ha.fits').replace('-r-shifted.fits','-Halpha.fits').replace('-r.fits','-Ha4.fits')
             print('\t looking for ',haimage)
             if not os.path.exists(haimage):
                 print("couldn't find it")
@@ -841,24 +872,27 @@ if __name__ == '__main__':
                         continue
         print('###  Halpha image = ',haimage)
         # define previous gal for html links
-        
         if i > 0:
-            previous = os.path.basename(allrfiles[i-1]).replace('R.fits','').replace('.fits','').replace('-R','').replace('-r','')
+            previous = os.path.basename(allrfiles[i-1]).replace('R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-R','').replace('-r','')
             #print('previous = ',previous)
         else:
             previous = None
         if i < len(allrfiles)-1:
-            next = os.path.basename(allrfiles[i+1]).replace('R.fits','').replace('.fits','').replace('-R','').replace('-r','')
+            next = os.path.basename(allrfiles[i+1]).replace('R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-R','').replace('-r','')
             #print('next = ',next)
         else:
             next = None
-
-        pname = os.path.basename(rimage).replace('R.fits','').replace('-shifted','').replace('.fits','').replace('-r','').replace('-R','')
+        # define pointing name - remove fits and filter information
+        pname = os.path.basename(rimage).replace('R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-r','').replace('-R','')
+        # create a d
         poutdir = os.path.join(outdir,pname)
         print(poutdir)
+        p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=poutdir)
+        h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
+        
         try:
-            p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=poutdir)
-            h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
+             p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=poutdir)
+             h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
             
         except:
             print("")

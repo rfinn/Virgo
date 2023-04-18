@@ -993,6 +993,8 @@ class catalog:
                           
         self.cotable.remove_columns(remove_columns)
         ## HL
+        # TODO - remove RA_1 and DEC_1 - these are the VFID coords
+        
         self.cotable.add_column(Column(self.coflag),name='COflag')
         self.cotable.write(outdir+file_root+'paper1.fits',format='fits',overwrite=True)
             

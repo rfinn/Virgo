@@ -132,13 +132,15 @@ if __name__ == '__main__':
     # work through coadd directory
     #global vmain
 
-    VFMAIN_PATH = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits'
+    VFMAIN_PATH = homedir+'/research/Virgo/tables-north/v2/vf_v2_main.fits'
     vfmain = fits.getdata(VFMAIN_PATH)
     
-    VFFIL_PATH = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main_filament_membership_allgalaxies.fits'
+    #VFFIL_PATH = homedir+'/research/Virgo/tables-north/v2/vf_north_v1_main_filament_membership_allgalaxies.fits'
+    VFFIL_PATH = homedir+'/research/Virgo/tables-north/v2/vf_v2_environment.fits'    
     vffil = fits.getdata(VFFIL_PATH)
     
     outdir = homedir+'/research/Virgo/html-dev/coadds/'
+    outdir = '/media/rfinn/hdata/html_dev/coadds/'    
 
     # this should contain a list of all the galaxy folders
     flist1 = os.listdir(outdir)

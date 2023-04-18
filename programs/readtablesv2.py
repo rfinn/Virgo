@@ -39,6 +39,7 @@ class vtables:
         self.read_filaments()
         #try:
         self.read_magphys()
+        self.read_paper1()
         #except FileNotFoundError:
         #    print("WARNING: magphys file not found (this is probably ok)")
         #self.read_tempel()        
@@ -87,6 +88,13 @@ class vtables:
         #self.fil = Table.read(self.tabledir+self.tableprefix+'main_filament_membership.fits')
         #self.fil = Table.read(self.tabledir+self.tableprefix+'main_filament_membership_allgalaxies.fits')
         self.fil = Table.read(self.tabledir+self.tableprefix+'filament_distances.fits')
+
+        pass
+    def read_paper1(self):
+        ''' read in GC's table from paper1  '''
+        #self.fil = Table.read(self.tabledir+self.tableprefix+'main_filament_membership.fits')
+        #self.fil = Table.read(self.tabledir+self.tableprefix+'main_filament_membership_allgalaxies.fits')
+        self.paper1 = Table.read(self.tabledir+self.tableprefix+'paper1.fits')
 
         pass
                               
