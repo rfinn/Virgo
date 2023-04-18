@@ -44,6 +44,7 @@ class vtables:
         #self.read_tempel()        
         #self.read_rphot()
         self.read_legacy()
+        self.read_ephot()
         #self.read_extinction()
     def read_main(self):
         ''' read in main table; store as self.main  '''
@@ -148,6 +149,11 @@ class vtables:
     def read_extinction(self):
         ''' read in extinction table '''
         self.extinct = Table.read(self.tabledir+self.tableprefix+'extinction.fits')        
+        pass
+    #added by GHR on 17.April.2023
+    def read_ephot(self):
+        ''' read in elliptical aperture photometry from John '''
+        self.ephot = Table.read(self.tabledir+self.tableprefix+'legacy_ephot.fits')        
         pass
         
 
