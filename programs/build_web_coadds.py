@@ -27,6 +27,9 @@ from astropy.nddata import Cutout2D
 from astropy.stats import sigma_clip
 from astropy.time import Time
 
+
+import argparse
+
 homedir = os.getenv("HOME")
 VFMAIN_PATH = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits'
 VFMAIN_PATH = homedir+'/research/Virgo/tables-north/v2/vf_v2_main.fits'
@@ -35,6 +38,8 @@ import build_web_common as buildweb
 
 sys.path.append(homedir+'/github/halphagui/')
 import filter_transmission as ft
+
+OVERWRITE = True
 
 ###########################################################
 ####  FUNCTIONS
@@ -173,7 +178,7 @@ class coadd_image():
 
         # need to cut to keep the galaxies within the right filter
         self.keepflag = keepflag        
-        if os.path.exists(self.coadd_png):
+        if os.path.exists(self.coadd_png) and not OVERWRITE:
             print('Found {}.  not remaking this.'.format(self.coadd_png))
         else:
             plt.figure(figsize=(8,8))
@@ -322,8 +327,15 @@ class coadd_image():
 
     def get_html_data(self):
         labels = ['Date Obs','UT Time','Filter','ZP<br>(AB mag)','Max Exptime <br> (minutes)','PSF FWHM <br> (arcsec)','SE FWHM <br> (arcsec)']
+        try:
+            filter = self.imheader['FILTER']
+        except KeyError:
+            print()
+            print("WARNING: could not get filter for image ",self.imagename)
+            print()
+            filter = 'None'
         data = [self.dateobs,self.utobs,\
-                self.imheader['FILTER'],\
+                filter,\
                 "{:.1f}".format(self.zp),\
                 "{:.1f}".format(self.exptime/60),\
                 "{:.2f}".format(self.fwhm_arcsec)]
@@ -600,7 +612,10 @@ class build_html_pointing():
             self.html.write('<td>{:.6f}</td>\n'.format(g['RA']))
             self.html.write('<td>{:.6f}</td>\n'.format(g['DEC']))
             self.html.write('<td>{:.0f}</td>\n'.format(g['vr']))
-            self.html.write('<td>{:.2f}</td>\n'.format(self.pointing.ha.corrections[i]))                        
+            try:
+                self.html.write('<td>{:.2f}</td>\n'.format(self.pointing.ha.corrections[i]))
+            except IndexError:
+                print("WARNING: size mismatch between r and halpha catalogs!!!")
             self.html.write('<td>{:.3f}</td>\n'.format(g['radius']*2/60.))
             self.html.write('<td>{:.0f}</td>\n'.format(g['COflag']))
             self.html.write('<td>{:.0f}</td>\n'.format(g['A100flag']))
@@ -740,10 +755,22 @@ class build_html_pointing():
 # wrap
 
 if __name__ == '__main__':
-    # work through coadd directory
+    import argparse
 
-    # hard coding paths for now b/c this is only run in a few cases
-    # could make the coadd_dir an argument that you pass in at some point
+    parser = argparse.ArgumentParser(description ='create psf image from image that contains stars')
+
+    #parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
+    parser.add_argument('--laptop',dest = 'laptop', help='set if working on laptop')
+    
+    parser.add_argument('--coaddir',dest = 'coaddir', help='set to coadd directory')
+    parser.add_argument('--psfdir',dest = 'psfdir', help='set to coadd directory')
+    parser.add_argument('--outdir',dest = 'dir', help='set to coadd directory')        
+    parser.add_argument('--int',default=False,dest='int',action = 'store_true', help='set this for INT data')
+    parser.add_argument('--bok',default=False,dest='bok',action = 'store_true', help='set this for BOK data')        
+     
+    args = parser.parse_args()
+
+    
 
     virgovms=False
 
@@ -830,26 +857,36 @@ if __name__ == '__main__':
     
     # loop through r filenames
     for i,rimage in enumerate(allrfiles):
-        print(rimage)
+        print()
+        print('###################################')
+        print('r-band image: ',rimage)
+        print()
         # find matching ha4 coadd
-        if rimage.find('shifted.fits') > -1:
-            h1files = glob.glob(coadd_dir+'VF*-Halpha.fits')
-            try:
-                haimage = h1files[0]
-            except IndexError:
+        #if rimage.find('shifted.fits') > -1:
+        #    # not sure what this section is doing
+        #    h1files = glob.glob(coadd_dir+'VF*-Halpha.fits')
+        #    try:
+        #        haimage = h1files[0]
+        #    except IndexError:
                 
-                h2files = glob.glob(coadd_dir+'VF*-Ha6657.fits')
-                
-                haimage = h2files[0]
-                print(haimage)
-            if not os.path.exists(haimage):
-                print('WHAT IS HAPPENING???')
-                continue
+        #        h2files = glob.glob(coadd_dir+'VF*-Ha6657.fits')
+        #        
+        #        haimage = h2files[0]
+        #        print(haimage)
+        #    if not os.path.exists(haimage):
+        #        print('WHAT IS HAPPENING???')
+        #        continue
+        if i < 0:
+            print("just kidding...")
         else:
-            haimage = rimage.replace('-r-','-ha4-').replace('-R-','-ha4-').replace('R.fits','Ha.fits').replace('-r-shifted.fits','-Halpha.fits').replace('-r.fits','-Ha4.fits')
+            haimage = rimage.replace('-r-shifted.fits','-Halpha.fits').replace('-r-','-ha4-').replace('-R-','-ha4-').replace('R.fits','Ha.fits').replace('-r.fits','-Ha4.fits')
             print('\t looking for ',haimage)
             if not os.path.exists(haimage):
+                continue
                 print("couldn't find it")
+                # check to see if the halpha image was taken on a different date
+                t = rimage.split('-')
+                datestring
                 # haimage could have a different date
                 impath,rfile = os.path.split(rimage)
                 #print(impath)
