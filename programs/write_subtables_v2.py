@@ -811,7 +811,12 @@ class catalog:
         print('######################\n')
 
         # read in CO mastertable
+        # topcat can read this fine, but astropy table can't.  I get some weird result with one row
+        # going to write as a fits basic table using topcat
+        #
+        #
         cofile = homedir+'/research/Virgo/gianluca_input_tables/for_vf_gastable.fits'
+        cofile = homedir+'/research/Virgo/gianluca_input_tables/for_vf_gastable_fitsbasic.fits'        
         self.co = Table(fits.getdata(cofile))
 
 
@@ -1800,11 +1805,23 @@ class catalog:
         * use extinction coefficients from Wyder+2007 for GALEX
         * get E(B-V) from irsa extiction
         '''
+
+        ### NOTE: THESE TABLES ARE SAVED TO A SEPARATE DIRECTORY B/C
+        ### THEY ARE NOT OF GENERAL INTEREST TO VF COLLABORATION
         out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'        
         size = 2*np.ones(len(self.cat),'f')
+        
         irsa_input = Table([self.cat['RA'],self.cat['DEC'],size],names=['RA','DEC','size'])
+        self.irsa_input = irsa_input
         irsa_input.write(homedir+'/research/Virgo/tables/v2/vf_v2_irsa_input.tbl',format='ipac',overwrite=True)
 
+        # upload this to https://irsa.ipac.caltech.edu/applications/DUST/
+        #
+        # this gives results from Schlegel, Finkbeiner and Davis, 1998, ApJ, 500, 525
+        # and
+        # Schlafly and Finkbeiner, 2011, ApJ, 737, 103
+        #
+        # download results
         # once that is uploaded, download the results to:
         infile = homedir+'/research/Virgo/tables/v2/vf_v2_irsa_extinction.tbl'
         etab = Table.read(infile,format='ipac')
@@ -1812,7 +1829,13 @@ class catalog:
         print('length of etab = ',len(etab),len(self.cat['VFID']))
         etab.add_column(self.cat['VFID'],index=0)
 
-        
+
+        # these must be values from legacy survey?
+        # galex coefficients are from Wyder+07, referenced in legacy code below
+        # https://github.com/moustakas/impro/blob/master/pro/galaxy/im_galex_to_maggies.pro#L64-L81
+        #
+        # some details at: https://www.legacysurvey.org/dr9/catalogs/#galactic-extinction-coefficients
+        #
         filters = ['FUV','NUV','G','R','Z','W1','W2','W3','W4']
         
         Rvalues = np.array([8.24, 8.20, 3.214, 2.165, 1.211, 0.184, 0.113, 0.0241, 0.00910],'d')
@@ -1825,7 +1848,7 @@ class catalog:
                 newcol = Column(alambda,name=columnname,unit='mag')
                 etab.add_column(newcol)
 
-        # add Salime +2016 values
+        # add Salim +2016 values
         # https://iopscience.iop.org/article/10.3847/0067-0049/227/1/2#apjsaa4425s3
         # section 3.3
         # they use Peek & Schiminovich (2013) for UV and Yuan+2013 for optical

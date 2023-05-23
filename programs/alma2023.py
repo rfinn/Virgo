@@ -77,7 +77,7 @@ def add_scale(ax,vr=1100,pscale=.331,barsize=5.,color='k'):
     #plt.arrow(xline1,yline1,barsize_pixels,0)
     # draw line to show size of barsize
     
-def display_gal(legacy_jpg,legacy_r,ha,gra=None,gdec=None,HImap=None,alma=False,percentile1=.5,percentile2=99.5,p1residual=5,p2residual=99,shitshow=False,cmap='viridis',zoom=None,pscale=.43,ra=None,dec=None,gname=None):
+def display_gal(legacy_jpg,legacy_r,ha,gra=None,gdec=None,HImap=None,alma=False,percentile1=.5,percentile2=99.5,p1residual=5,p2residual=99,shitshow=False,cmap='viridis',zoom=None,pscale=.43,ra=None,dec=None,gname=None,singlebeam=False):
     
     '''
     ARGS:
@@ -295,42 +295,43 @@ def display_gal(legacy_jpg,legacy_r,ha,gra=None,gdec=None,HImap=None,alma=False,
             plot_aca_centers(gname,plt.gca(),hwcs)
         except:
             print("problem plotting ACA pointings")
-            
+
     x1,x2=plt.xlim()
     y1,y2=plt.ylim()
     size=2.5/2/pscale # beam diam is 2.5 arcsec
     circ= plt.Circle((.9*x2,.1*y2),size,fill=True, color='r')
     plt.gca().add_artist(circ)
-    iram_rad = 23/2
-    kpno_rad = 55./2
-    japan_rad = 7.4
-    alma_rad = 50.8/2
-    #beamrad_dict = {'NGC 3504':alma_rad,'NGC 4314':alma_rad,'NGC 5348':alma_rad,'NGC 5560':alma_rad,'NGC 5577':alma_rad}
-    beamrad_dict = {'NGC 3504':japan_rad,'NGC 4314':iram_rad,\
+    if singlebeam:    
+        iram_rad = 23/2
+        kpno_rad = 55./2
+        japan_rad = 7.4
+        alma_rad = 50.8/2
+        #beamrad_dict = {'NGC 3504':alma_rad,'NGC 4314':alma_rad,'NGC 5348':alma_rad,'NGC 5560':alma_rad,'NGC 5577':alma_rad}
+        beamrad_dict = {'NGC 3504':japan_rad,'NGC 4314':iram_rad,\
                     'NGC 5348':iram_rad,'NGC 5560':kpno_rad,\
                     'NGC 5577':kpno_rad,'NGC 5566':iram_rad,\
                    'NGC 5356':kpno_rad,'UGC 09661':iram_rad,\
                    'NGC 5470':iram_rad}
-    try:
-        beamrad_arcsec = beamrad_dict[gname]
-        size=beamrad_arcsec/pscale
+        try:
+            beamrad_arcsec = beamrad_dict[gname]
+            size=beamrad_arcsec/pscale
 
-        if ra is not None:
-            print()
-            print("using ra and dec of galaxy to get center for zooming")
-            print()
-            xcenter,ycenter = hwcs.wcs_world2pix(ra,dec,1)
-            xcenter = int(xcenter)
-            ycenter = int(ycenter)
-            circ= plt.Circle((xcenter,ycenter),size,fill=False, color='w',lw=3)
-            circ= plt.Circle((xcenter,ycenter),size,fill=False, color='b',lw=2)
-        else:
+            if ra is not None:
+                print()
+                print("using ra and dec of galaxy to get center for zooming")
+                print()
+                xcenter,ycenter = hwcs.wcs_world2pix(ra,dec,1)
+                xcenter = int(xcenter)
+                ycenter = int(ycenter)
+                circ= plt.Circle((xcenter,ycenter),size,fill=False, color='w',lw=3)
+                circ= plt.Circle((xcenter,ycenter),size,fill=False, color='b',lw=2)
+            else:
         
-            circ= plt.Circle((.5*x2,.5*y2),size,fill=False, color='w',lw=3)
-            circ= plt.Circle((.5*x2,.5*y2),size,fill=False, color='b',lw=2)
-        plt.gca().add_artist(circ)
-    except KeyError:
-        print("problem plotting beam size")
+                circ= plt.Circle((.5*x2,.5*y2),size,fill=False, color='w',lw=3)
+                circ= plt.Circle((.5*x2,.5*y2),size,fill=False, color='b',lw=2)
+            plt.gca().add_artist(circ)
+        except KeyError:
+            print("problem plotting beam size")
     
     plt.axis('equal')
     #plt.savefig(pngname)

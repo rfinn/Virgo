@@ -5,6 +5,8 @@ GOAL:
 * create web page to inspect the coadds, zp calibration, and psf
 
 NOTES:
+* rewriting after I have adopted a uniform naming convention - 2023-May-18
+
 * using John Moustakas's code as a reference (https://github.com/moustakas/legacyhalos/blob/main/py/legacyhalos/virgofilaments.py#L1131-L1202)
 
 
@@ -105,10 +107,10 @@ class coadd_image():
         self.plotprefix = os.path.join(self.plotdir,filter+'-')
         self.zpdir = zpdir
         # might need to comment this out
-        #temp = self.imagename.replace('-shifted','').replace('.fits','')
-        #pointing = temp.split('-')[-2].replace('p','pointing')
-        #self.intprefix = "{}*_{}".format(pointing,temp[-1])
-        #print('INT plot prefix = ',self.intprefix)
+        temp = self.imagename.replace('-shifted','').replace('.fits','')
+        pointing = temp.split('-')[-2].replace('p','pointing')
+        self.intprefix = "{}*_{}".format(pointing,temp[-1])
+        print('INT plot prefix = ',self.intprefix)
     def generate_plots(self):
         self.get_image()
         self.make_coadd_png()
@@ -118,16 +120,16 @@ class coadd_image():
                 self.make_psf_png()
                 self.get_psf_allstars()
         try:
-            self.get_zpplot_firstpass()                
-            self.get_zpimage_firstpass()
-            self.get_zp_magcomp_firstpass()        
-            self.get_zpplot_secondpass()                
-            self.get_zpimage_secondpass()
-            self.get_zp_magcomp_secondpass()
-            self.zp_flag = True
+            self.get_zpplot_firstpass()
         except:
             print('WARNING: problem getting zp calibration images')
-            self.zp_flag = False
+        self.zp_flag = True
+        #self.get_zpimage_firstpass()
+        self.get_zp_magcomp_firstpass()        
+        #self.get_zpplot_secondpass()                
+        #self.get_zpimage_secondpass()
+        #self.get_zp_magcomp_secondpass()
+
 
         if self.filter == 'ha':
             self.get_gredshift_filter_curve()
@@ -230,7 +232,7 @@ class coadd_image():
 
 
 
-    def get_zpplot_firstpass(self):
+    def get_zpplot_firstpass_old(self):
         ''' get the zp image, first pass'''
         # check that png file exists
         # display png file
@@ -241,31 +243,42 @@ class coadd_image():
         #print(imagebase)
         #print('plotdir = ',self.plotdir)
         try:
-            imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','-fits')
+            imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','')
             zpsurf = glob.glob(os.path.join(self.zpdir,imagebase+"*getzp-xyresidual-fitted.png"))[0]
         except IndexError: # the above won't work for INT data b/c my naming conventions are a mess
             # and because I ran the zp calibration from diff directory
             #print('search path = ',os.path.join(self.zpdir,self.intprefix+"*getzp-xyresidual-fitted.png"))
             zpsurf = glob.glob(os.path.join(self.zpdir,self.intprefix+"*getzp*fitted*.png"))[0]
         zpplot_png = os.path.join(self.plotdir,'n'+imagebase+"-getzp-xyresidual-fitted.png")
-        if os.path.exists(self.zzplot_png):
+        if os.path.exists(self.zpplot_png):
             os.system('cp '+zpsurf+' '+self.zpplot_png)
         else:
-            if os.path.exists(zzplot_png):
-                self.zzplot_png = zzplot_png
+            if os.path.exists(zpplot_png):
+                self.pzplot_png = zpplot_png
+        pass
+    def get_zpplot_firstpass(self):
+        ''' get the zp image, first pass'''
+        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','')
+        zpsurf = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")
+        self.zpplot_png = os.path.join(self.plotdir,imagebase+"-getzp-xyresidual-fitted.png")
+        os.system('cp '+zpsurf+' '+self.zpplot_png)
+
+        
         pass
     def get_zpplot_secondpass(self):
         ''' get the zp image, first pass'''
         # check that png file exists
         # display png file
         #print(self.imagename)
-
-        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','-fits')
-        #print(imagebase)
-        #print('plotdir = ',self.plotdir)
-        zpplot2 = glob.glob(os.path.join(self.zpdir,"f"+imagebase+"*getzp-xyresidual-fitted.png"))[0]
-        self.zpplot2_png = os.path.join(self.plotdir,"f"+imagebase+"-getzp-xyresidual-fitted.png")
-        os.system('cp '+zpplot2+' '+self.zpplot2_png)
+        try:
+            imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','-fits')
+            #print(imagebase)
+            #print('plotdir = ',self.plotdir)
+            zpplot2 = glob.glob(os.path.join(self.zpdir,"f"+imagebase+"*getzp-xyresidual-fitted.png"))[0]
+            self.zpplot2_png = os.path.join(self.plotdir,"f"+imagebase+"-getzp-xyresidual-fitted.png")
+            os.system('cp '+zpplot2+' '+self.zpplot2_png)
+        except:
+            self.zpplot2_png = None
         pass
     def get_zpimage_firstpass(self):
         ''' get the zp image, first pass'''
@@ -276,12 +289,15 @@ class coadd_image():
             imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','-fits')
             #print(imagebase)
             #print('plotdir = ',self.plotdir)
-            
+            print("Looking for : ",os.path.join(self.zpdir,imagebase+"*imsurfit-2*.png"))
             zpsurf = glob.glob(os.path.join(self.zpdir,imagebase+"*imsurfit-2*.png"))[0]
         except IndexError:
             zpsurf = glob.glob(os.path.join(self.zpdir,self.intprefix+"*imsurfit-2*.png"))[0]
-        self.zpsurf_png = os.path.join(self.plotdir,imagebase+"-imsurfit-2.png")
-        os.system('cp '+zpsurf+' '+self.zpsurf_png)
+        try:
+            self.zpsurf_png = os.path.join(self.plotdir,imagebase+"-imsurfit-2.png")
+            os.system('cp '+zpsurf+' '+self.zpsurf_png)
+        except:
+            self.zpsurf_png = None
         pass
     
     def get_zpimage_secondpass(self):
@@ -295,8 +311,11 @@ class coadd_image():
             zpsurf = glob.glob(os.path.join(self.zpdir,"f"+imagebase+"*imsurfit-2-round2.png"))[0]
         except IndexError:
             zpsurf = glob.glob(os.path.join(self.zpdir,"f"+self.intprefix+"*imsurfit-2-round2.png"))[0]
-        self.zpsurf2_png = os.path.join(self.plotdir,"f"+imagebase+"-imsurfit-2-round2.png")
-        os.system('cp '+zpsurf+' '+self.zpsurf2_png)
+        try:
+            self.zpsurf2_png = os.path.join(self.plotdir,"f"+imagebase+"-imsurfit-2-round2.png")
+            os.system('cp '+zpsurf+' '+self.zpsurf2_png)
+        except:
+            self.zpsurf2_png = None
         pass
         
 
@@ -305,24 +324,35 @@ class coadd_image():
         # check that png file exists
         # display png file
         #print('imagename = ',self.imagename)
-        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','-fits')
-        #print('imagebase = ',imagebase)        
-        pancomp = glob.glob(self.zpdir+'/'+imagebase+"*se-pan-flux.png")[0]
-        self.pancomp_png = self.plotdir+'/'+imagebase+"-se-pan-flux.png"
-        #print('pancomp_png = ',self.pancomp_png)
-        os.system('cp '+pancomp+' '+self.pancomp_png)
+
+        
+        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','')
+        ##print('imagebase = ',imagebase)        
+        #pancomp = glob.glob(self.zpdir+'/'+imagebase+"*se-pan-flux.png")[0]
+        #self.pancomp_png = self.plotdir+'/'+imagebase+"-se-pan-flux.png"
+        ##print('pancomp_png = ',self.pancomp_png)
+        #os.system('cp '+pancomp+' '+self.pancomp_png)
+
+        # flux comp
+        fluxcomp = os.path.join(self.zpdir,imagebase+"-se-pan-flux.png")
+        self.pancomp_png = os.path.join(self.plotdir,imagebase+"-se-pan-flux.png")
+        os.system('cp '+fluxcomp+' '+self.pancomp_png)
+        
         pass
     def get_zp_magcomp_secondpass(self):
         ''' get the final plot of inst mag vs panstarrs mag'''
         # check that png file exists
         # display png file
         #print('imagename = ',self.imagename)
-        imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','-fits')
-        #print('imagebase = ',imagebase)        
-        pancomp = glob.glob(self.zpdir+'/'+'f'+imagebase+"*se-pan-flux.png")[0]
-        self.pancomp2_png = self.plotdir+'/'+'f'+imagebase+"-se-pan-flux.png"
-        #print('pancomp_png = ',self.pancomp_png)
-        os.system('cp '+pancomp+' '+self.pancomp2_png)
+        try:
+            imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','-fits')
+            #print('imagebase = ',imagebase)        
+            pancomp = glob.glob(self.zpdir+'/'+'f'+imagebase+"*se-pan-flux.png")[0]
+            self.pancomp2_png = self.plotdir+'/'+'f'+imagebase+"-se-pan-flux.png"
+            #print('pancomp_png = ',self.pancomp_png)
+            os.system('cp '+pancomp+' '+self.pancomp2_png)
+        except:
+            self.pancomp2_png = None
         pass
 
     def get_html_data(self):
@@ -448,6 +478,8 @@ class pointing():
 
     def get_filter_ratio_plot(self):
         ''' display the filter ratio png '''
+        # TODO - populate this!
+        
         pass
 
 
@@ -657,16 +689,17 @@ class build_html_pointing():
 
     def write_rband_zp(self):
         ''' make table with rband zp fit '''
-        labels=['Fit','Residuals','Residual<br> Surface']
+        labels=['Fit','Residuals']#,'Residual<br> Surface']
         images = [os.path.basename(self.pointing.r.pancomp_png),\
-                  os.path.basename(self.pointing.r.zpplot_png),\
-                  os.path.basename(self.pointing.r.zpsurf_png)]
+                  os.path.basename(self.pointing.r.zpplot_png)]#,\
+                  #os.path.basename(self.pointing.r.flux_comp)]
         buildweb.write_table(self.html,labels=labels,images=images,images2=None)
-        labels=['2nd Pass Fit','Residuals','Residual<br> Surface']        
-        images2 = [os.path.basename(self.pointing.r.pancomp2_png),\
-                   os.path.basename(self.pointing.r.zpplot2_png),\
-                   os.path.basename(self.pointing.r.zpsurf2_png)]
-        buildweb.write_table(self.html,labels=labels,images=images2)
+        #if self.pointing.r.pancomp2_png is not None:
+        #    labels=['2nd Pass Fit','Residuals','Residual<br> Surface']        
+        #    images2 = [os.path.basename(self.pointing.r.pancomp2_png),\
+        #               os.path.basename(self.pointing.r.zpplot2_png),\
+        #               os.path.basename(self.pointing.r.zpsurf2_png)]
+        #    buildweb.write_table(self.html,labels=labels,images=images2)
 
         
 
@@ -698,16 +731,17 @@ class build_html_pointing():
 
     def write_ha_zp(self):
         ''' make table with rband zp fit '''
-        labels=['Fit','Residuals','Residual<br> Surface']
+        labels=['Fit','Residuals']#,'Residual<br> Surface']
         images = [os.path.basename(self.pointing.ha.pancomp_png),\
-                  os.path.basename(self.pointing.ha.zpplot_png),\
-                  os.path.basename(self.pointing.ha.zpsurf_png)]
+                  os.path.basename(self.pointing.ha.zpplot_png)]
+                  #os.path.basename(self.pointing.ha.zpsurf_png)]
         buildweb.write_table(self.html,labels=labels,images=images,images2=None)
-        labels=['2nd Pass Fit','Residuals','Residual<br> Surface']        
-        images2 = [os.path.basename(self.pointing.ha.pancomp2_png),\
-                   os.path.basename(self.pointing.ha.zpplot2_png),\
-                   os.path.basename(self.pointing.ha.zpsurf2_png)]
-        buildweb.write_table(self.html,labels=labels,images=images2)
+        #if self.pointing.ha.pancomp2_png is not None:
+        #    labels=['2nd Pass Fit','Residuals','Residual<br> Surface']        
+        #    images2 = [os.path.basename(self.pointing.ha.pancomp2_png),\
+        #               os.path.basename(self.pointing.ha.zpplot2_png),\
+        #               os.path.basename(self.pointing.ha.zpsurf2_png)]
+        #    buildweb.write_table(self.html,labels=labels,images=images2)
 
 
     def write_ha_div(self):
@@ -764,7 +798,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--coaddir',dest = 'coaddir', help='set to coadd directory')
     parser.add_argument('--psfdir',dest = 'psfdir', help='set to coadd directory')
-    parser.add_argument('--outdir',dest = 'dir', help='set to coadd directory')        
+    parser.add_argument('--outdir',dest = 'dir', help='set to coadd directory',default='/media/rfinn/hdata/')        
     parser.add_argument('--int',default=False,dest='int',action = 'store_true', help='set this for INT data')
     parser.add_argument('--bok',default=False,dest='bok',action = 'store_true', help='set this for BOK data')        
      
@@ -781,77 +815,7 @@ if __name__ == '__main__':
     hdi=False
     ngc=False
     newnames = True
-    if virgovms:
-        vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
-        homedir = '/mnt/qnap_home/rfinn/'
-        coadd_dir = homedir+'/Halpha/reduced/virgo-coadds-HDI/'
-        zpdir = homedir+'/Halpha/reduced/virgo-coadds-HDI/plots/'        
-        psfdir = homedir+'/Halpha/reduced/psf-images/'
-        outdir = homedir+'/research/Virgo/html-dev/coadds/'
-
-    if laptop:
-        # updating April 2023 to use v2 catalogs
-        vtabledir = homedir+'/research/Virgo/tables-north/v2/'
-        vmain = fits.getdata(vtabledir+'vf_v2_main.fits')
-        #homedir = '/mnt/qnap_home/rfinn/'
-        VFFIL_PATH = vtabledir+'/vf_v2_main_filament_membership_allgalaxies.fits'
-        VFFIL_PATH = vtabledir+'/vf_v2_environment.fits'
-        vffil = fits.getdata(VFFIL_PATH)
-        #psfdir = homedir+'/data/reduced/psf-images/'
-        #outdir = homedir+'/research/Virgo/html-dev/coadds/'
-        outpathbase = '/media/rfinn/hdata/'
-        psfdir = outpathbase+'psf-images/'
-        outdir = outpathbase+'html_dev/coadds/'
-        
-    if hdi:
-        coadd_dir = homedir+'/data/reduced/virgo-coadds-HDI/'
-        zpdir = homedir+'/data/reduced/virgo-coadds-HDI/plots/'        
-
-    if ngc:
-        coadd_dir = homedir+'/data/reduced/NGC5846/'
-        zpdir = homedir+'/data/reduced/NGC5846/plots/'        
-        
-    #rimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-r-shifted.fits'    
-    #haimage = coadd_dir+'VF-219.9523+5.4009-INT-20190530-p019-Halpha.fits'
-    #hacsimage = coadd_dir+'VF-219.9485+5.3942-INT-20190530-p019-CS.fits'
-    if intonlaptop:
-        #vmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')    
-        coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-feb2019-int/'
-        coadd_dir = '/home/rfinn/data/reduced/virgo-coadds-jun2019-int/'
-        coadd_dir = '/media/rfinn/hdata/coadds/virgo-coadds-int-2022/'                
-        zpdir = coadd_dir+'/plots/'                
-        #psfdir = homedir+'/data/reduced/psf-images/'
-        #outdir = homedir+'/research/Virgo/html-dev/coadds/'
-    if bokonlaptop:
-        coadd_dir = outpathbase+'coadds/BOK2021pipeline/'                
-        zpdir = coadd_dir+'/plots/'                
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-
-    # for HDI files
-    if ngc:
-        # assume NGC naming convention
-        allrfiles = glob.glob(coadd_dir+'nNGC*R.fits')
-        print(coadd_dir+'nNGC*-R.fits')
-        hfiles = glob.glob(coadd_dir+'nNGC*Ha.fits')
-        print(allrfiles)
-    elif hdi:
-        rfiles = glob.glob(coadd_dir+'VF*-r-*coadd.fits')        
-        Rfiles = glob.glob(coadd_dir+'VF*-R-*coadd.fits')
-        hfiles = glob.glob(coadd_dir+'VF*-ha4-*coadd.fits')
-        # combine r and R files
-        allrfiles = rfiles+Rfiles
-    elif intonlaptop:
-        allrfiles = glob.glob(coadd_dir+'VF*-r-shifted.fits')        
-        h1files = glob.glob(coadd_dir+'VF*-Halpha.fits')
-        h2files = glob.glob(coadd_dir+'VF*-Ha6657.fits')        
-        # combine r and R files
-        hfiles = h1files+h2files
-    elif bokonlaptop:
-        allrfiles = glob.glob(coadd_dir+'VF*-r.fits')        
-        hfiles = glob.glob(coadd_dir+'VF*-Ha4.fits')
-
-    elif newnames:
+    if newnames:
         coadd_dir = '/media/rfinn/hdata/coadds/all-virgo-coadds/'                
         zpdir = coadd_dir+'/plots/'                
         vtabledir = homedir+'/research/Virgo/tables-north/v2/'
@@ -913,29 +877,35 @@ if __name__ == '__main__':
             if not os.path.exists(haimage):
                 continue
                 print("couldn't find it")
-                # check to see if the halpha image was taken on a different date
-                t = rimage.split('-')
-                datestring
-                # haimage could have a different date
-                impath,rfile = os.path.split(rimage)
-                #print(impath)
-                #print(rfile)
-                if intonlaptop:
-                    search_string = os.path.join(impath,"VF*"+rfile.split('r')[1].replace('-r-','-ha4-').replace('-R-','-ha4-'))
-                else:
-                    search_string = os.path.join(impath,"VF*"+rfile.replace('-r-shifted.fits','-Ha6657.fits'))
-                print('\t looking for ',search_string)
-                try:
-                    haimage = glob.glob(search_string)[0]
-                except:
-                    if not os.path.exists(haimage):
-                        # assume Becky's naming convention
-                        haimage = rimage.replace('-R.fits','-Ha.fits')
-                        if not os.path.exists(haimage):
-                            print('WARNING: could not find halpha image for ',rimage,' Skipping for now.')
-                            print('\t Looking for ',haimage)
-                            
-                        continue
+
+
+                # SKIPPING ALL  THIS FOR NOW
+                ## check to see if the halpha image was taken on a different date
+                #t = rimage.split('-')
+                ##datestring
+                ## haimage could have a different date
+                #impath,rfile = os.path.split(rimage)
+                ##print(impath)
+                ##print(rfile)
+                #if intonlaptop:
+                #    search_string = os.path.join(impath,"VF*"+rfile.split('r')[1].replace('-r-','-ha4-').replace('-R-','-ha4-'))
+                #else:
+                #    search_string = os.path.join(impath,"VF*"+rfile.replace('-r-shifted.fits','-Ha6657.fits'))
+                #print('\t looking for ',search_string)
+                #try:
+                #    haimage = glob.glob(search_string)[0]
+                #except:
+                #    if not os.path.exists(haimage):
+                #        # assume Becky's naming convention
+                #        haimage = rimage.replace('-R.fits','-Ha.fits')
+                #        if not os.path.exists(haimage):
+                #            print('WARNING: could not find halpha image for ',rimage,' Skipping for now.')
+                #            print('\t Looking for ',haimage)
+                #            
+                #        continue
+
+                continue
+            
         print('###  Halpha image = ',haimage)
         # define previous gal for html links
         if i > 0:
@@ -965,4 +935,6 @@ if __name__ == '__main__':
             print('WE HAVE A PROBLEM!!!',rimage)
             print("")            
         plt.close('all')
-        #break
+
+        # uncomment the next line for testing
+        break

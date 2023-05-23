@@ -37,8 +37,8 @@ class vtables:
         # these aren't updated for v2 yet
         self.read_env()
         self.read_filaments()
-        #self.read_magphys()
-        #self.read_paper1()
+        self.read_magphys()
+        self.read_paper1()
         #except FileNotFoundError:
         #    print("WARNING: magphys file not found (this is probably ok)")
         try:
