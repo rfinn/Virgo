@@ -123,8 +123,12 @@ class vtables:
         self.unwise = Table.read(self.tabledir+self.tableprefix+'unwise.fits')                               
         pass
     def read_halpha(self):
-        ''' read in halpha observations table; store as self.ha  '''
-        self.ha = Table.read(self.tabledir+self.tableprefix+'ha.fits')                               
+        ''' read in halpha observations table; store as self.ha; table generated from web coadds is self.haobs  '''
+
+
+        self.ha = Table.read(self.tabledir+self.tableprefix+'ha.fits')
+        # read in table that is created from making web pages for gui
+        self.haobs = Table.read(self.tabledir+self.tableprefix+'halpha_obs.fits')
         pass
     def read_tempel(self):
         ''' read in Tempel table; store as self.tempel  '''

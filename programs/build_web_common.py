@@ -2,6 +2,7 @@ from astropy.io import fits
 from matplotlib import pyplot as plt
 import numpy as np
 from astropy import wcs
+import os
 
 def write_coadd_prop_table(html,filter,zp,fwhm_arcsec):
     html.write('<h3>Image Characteristics</h3>\n')
@@ -82,6 +83,19 @@ def get_galaxies_fov(imagename,RA,DEC):
     # keep galaxies that fall within image boundary
     keepflag = (imx > 1) & (imx < xmax) & (imy > 1) & (imy < ymax)
 
+    # should also check the weight image and remove galaxies with weight=0
+    # this won't take care of images with partial exposures, but we can deal with that later...
+    # TODO - how to handle images with partial exposures, meaning only part of galaxy is in FOV?
+    weightimage = imagename.replace('.fits','.weight.fits')
+    if os.path.exists(weightimage):
+        whdu = fits.open(weightimage)
+        # just check center position?
+        int_imx = np.array(imx,'i')
+        int_imy = np.array(imy,'i')        
+        centerpixvals = whdu[0].data[int_imy[keepflag],int_imx[keepflag]]
+        # weight image will have value > 0 if there is data there
+        weightflag = centerpixvals > 0
+        keepflag[keepflag] = keepflag[keepflag] & weightflag
     return imx, imy, keepflag
 
 def plot_vf_gals(imx,imy,keepflag,cat,ax,galsize=120):
