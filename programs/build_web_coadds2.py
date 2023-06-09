@@ -1085,9 +1085,6 @@ if __name__ == '__main__':
 
     # TODO - convert this to multiprocessing!!!
     
-    # loop through r filenames
-    #startindex = 71
-    #for rimage in rimages: # loop through list
     indices = np.arange(len(rfiles))
     image_pool = mp.Pool(mp.cpu_count())
     myresults = [image_pool.apply_async(buildone,args=(rimages,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices]
