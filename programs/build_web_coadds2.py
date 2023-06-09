@@ -157,7 +157,10 @@ class coadd_image():
         self.wcs = wcs.WCS(self.imheader)
         self.xdim,self.ydim = self.imdata.shape
         self.racenter,self.deccenter = self.wcs.wcs_pix2world(self.xdim/2,self.ydim/2,1)
-        self.zp = self.imheader['PHOTZP']
+        try:
+            self.zp = self.imheader['PHOTZP']
+        except KeyError:
+            self.zp = -1
         try:
             self.pscale = np.abs(self.imheader['PIXSCAL1'])
         except KeyError:
