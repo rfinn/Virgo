@@ -112,7 +112,8 @@ class coadd_image():
             self.psfdir = os.path.split(psfimage)[0]
         else:
             self.psf_flag = False
-
+            self.fwhm_arcsec = None
+            self.sefwhm_arcsec = None            
         
         if plotdir is None:
             self.plotdir = os.getcwd()
