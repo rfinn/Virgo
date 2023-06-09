@@ -991,14 +991,14 @@ def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
         haimage = os.path.join(coadd_dir,rheader['HAIMAGE'])
         if not os.path.exists(haimage):
             print("couldn't find the halpha image ",haimage)                
-            continue
+            return
 
 
 
         csimage = haimage.replace('.fits','-CS.fits')
         if not os.path.exists(csimage):
             print("couldn't find the CS halpha image ",csimage)                
-            continue
+            return
 
     print('###  Halpha image = ',haimage)
     # define previous gal for html links
