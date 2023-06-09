@@ -396,8 +396,9 @@ class coadd_image():
         data = [self.dateobs,self.utobs,\
                 filter,\
                 "{:.1f}".format(self.zp),\
-                "{:.1f}".format(self.exptime/60),\
-                "{:.2f}".format(self.fwhm_arcsec)]
+                "{:.1f}".format(self.exptime/60)]
+        if self.fwhm_arcsec is not None:
+            data.append("{:.2f}".format(self.fwhm_arcsec))
         if self.sefwhm_arcsec is not None:
             data.append("{:.2f}".format(self.sefwhm_arcsec))
         return labels,data
