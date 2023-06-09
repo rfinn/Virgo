@@ -139,7 +139,8 @@ if __name__ == '__main__':
     VFFIL_PATH = homedir+'/research/Virgo/tables-north/v2/vf_v2_environment.fits'    
     vffil = fits.getdata(VFFIL_PATH)
     
-    outdir = homedir+'/research/Virgo-dev/html-dev/coadds/'
+    #outdir = homedir+'/research/Virgo-dev/html-dev/coadds/'
+    outdir = '/data-pool/Halpha/html_dev/coadds/'    
     #outdir = '/home/rfinn/Virgo-dev/html-dev/coadds/'    
 
     # this should contain a list of all the galaxy folders
