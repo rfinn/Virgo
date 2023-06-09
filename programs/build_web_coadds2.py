@@ -975,7 +975,7 @@ if __name__ == '__main__':
         outpathbase = '/media/rfinn/hdata/'
         outpathbase = '/data-pool/Halpha/'        
         psfdir = outpathbase+'psf-images/'
-        outdir = homedir+'/research/Virgo-dev/html-dev/coadds/'
+        outdir = outpathbase+'/html-dev/coadds/'
 
         # get list of r-band coadded images
         a = glob.glob(coadd_dir+'VF*INT*-r-shifted.fits')
