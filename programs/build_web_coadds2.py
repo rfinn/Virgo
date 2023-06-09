@@ -5,10 +5,11 @@ GOAL:
 * create web page to inspect the coadds, zp calibration, and psf
 * run this from the html directory
 
-
-
 /home/rfinn/research/Virgo-dev/html-dev
 
+or more recently
+
+/data-pool/Halpha/html_dev/
 
 
 NOTES:
@@ -141,7 +142,7 @@ class coadd_image():
             print('WARNING: problem getting zp calibration images')
         self.zp_flag = True
         #self.get_zpimage_firstpass()
-        if self.filter is not 'CS':
+        if self.filter != 'CS':
             self.get_zp_magcomp_firstpass()        
         #self.get_zpplot_secondpass()                
         #self.get_zpimage_secondpass()
@@ -960,7 +961,8 @@ if __name__ == '__main__':
 
     newnames = True
     if newnames:
-        coadd_dir = '/media/rfinn/hdata/coadds/all-virgo-coadds/'                
+        coadd_dir = '/media/rfinn/hdata/coadds/all-virgo-coadds/'
+        coadd_dir = '/data-pool/Halpha/coadds/all-virgo-coadds/'                        
         zpdir = coadd_dir+'/plots/'
         fratiodir = coadd_dir+'/plots-filterratio/'
         vtabledir = homedir+'/research/Virgo/tables-north/v2/'
@@ -971,6 +973,7 @@ if __name__ == '__main__':
         #psfdir = homedir+'/data/reduced/psf-images/'
 
         outpathbase = '/media/rfinn/hdata/'
+        outpathbase = '/data-pool/Halpha/'        
         psfdir = outpathbase+'psf-images/'
         outdir = homedir+'/research/Virgo-dev/html-dev/coadds/'
 
