@@ -63,7 +63,7 @@ def collect_results(result):
     image_results.append(result)
 
 
-def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csimage=False):
+def display_image(image,percent=95,lowrange=False,mask=None,sigclip=False,csimage=False):
     lowrange=False
     # use inner 80% of image
     xdim,ydim = image.shape
@@ -77,11 +77,11 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
         clipped_data = image[xmin:xmax,ymin:ymax]
     if csimage:
         try:
-            norm = simple_norm(clipped_data, stretch='linear',min_percent=10,max_percent=90)
+            norm = simple_norm(clipped_data, stretch='asinh',min_percent=10,max_percent=90)
         except:
             norm = None
     elif lowrange:
-        norm = simple_norm(clipped_data, stretch='linear',percent=percent)
+        norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
     else:
         norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
 
@@ -1089,7 +1089,7 @@ if __name__ == '__main__':
     
     indices = np.arange(len(rfiles))
     image_pool = mp.Pool(mp.cpu_count())
-    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices]
+    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices[0:3]]
     
     image_pool.close()
     image_pool.join()
