@@ -1068,7 +1068,12 @@ if __name__ == '__main__':
         poutdir = os.path.join(outdir,pname)
         print(poutdir)
         p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir)
-        h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
+        try:
+            h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
+        except:
+            print("problem builing webpage for ",p)
+            print("skipping for now")
+            print()
         
         #try:
         #     p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=poutdir)
