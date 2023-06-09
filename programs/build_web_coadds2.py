@@ -112,7 +112,8 @@ class coadd_image():
             self.psfdir = os.path.split(psfimage)[0]
         else:
             self.psf_flag = False
-
+            self.fwhm_arcsec = None
+            self.sefwhm_arcsec = None            
         
         if plotdir is None:
             self.plotdir = os.getcwd()
@@ -396,8 +397,9 @@ class coadd_image():
         data = [self.dateobs,self.utobs,\
                 filter,\
                 "{:.1f}".format(self.zp),\
-                "{:.1f}".format(self.exptime/60),\
-                "{:.2f}".format(self.fwhm_arcsec)]
+                "{:.1f}".format(self.exptime/60)]
+        if self.fwhm_arcsec is not None:
+            data.append("{:.2f}".format(self.fwhm_arcsec))
         if self.sefwhm_arcsec is not None:
             data.append("{:.2f}".format(self.sefwhm_arcsec))
         return labels,data
@@ -1138,7 +1140,12 @@ if __name__ == '__main__':
         poutdir = os.path.join(outdir,pname)
         print(poutdir)
         p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir)
-        h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
+        try:
+            h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
+        except:
+            print("problem builing webpage for ",p)
+            print("skipping for now")
+            print()
         
         #try:
         #     p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=poutdir)
