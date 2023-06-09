@@ -55,6 +55,12 @@ OVERWRITE = True
 ###########################################################
 ####  FUNCTIONS
 ###########################################################
+image_results = []
+def collect_results(result):
+
+    global results
+    image_results.append(result)
+
 
 def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csimage=False):
     lowrange=False
@@ -955,7 +961,7 @@ class build_html_pointing():
     def close_html(self):
         self.html.close()
 # wrap
-def buildone(rimages,i,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir):
+def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
     rimage = rimages[i]
     """ code to build webpage for one coadd """
     print()
@@ -1081,8 +1087,17 @@ if __name__ == '__main__':
     
     # loop through r filenames
     #startindex = 71
+    #for rimage in rimages: # loop through list
+    indices = np.arange(len(rfiles))
+    image_pool = mp.Pool(mp.cpu_count())
+    myresults = [image_pool.apply_async(buildone,args=(rimages,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices]
+    
+    image_pool.close()
+    image_pool.join()
+    image_results = [r.get() for r in myresults]
 
-    buildone(rimages,i,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir)
+
+    #buildone(rimages,i,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir)
 
     """
     for i,rimage in enumerate(rfiles[startindex:]):
