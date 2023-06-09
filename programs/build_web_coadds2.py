@@ -63,7 +63,7 @@ def collect_results(result):
     image_results.append(result)
 
 
-def display_image(image,percent=95,lowrange=False,mask=None,sigclip=False,csimage=False):
+def display_image(image,percent=95,lowrange=False,mask=None,sigclip=True,csimage=False):
     lowrange=False
     # use inner 80% of image
     xdim,ydim = image.shape
@@ -79,6 +79,7 @@ def display_image(image,percent=95,lowrange=False,mask=None,sigclip=False,csimag
         try:
             norm = simple_norm(clipped_data, stretch='asinh',min_percent=10,max_percent=90)
         except:
+            print("error getting norm")
             norm = None
     elif lowrange:
         norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
