@@ -229,6 +229,8 @@ class coadd_image():
             self.found_psf = True
         else:
             self.found_psf = False
+            self.fwhm_arcsec = -1
+            self.fwhm_pix = -1
         pass
     
     def make_psf_png(self):
