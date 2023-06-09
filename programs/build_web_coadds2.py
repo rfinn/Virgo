@@ -427,11 +427,12 @@ class coadd_image():
         elif header_filter.find('Halpha') > -1:
             filter='inthalpha'
         myfilter = ft.filter_trace(filter)
-        corrections = myfilter.get_trans_correction(redshift)
-        self.corrections = corrections
         self.gals_filter_png = os.path.join(self.plotdir,'galaxies_in_filter.png')
-        os.rename('galaxies_in_filter.png',self.gals_filter_png)
-        pass
+        corrections = myfilter.get_trans_correction(redshift,outfile=self.gals_filter_png)
+        self.corrections = corrections
+        #self.gals_filter_png = os.path.join(self.plotdir,'galaxies_in_filter.png')
+        #os.rename('galaxies_in_filter.png',self.gals_filter_png)
+        #pass
     
 class pointing():
 
