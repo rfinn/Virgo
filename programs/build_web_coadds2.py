@@ -402,7 +402,10 @@ class coadd_image():
         #print('filter from header = ',header_filter,self.filter)
         if header_filter.find('ha4') > -1:
             filter=4
-        if header_filter.find('Ha+4nm') > -1:
+        elif header_filter.find('Ha+4nm') > -1:
+            # TODO - need to check that this is in fact the same filter as on HDI
+            filter=4
+        elif header_filter.find('Ha4nm') > -1:
             # TODO - need to check that this is in fact the same filter as on HDI
             filter=4
         elif header_filter.find('Ha6657') > -1:
@@ -999,6 +1002,7 @@ if __name__ == '__main__':
     #hfiles.sort()
     rfiles.sort()
 
+    # TODO - convert this to multiprocessing!!!
     
     # loop through r filenames
     startindex = 71
