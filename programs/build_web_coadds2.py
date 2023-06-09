@@ -494,7 +494,7 @@ class pointing():
     def get_rband_image(self):
         ''' initiate an instance of coadd image class '''
         
-        if os.path.exists(rimage):
+        if os.path.exists(self.rimage):
             outprefix = self.outdir
             filter='r'
             if self.rpsf_flag:
