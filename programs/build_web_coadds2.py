@@ -203,7 +203,7 @@ class coadd_image():
             print('Found {}.  not remaking this.'.format(self.coadd_png))
         else:
             plt.figure(figsize=(8,8))
-            ax = plt.subplot(projection=wcs.WCS(self.imheader))
+            ax = plt.subplot(projection=wcs.WCS(self.imheader)[0])
             plt.subplots_adjust(top=.95,right=.95,left=.15,bottom=.1)
             if self.filter == 'CS':
                 display_image(self.imdata,csimage=True)
