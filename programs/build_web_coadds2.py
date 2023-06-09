@@ -38,6 +38,7 @@ from astropy.nddata import Cutout2D
 from astropy.stats import sigma_clip
 from astropy.time import Time
 
+import multiprocessing as mp
 
 import argparse
 
