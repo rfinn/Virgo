@@ -132,17 +132,19 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
         clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=5,sigma_upper=5)#,grow=10)
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
-    #if csimage:
-    #    try:
-    #        norm = simple_norm(clipped_data, stretch='asinh',min_percent=10,max_percent=90)
-    #    except:
-    #        print("error getting norm")
-    #        norm = None
+    if csimage:
+        try:
+            norm = simple_norm(clipped_data, stretch='asinh',min_percent=10,max_percent=90)
+        except:
+            print("error getting norm")
+            norm = None
+    else:
+        norm = simple_norm(clipped_data, stretch='asinh',percent=percent)    
+
     #if lowrange:
     #    norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
     #else:
     #    norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
-    norm = simple_norm(clipped_data, stretch='asinh',percent=percent)    
 
     if norm == None:
         plt.imshow(image,cmap='gray_r',origin='lower')
@@ -635,7 +637,7 @@ class pointing():
         if self.czimage is not None:
             czimdata,czimheader = fits.getdata(self.czimage,header=True)                
         sizes = (galsizes/pixscale*2.,galsizes/pixscale*2.)
-        sizes_arcsec = (galsizes*2.5,galsizes*2.5)        
+        sizes_arcsec = (galsizes*3,galsizes*3)        
         rowchange = np.arange(4,50,4)
         nrow = 1
         for i in range(len(rowchange)):
@@ -659,7 +661,7 @@ class pointing():
             # TODO - finish this next line
             ax = plt.subplot(nrow,ncol,5*j+1)            
             jpeg_name = get_legacy_jpg(galra[j],galdec[j],galid=galnames[j],pixscale=1,imsize=imsize_arcsec,subfolder=self.outdir)
-            
+            print(jpeg_name)
             # plot jpg
             t = Image.open(jpeg_name)
             plt.imshow(t,origin='upper')
@@ -676,6 +678,7 @@ class pointing():
                 #print("displaying cutout ",imtitles[k],imsize)
                 ax = plt.subplot(nrow,ncol,5*j+k+2)            
                 cutout = Cutout2D(images[k],position,imsize)
+
                 display_image(cutout.data)
                 plt.title(imtitles[k])
                 
@@ -1192,7 +1195,10 @@ if __name__ == '__main__':
     image_pool.close()
     image_pool.join()
     image_results = [r.get() for r in myresults]
-
+    cwd = os.getcwd()
+    os.chdir(outdir)
+    os.system("python ~/github/Virgo/programs/build_coadd_index.html")
+    os.chdir(cwd)
 
     #buildone(rimages,i,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir)
 
