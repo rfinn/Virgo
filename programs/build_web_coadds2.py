@@ -66,7 +66,7 @@ sys.path.append(homedir+'/github/halphagui/')
 import filter_transmission as ft
 
 OVERWRITE = False
-
+VERBOSE = False
 ###########################################################
 ####  FUNCTIONS
 ###########################################################
@@ -103,15 +103,16 @@ def get_legacy_jpg(ra,dec,galid='VFID0',pixscale=1,imsize='60',subfolder=None):
         rootname = str(galid)+'-legacy-'+str(imsize)        
     jpeg_name = rootname+'.jpg'
 
-    print('legacy image name = ',jpeg_name)
-    print('legacy imsize = ',imsize)
+    if VERBOSE:
+        print('legacy image name = ',jpeg_name)
+        print('legacy imsize = ',imsize)
     
     # check if images already exist
     # if not download images
     if not(os.path.exists(jpeg_name)):
-        print('retrieving ',jpeg_name)
+        #print('retrieving ',jpeg_name)
         url='http://legacysurvey.org/viewer/jpeg-cutout?ra='+str(ra)+'&dec='+str(dec)+'&layer=dr8&size='+str(imsize)+'&pixscale='+str(pixscale)
-        print('legacy url = ',url)
+        #print('legacy url = ',url)
         urlretrieve(url, jpeg_name)
     else:
         print('previously downloaded ',jpeg_name)
@@ -198,7 +199,7 @@ class coadd_image():
         temp = self.imagename.replace('-shifted','').replace('.fits','')
         pointing = temp.split('-')[-2].replace('p','pointing')
         self.intprefix = "{}*_{}".format(pointing,temp[-1])
-        print('INT plot prefix = ',self.intprefix)
+        #print('INT plot prefix = ',self.intprefix)
     def generate_plots(self):
         self.get_image()
         self.make_coadd_png()
@@ -389,7 +390,7 @@ class coadd_image():
             imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','-fits')
             #print(imagebase)
             #print('plotdir = ',self.plotdir)
-            print("Looking for : ",os.path.join(self.zpdir,imagebase+"*imsurfit-2*.png"))
+            #print("Looking for : ",os.path.join(self.zpdir,imagebase+"*imsurfit-2*.png"))
             zpsurf = glob.glob(os.path.join(self.zpdir,imagebase+"*imsurfit-2*.png"))[0]
         except IndexError:
             zpsurf = glob.glob(os.path.join(self.zpdir,self.intprefix+"*imsurfit-2*.png"))[0]
@@ -600,8 +601,8 @@ class pointing():
             self.cs = coadd_image(self.csimage,psfimage=None,plotdir=outprefix,zpdir=None,filter=filter)
             self.cs.generate_plots()
             self.cscoadd_flag=True
-            print()
-            print('getting galaxy cutouts')
+            #print()
+            #print('getting galaxy cutouts')
             self.get_gal_cutouts()
         else:
             self.cscoadd_flag=False
@@ -659,7 +660,7 @@ class pointing():
             try:
                 imsize = galsizes[j]/pixscale*3.
             except IndexError:
-                print('hey rose - problem accessing sizes ',sizes)
+                #print('hey rose - problem accessing sizes ',sizes)
                 # set the default size to 90 arcsec
                 imsize = 90/pixscale
             imsize_arcsec = imsize*pixscale
@@ -707,7 +708,7 @@ class pointing():
         plotname = os.path.basename(self.haimage.replace('.fits','-filter-ratio.png'))
 
         filename = os.path.join(plotdir,plotname)
-        print("looking for filter ratio plot ",filename)
+        #print("looking for filter ratio plot ",filename)
         if os.path.exists(filename):
             s = f'cp {filename} {os.path.join(self.outdir,os.path.basename(filename))}'
             os.system(s)
@@ -1073,11 +1074,11 @@ def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
     #try:
 
     
-    print()
-    print('###################################')
+    #print()
+    #print('###################################')
     print(f'r-band image: {rimage} ({i}/{len(rfiles)})')
-    print('###################################')        
-    print()
+    #print('###################################')        
+    #print()
     # find matching ha4 coadd
     #if rimage.find('shifted.fits') > -1:
     #    # not sure what this section is doing
@@ -1109,7 +1110,7 @@ def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
             print("couldn't find the CS halpha image ",csimage)                
             return
 
-    print('###  Halpha image = ',haimage)
+    #print('###  Halpha image = ',haimage)
     # define previous gal for html links
     if i > 0:
         previous = os.path.basename(rfiles[i-1]).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-R','').replace('-r','')
@@ -1125,7 +1126,7 @@ def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
     pname = os.path.basename(rimage).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-r','').replace('-R','')
     # create a d
     poutdir = os.path.join(outdir,pname)
-    print(poutdir)
+    #print(poutdir)
     p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir)
     h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
 
