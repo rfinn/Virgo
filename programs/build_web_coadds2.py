@@ -147,7 +147,10 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
             print("error getting norm")
             norm = None
     else:
-        norm = simple_norm(clipped_data, stretch='asinh',percent=percent)    
+        try:
+            norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
+        except IndexError:
+            norm = None
 
     #if lowrange:
     #    norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
