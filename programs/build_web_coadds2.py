@@ -289,7 +289,7 @@ class coadd_image():
             ax.set_xlabel('RA (deg)',fontsize=16)
             ax.set_ylabel('DEC (deg)',fontsize=16)        
             plt.savefig(self.coadd_png)
-
+            plt.close()
     def get_psf_image(self):
         ''' get psf image, store FWHM '''
         if os.path.exists(self.psf_image):
@@ -315,7 +315,7 @@ class coadd_image():
         #plt.show()
         self.psf_png = self.plotprefix+'psf.png'
         plt.savefig(self.psf_png)        
-
+        plt.close()
     def get_psf_allstars(self):
         ''' display psf image mosaic of 100 stars '''
         # check that png file exists
@@ -685,6 +685,7 @@ class pointing():
         imname = f"{self.pointing_name}-gal-cutouts.png"
         outfile = os.path.join(self.outdir,imname)
         plt.savefig(outfile)
+        plt.close()
             
         # add image name to list
         self.gal_cutout_figname = imname
@@ -783,7 +784,7 @@ class pointing():
         plt.legend()
         self.position_plot_zoom = self.outdir+'/positions-zoom.png'
         plt.savefig(self.position_plot_zoom)
-        
+        plt.close()
 class build_html_pointing():
 
     def __init__(self,pointing,outdir,next=None,previous=None):
