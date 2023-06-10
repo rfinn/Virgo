@@ -134,7 +134,7 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
         clipped_data = image[xmin:xmax,ymin:ymax]
     if csimage:
         try:
-            norm = simple_norm(clipped_data, stretch='asinh',min_percent=10,max_percent=90)
+            norm = simple_norm(clipped_data, stretch='asinh',min_percent=5,max_percent=90)
         except:
             print("error getting norm")
             norm = None
