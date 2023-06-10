@@ -126,10 +126,16 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
     lowrange=False
     # use inner 80% of image
     xdim,ydim = image.shape
-    xmin = int(.2*xdim)
-    xmax = int(.8*xdim)    
-    ymin = int(.2*ydim)
-    ymax = int(.8*ydim)    
+    if xdim > 1000:
+        xmin = int(.1*xdim)
+        xmax = int(.9*xdim)    
+        ymin = int(.1*ydim)
+        ymax = int(.9*ydim)
+    else:
+        xmin = 1
+        xmax = xdim
+        ymin = 1
+        ymax = ydim
     if sigclip:
         clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=5,sigma_upper=5)#,grow=10)
     else:
