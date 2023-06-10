@@ -658,7 +658,7 @@ class pointing():
             try:
                 imsize = sizes[j][0]
             except IndexError:
-                print('hey rose - problem accessing sizes ',sizes[j])
+                print('hey rose - problem accessing sizes ',sizes)
                 # set the default size to 90 arcsec
                 imsize = 90/pixscale
             imsize_arcsec = imsize*pixscale
