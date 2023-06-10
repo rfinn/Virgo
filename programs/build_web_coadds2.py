@@ -656,7 +656,7 @@ class pointing():
         for j in range(len(galra)):
             #print(sizes[j][0])
             try:
-                imsize = galsizes[j]/pixelscale*3.
+                imsize = galsizes[j]/pixscale*3.
             except IndexError:
                 print('hey rose - problem accessing sizes ',sizes)
                 # set the default size to 90 arcsec
