@@ -954,9 +954,11 @@ class build_html_pointing():
     def write_rband_psf(self):
         '''  make table with rband psf results '''
         labels=['Coadd','Stars','PSF']
-        images=[os.path.basename(self.pointing.r.coadd_png),\
-                os.path.basename(self.pointing.r.psf_allstars_png),\
-                os.path.basename(self.pointing.r.psf_png)]
+        images=[os.path.basename(self.pointing.r.coadd_png)]
+        if self.pointing.r.psf_allstars_png is not None:
+            images.append(os.path.basename(self.pointing.r.psf_allstars_png))
+        if self.pointing.r.psf_png is not None:
+            images.append(os.path.basename(self.pointing.r.psf_png))
         buildweb.write_table(self.html,labels=labels,images=images,images2=None)
 
     def write_rband_zp(self):
@@ -996,9 +998,11 @@ class build_html_pointing():
     def write_ha_psf(self):
         '''  make table with rband psf results '''
         labels=['Coadd','Stars','PSF']
-        images = [os.path.basename(self.pointing.ha.coadd_png),\
-                  os.path.basename(self.pointing.ha.psf_allstars_png),\
-                  os.path.basename(self.pointing.ha.psf_png)]
+        images = [os.path.basename(self.pointing.ha.coadd_png)]
+        if self.pointing.ha.psf_allstars_png is not None:
+            images.append(os.path.basename(self.pointing.ha.psf_allstars_png))
+        if self.pointing.ha.psf_png is not None:
+            images.append(os.path.basename(self.pointing.ha.psf_png))
         buildweb.write_table(self.html,labels=labels,images=images,images2=None)
 
     def write_ha_zp(self):
