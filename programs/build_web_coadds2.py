@@ -185,7 +185,8 @@ class coadd_image():
 
     def __init__(self,imagename,psfimage=None,plotdir=None,cat=None,zpdir=None,filter=None):
         self.imagename = imagename
-        self.psf_allstars_png = None        
+        self.psf_allstars_png = None
+        self.psf_png = None                
         if psfimage is not None:
             self.psf_flag = True
             self.psf_image = psfimage
