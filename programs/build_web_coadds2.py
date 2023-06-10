@@ -669,7 +669,7 @@ class pointing():
                 imtitles = ['r','ha','cs ha']                
             position = (self.r.galfov_imx[j],self.r.galfov_imy[j])                
             for k in range(len(images)):
-                print("displaying cutout ",imtitles[k])
+                print("displaying cutout ",imtitles[k],sizes[j])
                 ax = plt.subplot(nrow,ncol,5*j+k+2)            
                 cutout = Cutout2D(images[k],position,sizes[j])
                 display_image(cutout.data)
