@@ -687,7 +687,7 @@ class pointing():
                 images = [rimdata,himdata,cimdata,czimdata]
                 imtitles = ['r','ha','cs from filt ratio','cs from ZP ratio']
             else:
-                images = [rimdata,haimdata,csimdata]
+                images = [rimdata,himdata,csimdata]
                 imtitles = ['r','ha','cs ha']                
             position = (self.r.galfov_imx[j],self.r.galfov_imy[j])                
             for k in range(len(images)):
