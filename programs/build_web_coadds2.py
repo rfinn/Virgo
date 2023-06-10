@@ -636,7 +636,7 @@ class pointing():
         cimdata,cimheader = fits.getdata(self.csimage,header=True)
         if self.czimage is not None:
             czimdata,czimheader = fits.getdata(self.czimage,header=True)                
-        sizes = (galsizes/pixscale*2.,galsizes/pixscale*2.)
+        sizes = (galsizes/pixscale*3.,galsizes/pixscale*3.)
         sizes_arcsec = (galsizes*3,galsizes*3)        
         rowchange = np.arange(4,50,4)
         nrow = 1
