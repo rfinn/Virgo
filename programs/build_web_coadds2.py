@@ -630,7 +630,7 @@ class pointing():
         cimdata,cimheader = fits.getdata(self.csimage,header=True)
         if self.czimage is not None:
             czimdata,czimheader = fits.getdata(self.czimage,header=True)                
-        sizes = (galsizes/pixscale,galsizes/pixscale)*2.5
+        sizes = (galsizes/pixscale*2.5,galsizes/pixscale*2.5)
         rowchange = np.arange(4,50,4)
         nrow = 1
         for i in range(len(rowchange)):
@@ -1176,7 +1176,7 @@ if __name__ == '__main__':
     
     indices = np.arange(len(rfiles))
     image_pool = mp.Pool(mp.cpu_count())
-    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices[0:2]]
+    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices[0:1]]
     
     image_pool.close()
     image_pool.join()
