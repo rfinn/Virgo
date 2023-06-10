@@ -128,12 +128,12 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
         clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=5,sigma_upper=5)#,grow=10)
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
-    if csimage:
-        try:
-            norm = simple_norm(clipped_data, stretch='asinh',min_percent=10,max_percent=90)
-        except:
-            print("error getting norm")
-            norm = None
+    #if csimage:
+    #    try:
+    #        norm = simple_norm(clipped_data, stretch='asinh',min_percent=10,max_percent=90)
+    #    except:
+    #        print("error getting norm")
+    #        norm = None
     elif lowrange:
         norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
     else:
@@ -592,6 +592,8 @@ class pointing():
             self.cs = coadd_image(self.csimage,psfimage=None,plotdir=outprefix,zpdir=None,filter=filter)
             self.cs.generate_plots()
             self.cscoadd_flag=True
+            print()
+            print('getting galaxy cutouts')
             self.get_gal_cutouts()
         else:
             self.cscoadd_flag=False
