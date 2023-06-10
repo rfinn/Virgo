@@ -1190,14 +1190,14 @@ if __name__ == '__main__':
     
     indices = np.arange(len(rfiles))
     image_pool = mp.Pool(mp.cpu_count())
-    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices[0:4]]
+    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices]
     
     image_pool.close()
     image_pool.join()
     image_results = [r.get() for r in myresults]
     cwd = os.getcwd()
     os.chdir(outdir)
-    os.system("python ~/github/Virgo/programs/build_coadd_index.html")
+    os.system("python ~/github/Virgo/programs/build_coadd_index.py")
     os.chdir(cwd)
 
     #buildone(rimages,i,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir)
