@@ -647,7 +647,7 @@ class pointing():
                 break
 
         # columns: legacy, r, halpha, cs, CS-zp
-        #ncol = 5
+        ncol = 5
         nrow = np.sum(self.r.keepflag)
         # change to one row per galaxy
         figsize = (12,3*np.sum(self.r.keepflag))            
