@@ -659,7 +659,7 @@ class pointing():
             # TODO - finish this next line
             ax = plt.subplot(nrow,ncol,5*j+1)            
             jpeg_name = get_legacy_jpg(galra[j],galdec[j],galid=galnames[j],pixscale=1,imsize=imsize_arcsec,subfolder=self.outdir)
-
+            
             # plot jpg
             t = Image.open(jpeg_name)
             plt.imshow(t,origin='upper')
@@ -1187,7 +1187,7 @@ if __name__ == '__main__':
     
     indices = np.arange(len(rfiles))
     image_pool = mp.Pool(mp.cpu_count())
-    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices]
+    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices[0:4]]
     
     image_pool.close()
     image_pool.join()
