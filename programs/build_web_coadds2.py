@@ -620,7 +620,7 @@ class pointing():
         ##
         # set size to 2.5 time size in coadd images
         ##
-        galsizes = Table(self.r.cat)['radius'][self.r.keepflag]
+        galsizes = Table(self.r.cat)['radius'][self.r.keepflag]*2
         
         #galsizes = size#self.rcat['radius']/.4*2
         if self.rimage.find('INT'):
@@ -635,6 +635,7 @@ class pointing():
         if self.czimage is not None:
             czimdata,czimheader = fits.getdata(self.czimage,header=True)                
         sizes = (galsizes/pixscale*2.5,galsizes/pixscale*2.5)
+        sizes_arcsec = (galsizes*2.5,galsizes*2.5)        
         rowchange = np.arange(4,50,4)
         nrow = 1
         for i in range(len(rowchange)):
@@ -661,7 +662,7 @@ class pointing():
             plt.title(galnames[j][:20])# cutting names to avoid ridiculously long NED names
             # loop to display other images
             if self.czimage is not None:
-                images = [rimdata,haimdata,csimdata,czimdata]
+                images = [rimdata,himdata,csimdata,czimdata]
                 imtitles = ['r','ha','cs ha','cs-zp ha']
             else:
                 images = [rimdata,haimdata,csimdata]
