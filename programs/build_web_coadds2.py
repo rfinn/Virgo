@@ -50,6 +50,7 @@ from urllib.parse import urlencode
 from urllib.request import urlretrieve
 
 import multiprocessing as mp
+multiprocessing.set_start_method('spawn')
 
 import argparse
 
@@ -1197,7 +1198,7 @@ if __name__ == '__main__':
     # DONE - TODO - convert this to multiprocessing!!!
     
     indices = np.arange(len(rfiles))
-    image_pool = mp.Pool(mp.cpu_count())
+    image_pool = mp.Pool(mp.cpu_count()-4)
     myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices]
     
     image_pool.close()
