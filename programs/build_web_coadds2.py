@@ -658,7 +658,7 @@ class pointing():
             # get legacy cutout
             # TODO - finish this next line
             ax = plt.subplot(nrow,ncol,5*j+1)            
-            jpeg_name = get_legacy_jpg(galra[j],galdec[i],galid=galnames[i],pixscale=1,imsize=imsize_arcsec,subfolder=self.outdir)
+            jpeg_name = get_legacy_jpg(galra[j],galdec[j],galid=galnames[j],pixscale=1,imsize=imsize_arcsec,subfolder=self.outdir)
 
             # plot jpg
             t = Image.open(jpeg_name)
@@ -1060,75 +1060,76 @@ class build_html_pointing():
 def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
     """ code to build webpage for one coadd """    
     rimage = rimages[i]
+    try:
+        print()
+        print('###################################')
+        print(f'r-band image: {rimage} ({i}/{len(rfiles)})')
+        print('###################################')        
+        print()
+        # find matching ha4 coadd
+        #if rimage.find('shifted.fits') > -1:
+        #    # not sure what this section is doing
+        #    h1files = glob.glob(coadd_dir+'VF*-Halpha.fits')
+        #    try:
+        #        haimage = h1files[0]
+        #    except IndexError:
 
-    print()
-    print('###################################')
-    print(f'r-band image: {rimage} ({i}/{len(rfiles)})')
-    print('###################################')        
-    print()
-    # find matching ha4 coadd
-    #if rimage.find('shifted.fits') > -1:
-    #    # not sure what this section is doing
-    #    h1files = glob.glob(coadd_dir+'VF*-Halpha.fits')
-    #    try:
-    #        haimage = h1files[0]
-    #    except IndexError:
-
-    #        h2files = glob.glob(coadd_dir+'VF*-Ha6657.fits')
-    #        
-    #        haimage = h2files[0]
-    #        print(haimage)
-    #    if not os.path.exists(haimage):
-    #        print('WHAT IS HAPPENING???')
-    #        continue
-    if i < 0:
-        print("just kidding...")
-    else:
-        rheader = fits.getheader(rimage)
-        haimage = os.path.join(coadd_dir,rheader['HAIMAGE'])
-        if not os.path.exists(haimage):
-            print("couldn't find the halpha image ",haimage)                
-            return
+        #        h2files = glob.glob(coadd_dir+'VF*-Ha6657.fits')
+        #        
+        #        haimage = h2files[0]
+        #        print(haimage)
+        #    if not os.path.exists(haimage):
+        #        print('WHAT IS HAPPENING???')
+        #        continue
+        if i < 0:
+            print("just kidding...")
+        else:
+            rheader = fits.getheader(rimage)
+            haimage = os.path.join(coadd_dir,rheader['HAIMAGE'])
+            if not os.path.exists(haimage):
+                print("couldn't find the halpha image ",haimage)                
+                return
 
 
 
-        csimage = haimage.replace('.fits','-CS.fits')
-        if not os.path.exists(csimage):
-            print("couldn't find the CS halpha image ",csimage)                
-            return
+            csimage = haimage.replace('.fits','-CS.fits')
+            if not os.path.exists(csimage):
+                print("couldn't find the CS halpha image ",csimage)                
+                return
 
-    print('###  Halpha image = ',haimage)
-    # define previous gal for html links
-    if i > 0:
-        previous = os.path.basename(rfiles[i-1]).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-R','').replace('-r','')
-        #print('previous = ',previous)
-    else:
-        previous = None
-    if i < len(rfiles)-1:
-        next = os.path.basename(rfiles[i+1]).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-R','').replace('-r','')
-        #print('next = ',next)
-    else:
-        next = None
-    # define pointing name - remove fits and filter information
-    pname = os.path.basename(rimage).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-r','').replace('-R','')
-    # create a d
-    poutdir = os.path.join(outdir,pname)
-    print(poutdir)
-    p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir)
-    h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
+        print('###  Halpha image = ',haimage)
+        # define previous gal for html links
+        if i > 0:
+            previous = os.path.basename(rfiles[i-1]).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-R','').replace('-r','')
+            #print('previous = ',previous)
+        else:
+            previous = None
+        if i < len(rfiles)-1:
+            next = os.path.basename(rfiles[i+1]).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-R','').replace('-r','')
+            #print('next = ',next)
+        else:
+            next = None
+        # define pointing name - remove fits and filter information
+        pname = os.path.basename(rimage).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-r','').replace('-R','')
+        # create a d
+        poutdir = os.path.join(outdir,pname)
+        print(poutdir)
+        p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,fratiodir = fratiodir, outdir=poutdir)
+        h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
 
-    #try:
-    #     p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=poutdir)
-    #     h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
-    #    
-    #except:
-    #    print("")
-    #    print('WE HAVE A PROBLEM!!!',rimage)
-    #    print("")            
-    plt.close('all')
-    #except:
-    #    print("WARNING: could not build page for ",rimages[i])
+        #try:
+        #     p = pointing(rimage=rimage,haimage=haimage,psfdir=psfdir,zpdir=zpdir,outdir=poutdir)
+        #     h = build_html_pointing(p,outdir=poutdir,next=next,previous=previous)
+        #    
+        #except:
+        #    print("")
+        #    print('WE HAVE A PROBLEM!!!',rimage)
+        #    print("")            
+        plt.close('all')
+    except:
+        print("WARNING: could not build page for ",rimages[i])
 
+        
 if __name__ == '__main__':
     import argparse
 
@@ -1182,7 +1183,7 @@ if __name__ == '__main__':
     #hfiles.sort()
     rfiles.sort()
 
-    # TODO - convert this to multiprocessing!!!
+    # DONE - TODO - convert this to multiprocessing!!!
     
     indices = np.arange(len(rfiles))
     image_pool = mp.Pool(mp.cpu_count())
