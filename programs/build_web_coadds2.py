@@ -109,7 +109,8 @@ def get_legacy_jpg(ra,dec,galid='VFID0',pixscale=1,imsize='60',subfolder=None):
     # if not download images
     if not(os.path.exists(jpeg_name)):
         print('retrieving ',jpeg_name)
-        url='http://legacysurvey.org/viewer/jpeg-cutout?ra='+str(ra)+'&dec='+str(dec)+'&layer=dr9&size='+str(imsize)+'&pixscale='+str(pixscale)
+        url='http://legacysurvey.org/viewer/jpeg-cutout?ra='+str(ra)+'&dec='+str(dec)+'&layer=dr8&size='+str(imsize)+'&pixscale='+str(pixscale)
+        print('legacy url = ',url)
         urlretrieve(url, jpeg_name)
     else:
         print('previously downloaded ',jpeg_name)
