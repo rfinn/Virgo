@@ -1048,8 +1048,9 @@ class build_html_pointing():
         self.html.close()
 # wrap
 def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
-        rimage = rimages[i]
-    """ code to build webpage for one coadd """
+    """ code to build webpage for one coadd """    
+    rimage = rimages[i]
+
     print()
     print('###################################')
     print(f'r-band image: {rimage} ({i}/{len(rfiles)})')
