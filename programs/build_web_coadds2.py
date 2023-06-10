@@ -652,7 +652,7 @@ class pointing():
         plt.figure(figsize=figsize)
         plt.subplots_adjust(top=.95,right=.95,left=.05,bottom=.05)        
         for j in gindex:
-            print(sizes[j][0])
+            #print(sizes[j][0])
             imsize = sizes[j][0]
             imsize_arcsec = imsize*pixscale
             # get legacy cutout
@@ -673,7 +673,7 @@ class pointing():
                 imtitles = ['r','ha','cs ha']                
             position = (self.r.galfov_imx[j],self.r.galfov_imy[j])                
             for k in range(len(images)):
-                print("displaying cutout ",imtitles[k],imsize)
+                #print("displaying cutout ",imtitles[k],imsize)
                 ax = plt.subplot(nrow,ncol,5*j+k+2)            
                 cutout = Cutout2D(images[k],position,imsize)
                 display_image(cutout.data)
