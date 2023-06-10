@@ -1130,7 +1130,7 @@ def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
         #    print('WE HAVE A PROBLEM!!!',rimage)
         #    print("")            
         plt.close('all')
-    except:
+    except IndexError:
         print("WARNING: could not build page for ",rimages[i])
 
         
