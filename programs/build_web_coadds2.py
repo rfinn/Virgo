@@ -87,9 +87,9 @@ def display_image(image,percent=95,lowrange=False,mask=None,sigclip=True,csimage
         norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
 
     if norm == None:
-        plt.imshow(image, norm=norm,cmap='gray_r',origin='lower')
-    else:
         plt.imshow(image,cmap='gray_r',origin='lower')
+    else:
+        plt.imshow(image,norm=norm,cmap='gray_r',origin='lower')
     
 
 
