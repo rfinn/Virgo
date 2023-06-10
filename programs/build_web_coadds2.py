@@ -46,6 +46,9 @@ from astropy.nddata import Cutout2D
 from astropy.stats import sigma_clip
 from astropy.time import Time
 
+from urllib.parse import urlencode
+from urllib.request import urlretrieve
+
 import multiprocessing as mp
 
 import argparse
