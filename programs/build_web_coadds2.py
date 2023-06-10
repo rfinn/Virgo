@@ -667,7 +667,7 @@ class pointing():
             # loop to display other images
             if self.czimage is not None:
                 images = [rimdata,himdata,cimdata,czimdata]
-                imtitles = ['r','ha','cs ha','cs-zp ha']
+                imtitles = ['r','ha','cs from filt ratio','cs from ZP ratio']
             else:
                 images = [rimdata,haimdata,csimdata]
                 imtitles = ['r','ha','cs ha']                
