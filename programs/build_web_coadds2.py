@@ -647,7 +647,7 @@ class pointing():
                 break
 
         # columns: legacy, r, halpha, cs, CS-zp
-        ncol = 5
+        #ncol = 5
         nrow = np.sum(self.r.keepflag)
         # change to one row per galaxy
         figsize = (12,3*np.sum(self.r.keepflag))            
@@ -655,7 +655,12 @@ class pointing():
         plt.subplots_adjust(top=.95,right=.95,left=.05,bottom=.05)        
         for j in range(len(galra)):
             #print(sizes[j][0])
-            imsize = sizes[j][0]
+            try:
+                imsize = sizes[j][0]
+            except IndexError:
+                print('hey rose - problem accessing sizes ',sizes[j])
+                # set the default size to 90 arcsec
+                imsize = 90/pixscale
             imsize_arcsec = imsize*pixscale
             # get legacy cutout
             # TODO - finish this next line
