@@ -50,7 +50,7 @@ from urllib.parse import urlencode
 from urllib.request import urlretrieve
 
 import multiprocessing as mp
-mp.set_start_method('spawn')
+#mp.set_start_method('spawn')
 
 import argparse
 
