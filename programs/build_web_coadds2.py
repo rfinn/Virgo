@@ -20,6 +20,14 @@ NOTES:
 
 
 '''
+# TODO - use radius from main table for cutout size - maybe 2.5x bigger than boxes shown on full image
+# TODO - show cutout from CS-ZP if available
+# TODO - add legacy jpg image to cutouts
+# TODO - add r and Halpha to cutouts
+# TODO - check color correction for 90prime filters with Matteo - color term persists
+# eg https://facultyweb.siena.edu/~rfinn/virgo/coadds/VF-135.196+45.266-BOK-20210315-VFID1728/VF-135.196+45.266-BOK-20210315-VFID1728.html
+
+# TODO - 
 
 import os
 import numpy as np
@@ -42,6 +50,8 @@ import multiprocessing as mp
 
 import argparse
 
+from PIL import Image
+
 homedir = os.getenv("HOME")
 VFMAIN_PATH = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits'
 VFMAIN_PATH = homedir+'/research/Virgo/tables-north/v2/vf_v2_main.fits'
@@ -51,7 +61,7 @@ import build_web_common as buildweb
 sys.path.append(homedir+'/github/halphagui/')
 import filter_transmission as ft
 
-OVERWRITE = False
+OVERWRITE = True
 
 ###########################################################
 ####  FUNCTIONS
@@ -62,8 +72,51 @@ def collect_results(result):
     global results
     image_results.append(result)
 
+def get_legacy_jpg(ra,dec,galid='VFID0',pixscale=1,imsize='60',subfolder=None):
+    """
+    Download legacy image for a particular ra, dec
+    
+    Inputs:
+    * ra
+    * dec
+    * galid = galaxy id (e.g. VFID0001); used for naming the image files
+    * imsize = size of cutout in pixels
+    * pixscale = pixel scale of cutout in arcsec; native is 0.262 for legacy
+    * subfolder = default is None; you can specify a name of a subfolder to 
+                  save the data in, e.g., subfolder='legacy-images'
+    Returns:
+    * jpeg_name = jpeg image name
+    """
+    imsize = int(imsize)
 
-def display_image(image,percent=95,lowrange=False,mask=None,sigclip=True,csimage=False):
+    # make output image names
+    if subfolder is not None:
+        # check if subfolder exists. if not, make it.
+        if not os.path.exists(subfolder):
+            os.mkdir(subfolder)
+        rootname = subfolder+'/'+str(galid)+'-legacy-'+str(imsize)
+    else:
+        rootname = str(galid)+'-legacy-'+str(imsize)        
+    jpeg_name = rootname+'.jpg'
+
+
+    print('legacy imsize = ',imsize)
+    
+    # check if images already exist
+    # if not download images
+    if not(os.path.exists(jpeg_name)):
+        print('retrieving ',jpeg_name)
+        url='http://legacysurvey.org/viewer/jpeg-cutout?ra='+str(ra)+'&dec='+str(dec)+'&layer=dr9&size='+str(imsize)+'&pixscale='+str(pixscale)
+        urlretrieve(url, jpeg_name)
+    else:
+        print('previously downloaded ',jpeg_name)
+
+
+    # return the name of the fits images and jpeg image
+    return jpeg_name
+
+
+def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csimage=False):
     lowrange=False
     # use inner 80% of image
     xdim,ydim = image.shape
@@ -450,6 +503,11 @@ class pointing():
         self.rimage = rimage
         self.haimage = haimage
         self.csimage = haimage.replace('.fits','-CS.fits')
+        czimage = haimage.replace('.fits','-CS-ZP.fits')
+        if os.path.exists(czimage):
+            self.czimage = czimage
+        else:
+            self.czimage = None
 
         self.psfdir = psfdir
         self.zpdir = zpdir
@@ -544,10 +602,19 @@ class pointing():
         """ get cutouts galaxies in FOV """
         self.gal_cutout_images = []
 
+
+        
         # loop over galaxies in FOV
         gindex=np.arange(len(self.r.galfov_imx))
         galnames = Table(self.r.cat)['prefix'][self.r.keepflag]
+        galra = Table(self.r.cat)['RA'][self.r.keepflag]
+        galdec = Table(self.r.cat)['DEC'][self.r.keepflag]        
 
+        ##
+        # set size to 2.5 time size in coadd images
+        ##
+        galsizes = Table(self.r.cat)['radius'][self.r.keepflag]
+        
         #galsizes = size#self.rcat['radius']/.4*2
         if self.rimage.find('INT'):
             pixscale = 0.33
@@ -555,8 +622,12 @@ class pointing():
             pixscale = 0.425
         elif self.rimage.find('BOK'):
             pixscale = 0.45
-        imdata,imheader = fits.getdata(self.csimage,header=True)
-        size = (size/pixscale,size/pixscale)
+        rimdata,rimheader = fits.getdata(self.rimage,header=True)
+        himdata,himheader = fits.getdata(self.haimage,header=True)
+        cimdata,cimheader = fits.getdata(self.csimage,header=True)
+        if self.czimage is not None:
+            czimdata,czimheader = fits.getdata(self.czimage,header=True)                
+        sizes = (galsizes/pixscale,galsizes/pixscale)*2.5
         rowchange = np.arange(4,50,4)
         nrow = 1
         for i in range(len(rowchange)):
@@ -564,29 +635,37 @@ class pointing():
                 nrow += 1
             else:
                 break
-            
-        ncol = 4
-        figsize = (12,3*nrow)            
+
+        # columns: legacy, r, halpha, cs, CS-zp
+        ncol = 5
+        # change to one row per galaxy
+        figsize = (12,3*np.sum(self.r.keepflag))            
         plt.figure(figsize=figsize)
         plt.subplots_adjust(top=.95,right=.95,left=.05,bottom=.05)        
         for j in gindex:
-            
-            #galsize = galsizes[j]
-            position = (self.r.galfov_imx[j],self.r.galfov_imy[j])
-            # get a cutout
-            #print("size = ",size)
-            #print("position = ",position)            
-            cutout = Cutout2D(imdata,position,size)
-            # display cutout
+            # get legacy cutout
+            # TODO - finish this next line
+            ax = plt.subplot(nrow,ncol,5*j+1)            
+            jpeg_name = get_legacy_jpg(galra[j],galdec[i],galid=galnames[i],pixscale=1,imsize=galsizes[j],subfolder=None)
 
-            ax = plt.subplot(nrow,ncol,j+1)
-
-            display_image(cutout.data,csimage=True)
+            # plot jpg
+            t = Image.open(jpeg_name)
+            plt.imshow(t,origin='upper')
             plt.title(galnames[j][:20])# cutting names to avoid ridiculously long NED names
-            #ax.set_xlabel('RA (deg)',fontsize=16)
-            #ax.set_ylabel('DEC (deg)',fontsize=16)
-
-            # save cutout image            
+            # loop to display other images
+            if self.czimage is not None:
+                images = [rimdata,haimdata,csimdata,czimdata]
+                imtitles = ['r','ha','cs ha','cs-zp ha']
+            else:
+                images = [rimdata,haimdata,csimdata]
+                imtitles = ['r','ha','cs ha']                
+            position = (self.r.galfov_imx[j],self.r.galfov_imy[j])                
+            for k in range(len(images)):
+                ax = plt.subplot(nrow,ncol,5*j+k+2)            
+                cutout = Cutout2D(images[k],position,sizes[j])
+                display_image(cutout.data)
+                plt.title(imtitles[k])
+                
         imname = f"{self.pointing_name}-gal-cutouts.png"
         outfile = os.path.join(self.outdir,imname)
         plt.savefig(outfile)
