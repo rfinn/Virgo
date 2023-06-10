@@ -653,10 +653,11 @@ class pointing():
         for j in gindex:
             print(sizes[j][0])
             imsize = sizes[j][0]
+            imsize_arcsec = imsize*pixscale
             # get legacy cutout
             # TODO - finish this next line
             ax = plt.subplot(nrow,ncol,5*j+1)            
-            jpeg_name = get_legacy_jpg(galra[j],galdec[i],galid=galnames[i],pixscale=1,imsize=imsize,subfolder=self.outdir)
+            jpeg_name = get_legacy_jpg(galra[j],galdec[i],galid=galnames[i],pixscale=1,imsize=imsize_arcsec,subfolder=self.outdir)
 
             # plot jpg
             t = Image.open(jpeg_name)
