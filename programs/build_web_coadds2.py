@@ -662,7 +662,7 @@ class pointing():
             plt.title(galnames[j][:20])# cutting names to avoid ridiculously long NED names
             # loop to display other images
             if self.czimage is not None:
-                images = [rimdata,himdata,csimdata,czimdata]
+                images = [rimdata,himdata,cimdata,czimdata]
                 imtitles = ['r','ha','cs ha','cs-zp ha']
             else:
                 images = [rimdata,haimdata,csimdata]
