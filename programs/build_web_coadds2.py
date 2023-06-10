@@ -102,7 +102,7 @@ def get_legacy_jpg(ra,dec,galid='VFID0',pixscale=1,imsize='60',subfolder=None):
         rootname = str(galid)+'-legacy-'+str(imsize)        
     jpeg_name = rootname+'.jpg'
 
-
+    print('legacy image name = ',jpeg_name)
     print('legacy imsize = ',imsize)
     
     # check if images already exist
@@ -653,7 +653,7 @@ class pointing():
             # get legacy cutout
             # TODO - finish this next line
             ax = plt.subplot(nrow,ncol,5*j+1)            
-            jpeg_name = get_legacy_jpg(galra[j],galdec[i],galid=galnames[i],pixscale=1,imsize=galsizes[j],subfolder=None)
+            jpeg_name = get_legacy_jpg(galra[j],galdec[i],galid=galnames[i],pixscale=1,imsize=galsizes[j],subfolder=self.outdir)
 
             # plot jpg
             t = Image.open(jpeg_name)
