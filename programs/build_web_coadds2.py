@@ -651,10 +651,11 @@ class pointing():
         plt.figure(figsize=figsize)
         plt.subplots_adjust(top=.95,right=.95,left=.05,bottom=.05)        
         for j in gindex:
+            imsize = sizes[j][0].value
             # get legacy cutout
             # TODO - finish this next line
             ax = plt.subplot(nrow,ncol,5*j+1)            
-            jpeg_name = get_legacy_jpg(galra[j],galdec[i],galid=galnames[i],pixscale=1,imsize=galsizes[j],subfolder=self.outdir)
+            jpeg_name = get_legacy_jpg(galra[j],galdec[i],galid=galnames[i],pixscale=1,imsize=imsize,subfolder=self.outdir)
 
             # plot jpg
             t = Image.open(jpeg_name)
@@ -669,9 +670,9 @@ class pointing():
                 imtitles = ['r','ha','cs ha']                
             position = (self.r.galfov_imx[j],self.r.galfov_imy[j])                
             for k in range(len(images)):
-                print("displaying cutout ",imtitles[k],sizes[j])
+                print("displaying cutout ",imtitles[k],imsize)
                 ax = plt.subplot(nrow,ncol,5*j+k+2)            
-                cutout = Cutout2D(images[k],position,sizes[j])
+                cutout = Cutout2D(images[k],position,imsize)
                 display_image(cutout.data)
                 plt.title(imtitles[k])
                 
