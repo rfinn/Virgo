@@ -51,7 +51,7 @@ import build_web_common as buildweb
 sys.path.append(homedir+'/github/halphagui/')
 import filter_transmission as ft
 
-OVERWRITE = True
+OVERWRITE = False
 
 ###########################################################
 ####  FUNCTIONS
@@ -114,6 +114,7 @@ class coadd_image():
 
     def __init__(self,imagename,psfimage=None,plotdir=None,cat=None,zpdir=None,filter=None):
         self.imagename = imagename
+        self.psf_allstars_png = None        
         if psfimage is not None:
             self.psf_flag = True
             self.psf_image = psfimage
@@ -122,7 +123,7 @@ class coadd_image():
             self.psf_flag = False
             self.fwhm_arcsec = None
             self.sefwhm_arcsec = None            
-        
+
         if plotdir is None:
             self.plotdir = os.getcwd()
         else:
