@@ -651,7 +651,8 @@ class pointing():
         plt.figure(figsize=figsize)
         plt.subplots_adjust(top=.95,right=.95,left=.05,bottom=.05)        
         for j in gindex:
-            imsize = sizes[j][0][0]
+            print(sizes[j][0])
+            imsize = sizes[j][0]
             # get legacy cutout
             # TODO - finish this next line
             ax = plt.subplot(nrow,ncol,5*j+1)            
