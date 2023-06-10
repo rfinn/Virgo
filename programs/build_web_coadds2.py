@@ -1115,7 +1115,7 @@ def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
         try:
             haimage = os.path.join(coadd_dir,rheader['HAIMAGE'])
         except KeyError:
-            print("couldn't find the halpha image ",haimage, rimage)                
+            print("couldn't find the halpha image name in header of ", rimage)                
             return
             
         if not os.path.exists(haimage):
