@@ -134,10 +134,11 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
     #    except:
     #        print("error getting norm")
     #        norm = None
-    elif lowrange:
-        norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
-    else:
-        norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
+    #if lowrange:
+    #    norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
+    #else:
+    #    norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
+    norm = simple_norm(clipped_data, stretch='asinh',percent=percent)    
 
     if norm == None:
         plt.imshow(image,cmap='gray_r',origin='lower')
