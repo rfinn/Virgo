@@ -651,7 +651,7 @@ class pointing():
         figsize = (12,3*np.sum(self.r.keepflag))            
         plt.figure(figsize=figsize)
         plt.subplots_adjust(top=.95,right=.95,left=.05,bottom=.05)        
-        for j in gindex:
+        for j in range(len(galra)):
             #print(sizes[j][0])
             imsize = sizes[j][0]
             imsize_arcsec = imsize*pixscale
