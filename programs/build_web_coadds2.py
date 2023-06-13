@@ -141,11 +141,14 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
     if csimage:
-        try:
-            norm = simple_norm(clipped_data, stretch='asinh',min_percent=5,max_percent=90)
-        except:
-            print("error getting norm")
-            norm = None
+        plt.imshow(clipped_data,cmap='gray_r',origin='lower',vmin=-.01,vmax=0.15)
+        return
+        
+        #try:
+        #    norm = simple_norm(clipped_data, stretch='asinh',min_percent=5,max_percent=90)
+        #except:
+        #    print("error getting norm")
+        #    norm = None
     else:
         try:
             norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
@@ -647,7 +650,17 @@ class pointing():
         himdata,himheader = fits.getdata(self.haimage,header=True)
         cimdata,cimheader = fits.getdata(self.csimage,header=True)
         if self.czimage is not None:
-            czimdata,czimheader = fits.getdata(self.czimage,header=True)                
+            czimdata,czimheader = fits.getdata(self.czimage,header=True)
+
+
+        # loop to display other images
+        if self.czimage is not None:
+            images = [rimdata,himdata,cimdata,czimdata]
+            imtitles = ['r','ha','cs from filt ratio','cs from ZP ratio']
+        else:
+            images = [rimdata,himdata,cimdata]
+            imtitles = ['r','ha','cs ha']                
+            
         sizes = (galsizes/pixscale*3.,galsizes/pixscale*3.)
 
         rowchange = np.arange(4,50,4)
@@ -668,11 +681,11 @@ class pointing():
         for j in range(len(galra)):
             #print(sizes[j][0])
             try:
-                imsize = galsizes[j]/pixscale*3.
+                imsize = galsizes[j]/pixscale*2.5
             except IndexError:
                 #print('hey rose - problem accessing sizes ',sizes)
-                # set the default size to 90 arcsec
-                imsize = 90/pixscale
+                # set the default size to 60 arcsec
+                imsize = 60/pixscale
             imsize_arcsec = imsize*pixscale
             # get legacy cutout
             # TODO - finish this next line
@@ -683,20 +696,16 @@ class pointing():
             t = Image.open(jpeg_name)
             plt.imshow(t,origin='upper')
             plt.title(galnames[j][:20])# cutting names to avoid ridiculously long NED names
-            # loop to display other images
-            if self.czimage is not None:
-                images = [rimdata,himdata,cimdata,czimdata]
-                imtitles = ['r','ha','cs from filt ratio','cs from ZP ratio']
-            else:
-                images = [rimdata,himdata,cimdata]
-                imtitles = ['r','ha','cs ha']                
+            
             position = (self.r.galfov_imx[j],self.r.galfov_imy[j])                
             for k in range(len(images)):
                 #print("displaying cutout ",imtitles[k],imsize)
                 ax = plt.subplot(nrow,ncol,5*j+k+2)            
                 cutout = Cutout2D(images[k],position,imsize)
-
-                display_image(cutout.data)
+                if k > 1:
+                    display_image(cutout.data)
+                else:
+                    display_image(cutout.data,csimage=True)                    
                 plt.title(imtitles[k])
                 
         imname = f"{self.pointing_name}-gal-cutouts.png"

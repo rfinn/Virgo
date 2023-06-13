@@ -37,18 +37,20 @@ def display_image(image,percent=99,lowrange=False,mask=None,sigclip=False,csimag
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
     if csimage:
-        try:
-            norm = simple_norm(clipped_data, stretch='asinh',min_percent=10,max_percent=90)
-        except:
-            print("error getting norm")
-            norm = None
+        plt.imshow(clipped_data,cmap='gray_r',origin='lower',vmin=-.01,vmax=0.15)
+        return
+        #try:
+        #    norm = simple_norm(clipped_data, stretch='asinh',min_percent=10,max_percent=90)
+        #except:
+        #    print("error getting norm")
+        #    norm = None
     elif lowrange:
         norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
     else:
         norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
 
     if norm == None:
-        plt.imshow(image,cmap='gray_r',origin='lower')
+        plt.imshow(clipped_data,cmap='gray_r',origin='lower')
     else:
-        plt.imshow(image,cmap='gray_r',origin='lower', norm=norm)
+        plt.imshow(clipped_data,cmap='gray_r',origin='lower', norm=norm)
     
