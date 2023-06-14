@@ -1232,15 +1232,15 @@ if __name__ == '__main__':
     # DONE - TODO - convert this to multiprocessing!!!
     
     indices = np.arange(len(rfiles))
-    #image_pool = mp.Pool(mp.cpu_count())
-    #myresults = [image_pool.map(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir) for i in indices]
+    image_pool = mp.Pool(mp.cpu_count())
+    myresults = [image_pool.map(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir) for i in indices]
     
     #image_pool.close()
     #image_pool.join()
     #image_results = [r.get() for r in myresults]
 
-    with ProcessPoolExecutor(max_workers=24) as exe:
-                 exe.map(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),indices)
+    #with ProcessPoolExecutor(max_workers=24) as exe:
+    #             exe.map(buildone,indices,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir))
 
     # build the web index
     cwd = os.getcwd()
