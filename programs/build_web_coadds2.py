@@ -204,8 +204,7 @@ def get_legacy_jpg(ra,dec,galid='VFID0',pixscale=1,imsize='60',subfolder=None):
     # return the name of the fits images and jpeg image
     return jpeg_name
 
-
-def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csimage=False):
+def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=True):
     lowrange=False
     # use inner 80% of image
     xdim,ydim = image.shape
@@ -219,36 +218,20 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
         xmax = xdim
         ymin = 1
         ymax = ydim
-    #if sigclip:
-    #    clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=5,sigma_upper=5)#,grow=10)
-    #else:
-    #    clipped_data = image[xmin:xmax,ymin:ymax]
-    clipped_data = image
-    if csimage:
-        plt.imshow(clipped_data,cmap='gray_r',origin='lower',vmin=-.01,vmax=0.25)
-        return
-        
-        #try:
-        #    norm = simple_norm(clipped_data, stretch='asinh',min_percent=5,max_percent=90)
-        #except:
-        #    print("error getting norm")
-        #    norm = None
+    if sigclip:
+        clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=5,sigma_upper=5)#,grow=10)
     else:
-        try:
-            norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
-        except IndexError:
-            norm = None
-
-    #if lowrange:
-    #    norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
-    #else:
-    #    norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
-
-    if norm == None:
-        plt.imshow(image,cmap='gray_r',origin='lower')
-    else:
-        plt.imshow(image,norm=norm,cmap='gray_r',origin='lower')
+        clipped_data = image[xmin:xmax,ymin:ymax]
     
+    if lowrange:
+        norm = simple_norm(clipped_data, stretch='linear',percent=percent)
+    else:
+        norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
+
+    plt.imshow(image, norm=norm,cmap='gray_r',origin='lower')
+    #v1,v2=scoreatpercentile(image,[.5,99.5])            
+    #plt.imshow(image, cmap='gray_r',vmin=v1,vmax=v2,origin='lower')    
+
 
 
 def write_coadd_prop_table(html,filter,zp,fwhm_arcsec):
@@ -308,7 +291,7 @@ class coadd_image():
         try:
             self.get_zpplot_firstpass()
         except:
-            print('WARNING: problem getting zp calibration images')
+            print('WARNING: problem getting zp calibration images ',self.imagename)
         self.zp_flag = True
         #self.get_zpimage_firstpass()
         if self.filter != 'CS':
@@ -729,7 +712,7 @@ class pointing():
         elif self.rimage.find('HDI'):
             pixscale = 0.425
         elif self.rimage.find('BOK'):
-            pixscale = 0.45
+            pixscale = 0.4533
         rimdata,rimheader = fits.getdata(self.rimage,header=True)
         himdata,himheader = fits.getdata(self.haimage,header=True)
         cimdata,cimheader = fits.getdata(self.csimage,header=True)
@@ -745,7 +728,7 @@ class pointing():
             images = [rimdata,himdata,cimdata]
             imtitles = ['r','ha','cs ha']                
             
-        sizes = (galsizes/pixscale*3.,galsizes/pixscale*3.)
+        #sizes = (galsizes/pixscale*3.,galsizes/pixscale*3.)
 
         rowchange = np.arange(4,50,4)
         nrow = 1
@@ -786,10 +769,10 @@ class pointing():
                 #print("displaying cutout ",imtitles[k],imsize)
                 ax = plt.subplot(nrow,ncol,5*j+k+2)            
                 cutout = Cutout2D(images[k],position,imsize)
-                if k > 1 :
-                    display_image(cutout.data,csimage=True)
-                else:
-                    display_image(cutout.data)                    
+                #if k > 1 :
+                #    display_image(cutout.data,csimage=True)
+                #else:
+                display_image(cutout.data)                    
                 plt.title(imtitles[k])
                 
         imname = f"{self.pointing_name}-gal-cutouts.png"
