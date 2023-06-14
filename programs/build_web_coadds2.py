@@ -1237,7 +1237,7 @@ if __name__ == '__main__':
     
     indices = np.arange(len(rfiles))
     #image_pool = mp.Pool(mp.cpu_count())
-    image_pool = mp.ThreadPool(mp.cpu_count())    
+    image_pool = mp.pool.ThreadPool(mp.cpu_count())    
     myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir,)) for i in indices]
     
     image_pool.close()
