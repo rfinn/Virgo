@@ -67,7 +67,7 @@ import build_web_common as buildweb
 sys.path.append(homedir+'/github/halphagui/')
 import filter_transmission as ft
 
-OVERWRITE = True
+OVERWRITE = False
 VERBOSE = False
 ###########################################################
 ####  FUNCTIONS
@@ -204,7 +204,7 @@ def get_legacy_jpg(ra,dec,galid='VFID0',pixscale=1,imsize='60',subfolder=None):
     # return the name of the fits images and jpeg image
     return jpeg_name
 
-def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=True):
+def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=True,csimage=False):
     lowrange=False
     # use inner 80% of image
     xdim,ydim = image.shape
