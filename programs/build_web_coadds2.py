@@ -892,28 +892,70 @@ class build_html_pointing():
     def build_html(self):
         self.write_header()
         self.write_navigation_links()
-        self.write_gal_table()
-        self.write_pointing_location()        
-        self.write_rband_header()
-        self.write_rband_table()
-        self.write_rband_psf()
-        if self.pointing.r.zp_flag:
-            self.write_rband_zp()
+        try:
+            self.write_gal_table()
+        except:
+            print("problem writing gal table for ",self.pointing.pointing_name)
+            
+        try:
+            self.write_pointing_location()
+        except:
+            print("problem writing pointing location for ",self.pointing.pointing_name)
+
+        try:
+            self.write_rband_header()
+            self.write_rband_table()            
+        except:
+            print("problem writing rband header/table for ",self.pointing.pointing_name)
+
+        
+        try:
+            self.write_rband_psf()
+        except:
+            print("problem writing rband psf for ",self.pointing.pointing_name)
+
+        try:
+            if self.pointing.r.zp_flag:
+                self.write_rband_zp()
+        except:
+            print("problem writing rband zp for ",self.pointing.pointing_name)
 
                  
         #self.write_rband_div()
-        self.write_ha_header()
-        self.write_ha_table()
-        self.write_ha_psf()
-        if self.pointing.ha.zp_flag:
-            self.write_ha_zp()
+        try:
+            self.write_ha_header()
+            self.write_ha_table()
+        except:
+            print("problem writing ha header/table for ",self.pointing.pointing_name)
 
-        self.write_cs_header()
-        self.write_cs_table()
+        try:
+            self.write_ha_psf()
+        except:
+            print("problem writing ha psf for ",self.pointing.pointing_name)
+
+        try:
+            if self.pointing.ha.zp_flag:
+                self.write_ha_zp()
+        except:
+            print("problem writing rband zp for ",self.pointing.pointing_name)
+
+        try:
+            self.write_cs_header()
+            self.write_cs_table()
+        except:
+            print("problem writing cs header/table for ",self.pointing.pointing_name)
 
         # adding galaxy table again near the cutout images for easy comparison
-        self.write_gal_table()        
-        self.write_cutouts_table()
+        try:
+            self.write_gal_table()
+        except:
+            print("problem writing gal table for ",self.pointing.pointing_name)
+
+        try:
+            self.write_cutouts_table()
+        except:
+            print("problem writing cutouts table for ",self.pointing.pointing_name)
+            
         # add functions to write out CS image
         # first row
         # CS image, fratio plot, zoom in on galaxies in CS image?
