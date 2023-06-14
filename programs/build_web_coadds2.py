@@ -141,7 +141,7 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
     if csimage:
-        plt.imshow(clipped_data,cmap='gray_r',origin='lower',vmin=-.01,vmax=0.15)
+        plt.imshow(clipped_data,cmap='gray_r',origin='lower',vmin=-.01,vmax=0.2)
         return
         
         #try:
@@ -546,7 +546,7 @@ class pointing():
             except:
                 print('error: could not find date in image header')
 
-        self.pointing_name = os.path.basename(self.rimage).replace('R.fits','').replace('.fits','').replace('-r','').replace('-R','').replace('-shifted','')
+        self.pointing_name = os.path.basename(self.rimage).replace('.fits','').replace('-r','').replace('-R','').replace('-shifted','')
         
         self.build_psf_names()
         self.get_rband_image()
@@ -681,7 +681,7 @@ class pointing():
         for j in range(len(galra)):
             #print(sizes[j][0])
             try:
-                imsize = galsizes[j]/pixscale*2.5
+                imsize = galsizes[j]/pixscale*2.
             except IndexError:
                 #print('hey rose - problem accessing sizes ',sizes)
                 # set the default size to 60 arcsec
