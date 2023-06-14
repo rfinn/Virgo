@@ -1235,20 +1235,20 @@ if __name__ == '__main__':
 
     # DONE - TODO - convert this to multiprocessing!!!
     
-    #indices = np.arange(len(rfiles))
-    #image_pool = mp.Pool(mp.cpu_count())
-    ##image_pool = mp.pool.ThreadPool(mp.cpu_count())    
-    #myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir,)) for i in indices]
+    indices = np.arange(len(rfiles))
+    image_pool = mp.Pool(mp.cpu_count())
+    #image_pool = mp.pool.ThreadPool(mp.cpu_count())    
+    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir,)) for i in indices]
     
-    #image_pool.close()
-    #image_pool.join()
-    #image_results = [r.get() for r in myresults]
+    image_pool.close()
+    image_pool.join()
+    image_results = [r.get() for r in myresults]
 
     ##
     # skipping mp because of pickling errors - will get back to that someday...
     ##
-    for i in range(len(rfiles)):
-        buildone(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir)
+    #for i in range(len(rfiles)):
+    #    buildone(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir)
 
     
     #with ProcessPoolExecutor(max_workers=24) as exe:
