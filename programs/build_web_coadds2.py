@@ -1233,7 +1233,7 @@ if __name__ == '__main__':
     
     indices = np.arange(len(rfiles))
     image_pool = mp.Pool(24)
-    myresults = [image_pool.starmap(buildone,(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir)) for i in indices]
+    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir)) for i in indices]
     
     #image_pool.close()
     #image_pool.join()
