@@ -1235,9 +1235,9 @@ if __name__ == '__main__':
     image_pool = mp.Pool(24)
     myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir)) for i in indices]
     
-    #image_pool.close()
-    #image_pool.join()
-    #image_results = [r.get() for r in myresults]
+    image_pool.close()
+    image_pool.join()
+    image_results = [r.get() for r in myresults]
 
     #with ProcessPoolExecutor(max_workers=24) as exe:
     #             exe.map(buildone,indices,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir))
