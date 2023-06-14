@@ -50,7 +50,8 @@ from urllib.parse import urlencode
 from urllib.request import urlretrieve
 
 import multiprocessing as mp
-from concurrent.futures import ProcessPoolExecutor
+#import pathos.multiprocessing as mp
+#from concurrent.futures import ProcessPoolExecutor
 #mp.set_start_method('spawn')
 
 import argparse
@@ -196,7 +197,8 @@ def get_legacy_jpg(ra,dec,galid='VFID0',pixscale=1,imsize='60',subfolder=None):
         #print('legacy url = ',url)
         urlretrieve(url, jpeg_name)
     else:
-        print('previously downloaded ',jpeg_name)
+        pass
+        #print('previously downloaded ',jpeg_name)
 
 
     # return the name of the fits images and jpeg image
@@ -1234,7 +1236,8 @@ if __name__ == '__main__':
     # DONE - TODO - convert this to multiprocessing!!!
     
     indices = np.arange(len(rfiles))
-    image_pool = mp.Pool(24)
+    #image_pool = mp.Pool(mp.cpu_count())
+    image_pool = mp.ThreadPool(mp.cpu_count())    
     myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir,)) for i in indices]
     
     image_pool.close()
