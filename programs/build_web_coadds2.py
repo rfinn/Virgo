@@ -50,6 +50,7 @@ from urllib.parse import urlencode
 from urllib.request import urlretrieve
 
 import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor
 #mp.set_start_method('spawn')
 
 import argparse
@@ -1231,12 +1232,17 @@ if __name__ == '__main__':
     # DONE - TODO - convert this to multiprocessing!!!
     
     indices = np.arange(len(rfiles))
-    image_pool = mp.Pool(mp.cpu_count()-4)
-    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),callback=collect_results) for i in indices]
+    #image_pool = mp.Pool(mp.cpu_count())
+    #myresults = [image_pool.map(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir) for i in indices]
     
-    image_pool.close()
-    image_pool.join()
-    image_results = [r.get() for r in myresults]
+    #image_pool.close()
+    #image_pool.join()
+    #image_results = [r.get() for r in myresults]
+
+    with ProcessPoolExecutor(max_workers=24) as exe:
+                 exe.map(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir),indices)
+
+    # build the web index
     cwd = os.getcwd()
     os.chdir(outdir)
     os.system("python ~/github/Virgo/programs/build_coadd_index.py")
