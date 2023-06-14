@@ -67,7 +67,7 @@ import build_web_common as buildweb
 sys.path.append(homedir+'/github/halphagui/')
 import filter_transmission as ft
 
-OVERWRITE = False
+OVERWRITE = True
 VERBOSE = False
 ###########################################################
 ####  FUNCTIONS
@@ -775,7 +775,7 @@ class pointing():
             # TODO - finish this next line
             ax = plt.subplot(nrow,ncol,5*j+1)            
             jpeg_name = get_legacy_jpg(galra[j],galdec[j],galid=galnames[j],pixscale=1,imsize=imsize_arcsec,subfolder=self.outdir)
-            print(jpeg_name)
+            #print(jpeg_name)
             # plot jpg
             t = Image.open(jpeg_name)
             plt.imshow(t,origin='upper')
