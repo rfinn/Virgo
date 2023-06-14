@@ -86,7 +86,10 @@ def get_galaxies_fov(imagename,RA,DEC):
     # should also check the weight image and remove galaxies with weight=0
     # this won't take care of images with partial exposures, but we can deal with that later...
     # TODO - how to handle images with partial exposures, meaning only part of galaxy is in FOV?
-    weightimage = imagename.replace('.fits','.weight.fits')
+    if imagename.find('shifted') > -1:
+        weightimage = imagename.replace('-r-shifted.fits','-r.weight-shifted.fits')
+    else:
+        weightimage = imagename.replace('.fits','.weight.fits')
     if os.path.exists(weightimage):
         whdu = fits.open(weightimage)
         # just check center position?

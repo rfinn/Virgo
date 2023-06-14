@@ -136,12 +136,13 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=False,csim
         xmax = xdim
         ymin = 1
         ymax = ydim
-    if sigclip:
-        clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=5,sigma_upper=5)#,grow=10)
-    else:
-        clipped_data = image[xmin:xmax,ymin:ymax]
+    #if sigclip:
+    #    clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=5,sigma_upper=5)#,grow=10)
+    #else:
+    #    clipped_data = image[xmin:xmax,ymin:ymax]
+    clipped_data = image
     if csimage:
-        plt.imshow(clipped_data,cmap='gray_r',origin='lower',vmin=-.01,vmax=0.2)
+        plt.imshow(clipped_data,cmap='gray_r',origin='lower',vmin=-.01,vmax=0.25)
         return
         
         #try:
@@ -296,7 +297,7 @@ class coadd_image():
             ax = plt.subplot(projection=wcs.WCS(self.imheader))
             plt.subplots_adjust(top=.95,right=.95,left=.15,bottom=.1)
             if self.filter == 'CS':
-                display_image(self.imdata,csimage=True)
+                display_image(self.imdata,csimage=True,sigclip=True)
             else:
                 display_image(self.imdata)
             galsize=60/(abs(self.imheader['CD1_1'])*3600)
@@ -702,10 +703,10 @@ class pointing():
                 #print("displaying cutout ",imtitles[k],imsize)
                 ax = plt.subplot(nrow,ncol,5*j+k+2)            
                 cutout = Cutout2D(images[k],position,imsize)
-                if k > 1:
-                    display_image(cutout.data)
+                if k > 1 :
+                    display_image(cutout.data,csimage=True)
                 else:
-                    display_image(cutout.data,csimage=True)                    
+                    display_image(cutout.data)                    
                 plt.title(imtitles[k])
                 
         imname = f"{self.pointing_name}-gal-cutouts.png"
@@ -843,6 +844,9 @@ class build_html_pointing():
 
         self.write_cs_header()
         self.write_cs_table()
+
+        # adding galaxy table again near the cutout images for easy comparison
+        self.write_gal_table()        
         self.write_cutouts_table()
         # add functions to write out CS image
         # first row
