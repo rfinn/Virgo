@@ -67,7 +67,7 @@ import build_web_common as buildweb
 sys.path.append(homedir+'/github/halphagui/')
 import filter_transmission as ft
 
-OVERWRITE = False
+OVERWRITE = True
 VERBOSE = False
 ###########################################################
 ####  FUNCTIONS
