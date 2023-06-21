@@ -20,13 +20,13 @@ NOTES:
 
 
 '''
-# TODO - use radius from main table for cutout size - maybe 2.5x bigger than boxes shown on full image
-# TODO - show cutout from CS-ZP if available
-# TODO - add legacy jpg image to cutouts
-# TODO - add r and Halpha to cutouts
+# DONE TODO - use radius from main table for cutout size - maybe 2.5x bigger than boxes shown on full image
+# DONE TODO - show cutout from CS-ZP if available
+# DINE TODO - add legacy jpg image to cutouts
+# DONE TODO - add r and Halpha to cutouts
 # TODO - check color correction for 90prime filters with Matteo - color term persists
 # eg https://facultyweb.siena.edu/~rfinn/virgo/coadds/VF-135.196+45.266-BOK-20210315-VFID1728/VF-135.196+45.266-BOK-20210315-VFID1728.html
-
+# TODO - figure out why scale between BOK jpg and r-band/halpha images is wrong - must have wrong pixel scale for bok
 # TODO - 
 
 import os
@@ -619,6 +619,7 @@ class pointing():
         self.get_rband_image()
         self.get_halpha_image()
         self.get_cs_image()
+        self.get_cz_image()        
         self.get_gal_cutouts()
         self.get_params_for_gal_table()
         self.write_gal_table()
@@ -688,6 +689,21 @@ class pointing():
             self.cscoadd_flag=False
             print('could not find CS ha image : ',self.csimage)
         
+    def get_cz_image(self):
+        ''' initiate an instance of coadd image class '''
+        if os.path.exists(self.czimage):
+            outprefix = self.outdir
+            filter='CS'
+            self.cz = coadd_image(self.csimage,psfimage=None,plotdir=outprefix,zpdir=None,filter=filter)
+            self.cz.generate_plots()
+            self.czcoadd_flag=True
+            #print()
+            #print('getting galaxy cutouts')
+            #self.get_gal_cutouts()
+        else:
+            self.czcoadd_flag=False
+            print('could not find ZP CS ha image : ',self.czimage)
+        
 
     def get_gal_cutouts(self,size=90):
         """ get cutouts galaxies in FOV """
@@ -707,11 +723,11 @@ class pointing():
         galsizes = Table(self.r.cat)['radius'][self.r.keepflag]*2
         
         #galsizes = size#self.rcat['radius']/.4*2
-        if self.rimage.find('INT'):
+        if 'INT' in self.rimage:
             pixscale = 0.33
-        elif self.rimage.find('HDI'):
+        elif 'HDI' in self.rimage:
             pixscale = 0.425
-        elif self.rimage.find('BOK'):
+        elif 'BOK' in self.rimage:
             pixscale = 0.4533
         rimdata,rimheader = fits.getdata(self.rimage,header=True)
         himdata,himheader = fits.getdata(self.haimage,header=True)
@@ -763,7 +779,7 @@ class pointing():
             t = Image.open(jpeg_name)
             plt.imshow(t,origin='upper')
             plt.title(galnames[j][:20])# cutting names to avoid ridiculously long NED names
-            
+            plt.ylabel('arcsec')
             position = (self.r.galfov_imx[j],self.r.galfov_imy[j])                
             for k in range(len(images)):
                 #print("displaying cutout ",imtitles[k],imsize)
@@ -774,7 +790,9 @@ class pointing():
                 #else:
                 display_image(cutout.data)                    
                 plt.title(imtitles[k])
-                
+                # remove tick labels on greyscale images - png is in arcsec
+                plt.xticks([][])
+                plt.yticks([][])                
         imname = f"{self.pointing_name}-gal-cutouts.png"
         outfile = os.path.join(self.outdir,imname)
         plt.savefig(outfile)
@@ -1143,9 +1161,13 @@ class build_html_pointing():
     def write_cs_table(self):
         ''' make table with rband zp fit '''
 
-        labels=['Continuum-Sub Image','Filter Ratio']#,'Residual<br> Surface']
-        images = [os.path.basename(self.pointing.cs.coadd_png),\
-                  os.path.basename(self.pointing.filter_ratio_plot)]
+        labels=['Cont-Sub Image w/Filter Ratio']
+        images = [os.path.basename(self.pointing.cs.coadd_png)]
+        if self.pointing.cz.coadd_png in not None:
+            images.append(os.path.basename(self.pointing.cs.coadd_png))
+            labels.append('Cont-Sub Image w/ZPs')
+        images.append(os.path.basename(self.pointing.filter_ratio_plot))
+        labels.append('Filter Ratio')
         buildweb.write_table(self.html,labels=labels,images=images,images2=None)
         
 
