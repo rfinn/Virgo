@@ -791,8 +791,8 @@ class pointing():
                 display_image(cutout.data)                    
                 plt.title(imtitles[k])
                 # remove tick labels on greyscale images - png is in arcsec
-                plt.xticks([][])
-                plt.yticks([][])                
+                plt.xticks([],[])
+                plt.yticks([],[])                
         imname = f"{self.pointing_name}-gal-cutouts.png"
         outfile = os.path.join(self.outdir,imname)
         plt.savefig(outfile)
