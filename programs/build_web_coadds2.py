@@ -1163,7 +1163,7 @@ class build_html_pointing():
 
         labels=['Cont-Sub Image w/Filter Ratio']
         images = [os.path.basename(self.pointing.cs.coadd_png)]
-        if self.pointing.cz.coadd_png in not None:
+        if self.pointing.cz.coadd_png is not None:
             images.append(os.path.basename(self.pointing.cs.coadd_png))
             labels.append('Cont-Sub Image w/ZPs')
         images.append(os.path.basename(self.pointing.filter_ratio_plot))
