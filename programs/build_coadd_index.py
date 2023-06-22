@@ -108,7 +108,7 @@ class build_html_coadd():
 
         #vfindices = np.arange(len(vfmain))
         # write one row for each galaxy
-        print('galnames = ',self.galnames)
+        #print('galnames = ',self.galnames)
         galindex = 1
         for i,g in enumerate(self.galnames):
             print(g)
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     # this should contain a list of all the galaxy folders
     flist1 = os.listdir(outdir)
     flist1.sort()
-    print(flist1)
+    #print(flist1)
     galnames=[]
     for i,subdir in enumerate(flist1): # loop through list
         
@@ -155,5 +155,5 @@ if __name__ == '__main__':
         if (os.path.isdir(subdir)):# & (subdir.startswith('VF')):
             #print('adding ',subdir)
             galnames.append(subdir)
-    print('galnames = ',galnames)
+    #print('galnames = ',galnames)
     h = build_html_coadd(galnames,outdir)
