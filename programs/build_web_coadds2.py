@@ -888,8 +888,14 @@ class pointing():
             pscale_deg = self.r.imheader['PIXSCAL1']/3600
         except KeyError:
             pscale_deg =self.r.imheader['CD1_1']
+            
         boxsizex=self.r.imheader['NAXIS1']*np.abs(float(pscale_deg))
         boxsizey=self.r.imheader['NAXIS2']*np.abs(float(pscale_deg))
+        
+        # correct the x (RA) dimension of the box for the cosine of the declination
+        # boxes should appear bigger at you approach the north celestial pole
+        boxsizex = boxsizex/np.cos(np.radians(py))
+
         #boxsizex,boxsizey=2,2
         rect= plt.Rectangle((px-boxsizex/2.,py-boxsizex/2.), boxsizex, boxsizey,fill=True, color='k',lw=2,alpha=.2)
         plt.gca().add_artist(rect)
