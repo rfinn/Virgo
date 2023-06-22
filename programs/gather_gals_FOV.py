@@ -8,7 +8,7 @@ GOAL:
 
 
 USEAGE:
-* run from html_dev/coadds directory
+* run on draco from /data-pool/html_dev/coadds directory
 
 
 
