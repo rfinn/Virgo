@@ -1273,7 +1273,7 @@ if __name__ == '__main__':
 
         outpathbase = '/media/rfinn/hdata/'
         outpathbase = '/data-pool/Halpha/'        
-        psfdir = outpathbase+'psf-images/'
+        psfdir = outpathbase+'/psf-images/'
         outdir = outpathbase+'/html_dev/coadds/'
 
         # get list of r-band coadded images
