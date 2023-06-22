@@ -295,10 +295,11 @@ class coadd_image():
             if self.found_psf:
                 self.make_psf_png()
                 self.get_psf_allstars()
-        try:
-            self.get_zpplot_firstpass()
-        except:
-            print('WARNING: problem getting zp calibration images ',self.imagename)
+        self.get_zpplot_firstpass()
+        #try:
+        #    self.get_zpplot_firstpass()
+        #except:
+        #    print('WARNING: problem getting zp calibration images ',self.imagename)
         self.zp_flag = True
         #self.get_zpimage_firstpass()
         if self.filter != 'CS':
