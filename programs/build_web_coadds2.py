@@ -219,18 +219,23 @@ def display_image(image,percent=99.5,lowrange=False,mask=None,sigclip=True,csima
         ymin = 1
         ymax = ydim
     if sigclip:
-        clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=1.5,sigma_upper=3)#,grow=10)
+        clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=2,sigma_upper=3)#,grow=10)
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
     
     if lowrange:
         norm = simple_norm(clipped_data, stretch='linear',percent=percent)
     else:
-        norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
+        try:
+            norm = simple_norm(clipped_data, stretch='asinh',percent=percent)
+        except IndexError:
+            norm = None
 
-    plt.imshow(image, norm=norm,cmap='gray_r',origin='lower')
-    #v1,v2=scoreatpercentile(image,[.5,99.5])            
-    #plt.imshow(image, cmap='gray_r',vmin=v1,vmax=v2,origin='lower')    
+    if norm is not None:
+        plt.imshow(image, norm=norm,cmap='gray_r',origin='lower')
+    else:
+        v1,v2=scoreatpercentile(image,[.5,99.5])            
+        plt.imshow(image, cmap='gray_r',vmin=v1,vmax=v2,origin='lower')    
 
 
 
