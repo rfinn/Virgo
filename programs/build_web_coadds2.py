@@ -868,7 +868,7 @@ class pointing():
         plt.gca().invert_xaxis()
         plt.xlabel('RA (deg)',fontsize=16)
         plt.ylabel('DEC (deg)',fontsize=16)        
-        
+        plt.title("NB: size of box is not to scale")
         self.position_plot = self.outdir+'/positions.png'        
         plt.savefig(self.position_plot)
         
