@@ -295,7 +295,7 @@ class coadd_image():
             if self.found_psf:
                 self.make_psf_png()
                 self.get_psf_allstars()
-        self.get_zpplot_firstpass()
+
         #try:
         #    self.get_zpplot_firstpass()
         #except:
@@ -303,6 +303,7 @@ class coadd_image():
         self.zp_flag = True
         #self.get_zpimage_firstpass()
         if self.filter != 'CS':
+            self.get_zpplot_firstpass()            
             self.get_zp_magcomp_firstpass()        
         #self.get_zpplot_secondpass()                
         #self.get_zpimage_secondpass()
