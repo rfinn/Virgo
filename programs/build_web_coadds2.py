@@ -46,6 +46,8 @@ from astropy.nddata import Cutout2D
 from astropy.stats import sigma_clip
 from astropy.time import Time
 
+from scipy.stats import scoreatpercentile
+
 from urllib.parse import urlencode
 from urllib.request import urlretrieve
 
