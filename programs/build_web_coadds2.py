@@ -1290,7 +1290,8 @@ if __name__ == '__main__':
             sys.exit()
         rfiles = [args.oneimage]
     
-    # DONE - TODO - convert this to multiprocessing!!!
+
+
     
     indices = np.arange(len(rfiles))
     image_pool = mp.Pool(mp.cpu_count())
@@ -1314,6 +1315,7 @@ if __name__ == '__main__':
     # build the web index
     cwd = os.getcwd()
     os.chdir(outdir)
+    print("\nBuilding coadd index\n")
     os.system("python ~/github/Virgo/programs/build_coadd_index.py")
     os.chdir(cwd)
 
