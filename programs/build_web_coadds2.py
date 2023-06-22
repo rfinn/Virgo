@@ -1238,7 +1238,8 @@ if __name__ == '__main__':
     parser.add_argument('--coaddir',dest = 'coaddir', help='set to coadd directory')
     parser.add_argument('--psfdir',dest = 'psfdir', help='set to coadd directory')
 
-  
+    parser.add_argument('--oneimage',dest = 'oneimage',default=None, help='give full path to the r-band image name to run on just one image')    
+    
      
     args = parser.parse_args()
 
@@ -1280,6 +1281,15 @@ if __name__ == '__main__':
     #hfiles.sort()
     rfiles.sort()
 
+    # just use one image if the argument flag was set
+
+    if args.oneimage is not None:
+        # make sure that the image exists
+        if not os.path.exists(args.oneimage):
+            print(f"Could not find {args.oneimage} - please check the r-band coadd name you provided")
+            sys.exit()
+        rfiles = [args.oneimage]
+    
     # DONE - TODO - convert this to multiprocessing!!!
     
     indices = np.arange(len(rfiles))
