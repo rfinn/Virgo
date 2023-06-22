@@ -10,7 +10,7 @@ GOAL:
 USEAGE:
 * run on draco from /data-pool/html_dev/coadds directory
 
-
+TESTING
 
 
 """
