@@ -1254,7 +1254,8 @@ if __name__ == '__main__':
     parser.add_argument('--coaddir',dest = 'coaddir', help='set to coadd directory')
     parser.add_argument('--psfdir',dest = 'psfdir', help='set to coadd directory')
 
-    parser.add_argument('--oneimage',dest = 'oneimage',default=None, help='give full path to the r-band image name to run on just one image')    
+    parser.add_argument('--oneimage',dest = 'oneimage',default=None, help='give full path to the r-band image name to run on just one image')
+    parser.add_argument('--bokonly',dest = 'bokonly',default=False,action='store_true', help='run to rebuild bok pages only')        
     
      
     args = parser.parse_args()
@@ -1310,6 +1311,14 @@ if __name__ == '__main__':
 
     
     indices = np.arange(len(rfiles))
+
+    # just rebuild the coadd pages for bok images
+    if args.bokonly:
+        indices=[]
+        for i in range(len(rfiles)):
+            if 'BOK' in rfiles:
+                indices.append(i)
+                
     image_pool = mp.Pool(mp.cpu_count())
     #image_pool = mp.pool.ThreadPool(mp.cpu_count())    
     myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir,)) for i in indices]

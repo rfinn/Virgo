@@ -127,7 +127,6 @@ class build_html_coadd():
     def close_html(self):
         self.html.close()
 # wrap
-
 if __name__ == '__main__':
     # work through coadd directory
     #global vmain
