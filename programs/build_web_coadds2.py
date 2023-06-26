@@ -1316,7 +1316,7 @@ if __name__ == '__main__':
     if args.bokonly:
         indices=[]
         for i in range(len(rfiles)):
-            if 'BOK' in rfiles:
+            if 'BOK' in rfiles[i]:
                 indices.append(i)
                 
     image_pool = mp.Pool(mp.cpu_count())
