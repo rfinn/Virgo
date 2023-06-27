@@ -1312,6 +1312,7 @@ if __name__ == '__main__':
         try:
             coadd_index = rfiles.index(args.oneimage)
             indices = [np.arange(len(rfiles))[coadd_index]]
+            print('when selecting one image, indices = ',indices)
         except ValueError:
             rfiles = [args.oneimage]
             indices = np.arange(len(rfiles))
