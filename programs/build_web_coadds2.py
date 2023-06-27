@@ -1297,7 +1297,6 @@ if __name__ == '__main__':
         #d = glob.glob(coadd_dir+'VF*BOK*-Ha6657.fits')         
         #hfiles = a + b + c + d
 
-https://drive.google.com/file/d/1yCFPvM8OekV8VgyOOyY3MaEWdd-OsTcp/view?usp=drive_link
         
     #hfiles.sort()
     rfiles.sort()
