@@ -124,12 +124,12 @@ def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
     # define previous gal for html links
     if i > 0:
         previous = os.path.basename(rfiles[i-1]).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-R','').replace('-r','')
-        #print('previous = ',previous)
+        print('previous = ',previous)
     else:
         previous = None
     if i < len(rfiles)-1:
         next = os.path.basename(rfiles[i+1]).replace('-R.fits','').replace('-shifted','').replace('-r.fits','').replace('.fits','').replace('-R','').replace('-r','')
-        #print('next = ',next)
+        print('next = ',next)
     else:
         next = None
     # define pointing name - remove fits and filter information
@@ -1312,7 +1312,7 @@ if __name__ == '__main__':
         try:
             coadd_index = rfiles.index(args.oneimage)
             indices = [np.arange(len(rfiles))[coadd_index]]
-            print('when selecting one image, indices = ',indices)
+            print('when selecting one image, indices = ',indices,rfiles[indices[0]])
         except ValueError:
             rfiles = [args.oneimage]
             indices = np.arange(len(rfiles))
