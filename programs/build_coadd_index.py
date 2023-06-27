@@ -95,7 +95,7 @@ class build_html_coadd():
         self.html.write('</style>\n')
         self.html.write('<h1>VF Coadds</h1>\n')        
     def write_coadd_list(self):
-        self.html.write('<table width="30%">\n')
+        self.html.write('<table width="50%">\n')
         self.html.write('<tr>')
         colnames = ['Index','COADD']
         for i,l in enumerate(colnames):

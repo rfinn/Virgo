@@ -20,7 +20,7 @@ from astropy.table import Table, Column
 import numpy as np
 
 #os.chdir('/home/rfinn/research/Virgo-dev/html-dev/coadds/')
-os.chdir('/data-pool/Halpha/html-dev/coadds/')
+os.chdir('/data-pool/Halpha/html_dev/coadds/')
 t = os.listdir()
 csvfiles = []
 for d in t:
