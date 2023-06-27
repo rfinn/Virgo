@@ -1311,7 +1311,7 @@ if __name__ == '__main__':
         # find index in rfiles that corresponds to image
         try:
             coadd_index = rfiles.index(args.oneimage)
-            indices = np.arange(len(rfiles))[coadd_index]            
+            indices = [np.arange(len(rfiles))[coadd_index]]
         except ValueError:
             rfiles = [args.oneimage]
             indices = np.arange(len(rfiles))
