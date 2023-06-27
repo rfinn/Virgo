@@ -1,11 +1,14 @@
 #!/usr/bin/env python
-
+"""
+run from directory that contains the coadds
+"""
 import glob
 # get list of r-band coadded images
-a = glob.glob(coadd_dir+'VF*INT*-r-shifted.fits')
-b = glob.glob(coadd_dir+'VF*HDI*-r.fits')
-c = glob.glob(coadd_dir+'VF*HDI*-R.fits')
-d = glob.glob(coadd_dir+'VF*BOK*-r.fits')         
+
+a = glob.glob('VF*INT*-r-shifted.fits')
+b = glob.glob('VF*HDI*-r.fits')
+c = glob.glob('VF*HDI*-R.fits')
+d = glob.glob('VF*BOK*-r.fits')         
 rfiles = a + b + c + d
 
 rfiles.sort()
