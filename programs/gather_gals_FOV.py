@@ -22,6 +22,7 @@ import numpy as np
 #os.chdir('/home/rfinn/research/Virgo-dev/html-dev/coadds/')
 os.chdir('/data-pool/Halpha/html_dev/coadds/')
 t = os.listdir()
+t.sort()
 csvfiles = []
 for d in t:
     csvfiles.append(os.path.join(d,d+'-galsFOV.csv'))
