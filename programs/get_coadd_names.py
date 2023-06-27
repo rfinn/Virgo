@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+import glob
 # get list of r-band coadded images
 a = glob.glob(coadd_dir+'VF*INT*-r-shifted.fits')
 b = glob.glob(coadd_dir+'VF*HDI*-r.fits')
