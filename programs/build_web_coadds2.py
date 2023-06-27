@@ -1316,8 +1316,8 @@ if __name__ == '__main__':
         except ValueError:
             rfiles = [args.oneimage]
             indices = np.arange(len(rfiles))
-
-
+    else:
+        indices = np.arange(len(rfiles))
 
     # just rebuild the coadd pages for bok images
     if args.bokonly:
