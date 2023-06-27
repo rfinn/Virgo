@@ -102,7 +102,20 @@ def get_galaxies_fov(imagename,RA,DEC):
     return imx, imy, keepflag
 
 def plot_vf_gals(imx,imy,keepflag,cat,ax,galsize=120):
-    ''' plot galaxies   '''
+    ''' plot galaxies on the coadd png images
+
+    INPUT:
+    * imx, imy : pixel locations of the galaxies
+    * keepflag : flag that tells which galaxies to plot
+    * cat : vf main catalog, 
+    * ax : plot axis
+
+    OPTIONAL INPUT:
+    * galsize : number or array, the size of the rectangle size; default is 120 pixels
+
+    RETURNS:
+    * Null
+    '''
     gindex=np.arange(len(imx))[keepflag]
     galsizes = cat['radius']/.4*2
 

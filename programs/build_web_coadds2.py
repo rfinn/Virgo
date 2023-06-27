@@ -45,7 +45,6 @@ from astropy import units as u
 from astropy.nddata import Cutout2D
 from astropy.stats import sigma_clip
 from astropy.time import Time
-
 from scipy.stats import scoreatpercentile
 
 from urllib.parse import urlencode
@@ -360,9 +359,11 @@ class coadd_image():
     def make_coadd_png(self):
         ''' display image, and mark position of galaxies '''
         self.coadd_png = self.plotprefix+'coadd.png'
+
         imx,imy,keepflag = buildweb.get_galaxies_fov(self.imagename,self.cat['RA'],self.cat['DEC'])
         self.galfov_imx = imx[keepflag]
         self.galfov_imy = imy[keepflag]
+        # where are we cutting based on filter redshift?        
         # need to cut to keep the galaxies within the right filter
         self.keepflag = keepflag        
         if os.path.exists(self.coadd_png) and not OVERWRITE:
@@ -583,7 +584,10 @@ class coadd_image():
         myfilter = ft.filter_trace(filter)
         self.gals_filter_png = os.path.join(self.plotdir,'galaxies_in_filter.png')
         corrections = myfilter.get_trans_correction(redshift,outfile=self.gals_filter_png)
-        self.corrections = corrections
+        filter_keepflag = corrections < 10 # this is a crazy big cut, but we can adjust with halphagui
+        self.corrections = corrections[filter_keepflag]
+
+        self.keepflag[self.keepflag] = filter_keepflag 
         #self.gals_filter_png = os.path.join(self.plotdir,'galaxies_in_filter.png')
         #os.rename('galaxies_in_filter.png',self.gals_filter_png)
         #pass
