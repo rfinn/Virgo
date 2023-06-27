@@ -33,11 +33,15 @@ coadd = []
 
 for f in csvfiles:
     if f.startswith('VF-'):
-        input = open(f,'r')
-        for line in input:
-            s = line.rstrip().split(',')
-            vfid.append(s[0])
-            coadd.append(s[1])        
+        if os.path.exists(f):
+            input = open(f,'r')
+            for line in input:
+                s = line.rstrip().split(',')
+                vfid.append(s[0])
+                coadd.append(s[1])
+            input.close()
+        else:
+            print("ERROR - can't find ",f)
 
 unique_ids = set(vfid)
 
