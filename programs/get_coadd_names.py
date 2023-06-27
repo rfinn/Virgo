@@ -17,5 +17,6 @@ print(f"number of targets = {len(rfiles)}")
 # write out as a csv file
 outfile = open('virgo-coadds.csv','w')
 for i in range(len(rfiles)):
-    outfile.write(f"{rfiles[i]} \n")
+    basname = rfiles[i].replace("-r-shifted.fits","").replace("-r.fits","").replace("-R.fits","")
+    outfile.write(f"{basname} \n")
 outfile.close()
