@@ -1297,7 +1297,7 @@ if __name__ == '__main__':
         #d = glob.glob(coadd_dir+'VF*BOK*-Ha6657.fits')         
         #hfiles = a + b + c + d
 
-
+https://drive.google.com/file/d/1yCFPvM8OekV8VgyOOyY3MaEWdd-OsTcp/view?usp=drive_link
         
     #hfiles.sort()
     rfiles.sort()
@@ -1309,12 +1309,15 @@ if __name__ == '__main__':
         if not os.path.exists(args.oneimage):
             print(f"Could not find {args.oneimage} - please check the r-band coadd name you provided")
             sys.exit()
-        rfiles = [args.oneimage]
-    
+        # find index in rfiles that corresponds to image
+        try:
+            coadd_index = rfiles.index(args.oneimage)
+            indices = np.arange(len(rfiles))[coadd_index]            
+        except ValueError:
+            rfiles = [args.oneimage]
+            indices = np.arange(len(rfiles))
 
 
-    
-    indices = np.arange(len(rfiles))
 
     # just rebuild the coadd pages for bok images
     if args.bokonly:
