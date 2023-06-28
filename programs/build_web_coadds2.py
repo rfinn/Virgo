@@ -1313,26 +1313,27 @@ if __name__ == '__main__':
             coadd_index = rfiles.index(args.oneimage)
             indices = [np.arange(len(rfiles))[coadd_index]]
             print('when selecting one image, indices = ',indices,rfiles[indices[0]])
+            buildone(rfiles,coadd_index,coadd_dir,psfdir,zpdir,fratiodir)
         except ValueError:
             rfiles = [args.oneimage]
             indices = np.arange(len(rfiles))
     else:
         indices = np.arange(len(rfiles))
 
-    # just rebuild the coadd pages for bok images
-    if args.bokonly:
-        indices=[]
-        for i in range(len(rfiles)):
-            if 'BOK' in rfiles[i]:
-                indices.append(i)
+        # just rebuild the coadd pages for bok images
+        if args.bokonly:
+            indices=[]
+            for i in range(len(rfiles)):
+                if 'BOK' in rfiles[i]:
+                    indices.append(i)
                 
-    image_pool = mp.Pool(mp.cpu_count())
-    #image_pool = mp.pool.ThreadPool(mp.cpu_count())    
-    myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir,)) for i in indices]
+        image_pool = mp.Pool(mp.cpu_count())
+        #image_pool = mp.pool.ThreadPool(mp.cpu_count())    
+        myresults = [image_pool.apply_async(buildone,args=(rfiles,i,coadd_dir,psfdir,zpdir,fratiodir,)) for i in indices]
     
-    image_pool.close()
-    image_pool.join()
-    image_results = [r.get() for r in myresults]
+        image_pool.close()
+        image_pool.join()
+        image_results = [r.get() for r in myresults]
 
     ##
     # skipping mp because of pickling errors - will get back to that someday...
