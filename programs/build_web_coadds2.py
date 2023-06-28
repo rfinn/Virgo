@@ -710,10 +710,12 @@ class pointing():
             outprefix = self.outdir
             filter='CS'
             self.cs = coadd_image(self.csimage,psfimage=None,plotdir=outprefix,zpdir=None,filter=filter)
-            self.cs.generate_plots()
+            print('\tmaking cs plots')
+            self.cs.generate_plots()            
             self.cscoadd_flag=True
             #print()
             #print('getting galaxy cutouts')
+            print('\tcs image getting gal cutouts')            
             self.get_gal_cutouts()
         else:
             self.cscoadd_flag=False
