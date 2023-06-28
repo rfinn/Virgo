@@ -198,8 +198,8 @@ def get_legacy_jpg(ra,dec,galid='VFID0',pixscale=1,imsize='60',subfolder=None):
         #print('legacy url = ',url)
         urlretrieve(url, jpeg_name)
     else:
-        pass
-        #print('previously downloaded ',jpeg_name)
+        
+        print('previously downloaded ',jpeg_name)
 
 
     # return the name of the fits images and jpeg image
