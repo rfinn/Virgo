@@ -705,7 +705,7 @@ class pointing():
         
     def get_cz_image(self):
         ''' initiate an instance of coadd image class '''
-        if os.path.exists(self.czimage):
+        if (self.csimage is not None) and os.path.exists(self.czimage):
             outprefix = self.outdir
             filter='CS'
             self.cz = coadd_image(self.csimage,psfimage=None,plotdir=outprefix,zpdir=None,filter=filter)
