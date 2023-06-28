@@ -633,11 +633,15 @@ class pointing():
         self.get_rband_image()
         self.get_halpha_image()
         self.get_cs_image()
-        self.get_cz_image()        
+        self.get_cz_image()
+        print("getting galaxy cutouts")        
         self.get_gal_cutouts()
+        print("getting galaxy table")
         self.get_params_for_gal_table()
         self.write_gal_table()
+        print("getting pointing position")
         self.plot_pointing_position()
+        print("getting filter ratio plot")        
         self.get_filter_ratio_plot()
 
     def build_psf_names(self):
