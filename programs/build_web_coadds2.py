@@ -774,6 +774,8 @@ class pointing():
             pixscale = 0.425
         elif 'BOK' in self.rimage:
             pixscale = 0.4533
+        elif 'MOS' in self.rimage:
+            pixscale = 0.425
         rimdata,rimheader = fits.getdata(self.rimage,header=True)
         himdata,himheader = fits.getdata(self.haimage,header=True)
         cimdata,cimheader = fits.getdata(self.csimage,header=True)
@@ -1317,7 +1319,8 @@ if __name__ == '__main__':
         a = glob.glob(coadd_dir+'VF*INT*-r-shifted.fits')
         b = glob.glob(coadd_dir+'VF*HDI*-r.fits')
         c = glob.glob(coadd_dir+'VF*HDI*-R.fits')
-        d = glob.glob(coadd_dir+'VF*BOK*-r.fits')         
+        d = glob.glob(coadd_dir+'VF*BOK*-r.fits')
+        d = glob.glob(coadd_dir+'VF*MOS*-R.fits')                 
         rfiles = a + b + c + d
 
         # changing this b/c I now store the halpha image name in the r-band header
