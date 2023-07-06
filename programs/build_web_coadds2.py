@@ -670,8 +670,12 @@ class pointing():
         if os.path.exists(self.rpsf_image):
             self.rpsf_flag=True
         else:
-            self.rpsf_flag=False
-            print('could not find r psf image: ',self.rpsf_image)
+            self.rpsf_image = self.psfdir+'/'+os.path.basename(self.rimage).split('.fits')[0]+'-psf.fits'
+            if os.path.exists(self.rpsf_image):
+                self.rpsf_flag=True
+            else:
+                self.rpsf_flag=False
+                print('could not find r psf image: ',self.rpsf_image)
             
         self.hapsf_image = self.psfdir+'/'+os.path.basename(self.haimage).split('.fits')[0]+'-psf.fits'
         if os.path.exists(self.hapsf_image):
