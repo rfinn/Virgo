@@ -599,8 +599,10 @@ class coadd_image():
         corrections = myfilter.get_trans_correction(redshift,outfile=self.gals_filter_png)
         filter_keepflag = corrections < 10 # this is a crazy big cut, but we can adjust with halphagui
         self.corrections = corrections[filter_keepflag]
-
-        self.keepflag[self.keepflag] = filter_keepflag 
+        print()
+        print(f"number of galaxies before filter cut = {np.sum(self.keepflag)}")
+        self.keepflag[self.keepflag] = filter_keepflag
+        print(f"number of galaxies AFTER filter cut = {np.sum(self.keepflag)}")        
         #self.gals_filter_png = os.path.join(self.plotdir,'galaxies_in_filter.png')
         #os.rename('galaxies_in_filter.png',self.gals_filter_png)
         #pass
