@@ -425,7 +425,7 @@ class coadd_image():
         if not os.path.exists(zpsurf):
             imagebase = os.path.basename(self.imagename).replace('.fits','')
             zpsurf = os.path.join(self.psfdir,'plots',imagebase+"-allstars.png")
-        #print('allstars source = ',zpsurf)
+        print('allstars source = ',zpsurf)
         self.psf_allstars_png = os.path.join(self.plotdir,imagebase+"-allstars.png")
         #print('allstars destination = ',self.psf_allstars_png)
         os.system('cp '+zpsurf+' '+self.psf_allstars_png)
