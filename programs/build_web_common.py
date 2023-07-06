@@ -92,6 +92,9 @@ def get_galaxies_fov(imagename,RA,DEC):
         weightimage = imagename.replace('.fits','.weight.fits')
     if 'MOS' not in imagename:
         if os.path.exists(weightimage):
+            print()
+            print("cross checking object locations with weight image")
+            print()
             whdu = fits.open(weightimage)
             # just check center position?
             int_imx = np.array(imx,'i')
