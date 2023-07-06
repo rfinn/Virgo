@@ -764,14 +764,14 @@ class pointing():
         
         # loop over galaxies in FOV
         gindex=np.arange(len(self.r.galfov_imx))
-        galnames = Table(self.r.cat)['prefix'][self.r.keepflag]
-        galra = Table(self.r.cat)['RA'][self.r.keepflag]
-        galdec = Table(self.r.cat)['DEC'][self.r.keepflag]        
+        galnames = Table(self.r.cat)['prefix'][self.cs.keepflag]
+        galra = Table(self.r.cat)['RA'][self.cs.keepflag]
+        galdec = Table(self.r.cat)['DEC'][self.cs.keepflag]        
 
         ##
         # set size to 2.5 time size in coadd images
         ##
-        galsizes = Table(self.r.cat)['radius'][self.r.keepflag]*2
+        galsizes = Table(self.r.cat)['radius'][self.cs.keepflag]*2
         
         #galsizes = size#self.rcat['radius']/.4*2
         if 'INT' in self.rimage:
@@ -809,9 +809,9 @@ class pointing():
 
         # columns: legacy, r, halpha, cs, CS-zp
         ncol = 5
-        nrow = np.sum(self.r.keepflag)
+        nrow = np.sum(self.cs.keepflag)
         # change to one row per galaxy
-        figsize = (12,3*np.sum(self.r.keepflag))            
+        figsize = (12,3*np.sum(self.cs.keepflag))            
         plt.figure(figsize=figsize)
         plt.subplots_adjust(top=.95,right=.95,left=.05,bottom=.05)        
         for j in range(len(galra)):
@@ -877,8 +877,8 @@ class pointing():
 
     def get_params_for_gal_table(self):
         ''' setup arrays for galaxy table '''
-        self.groupgals = self.r.cat[self.r.keepflag]
-        self.vffil = vffil[self.r.keepflag]
+        self.groupgals = self.r.cat[self.cs.keepflag]
+        self.vffil = vffil[self.cs.keepflag]
 
     def write_gal_table(self):
         """ write out a list of with galaxies in FOV """
@@ -891,7 +891,7 @@ class pointing():
         
         #outfile =
         outfile = os.path.join(self.outdir,self.pointing_name+'-galsFOV.csv')
-        gals = self.r.cat['VFID'][self.r.keepflag]
+        gals = self.r.cat['VFID'][self.cs.keepflag]
 
         output = open(outfile,'w')
         for i in range(len(gals)):
