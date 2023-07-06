@@ -385,7 +385,8 @@ class coadd_image():
                 display_image(self.imdata,csimage=True,sigclip=True)
             else:
                 display_image(self.imdata)
-            galsize=60/(abs(self.imheader['CD1_1'])*3600)
+                
+            galsize=60/self.pscale
             buildweb.plot_vf_gals(imx,imy,keepflag,self.cat,ax,galsize=galsize)
             ax.set_xlabel('RA (deg)',fontsize=16)
             ax.set_ylabel('DEC (deg)',fontsize=16)        
@@ -927,10 +928,7 @@ class pointing():
         px = self.r.imheader['CRVAL1']
         py = self.r.imheader['CRVAL2']
         #print(px,py)
-        try:
-            pscale_deg = self.r.imheader['PIXSCAL1']/3600
-        except KeyError:
-            pscale_deg =self.r.imheader['CD1_1']
+        pscale_deg = self.r.pscale/3600
             
         boxsizex=self.r.imheader['NAXIS1']*np.abs(float(pscale_deg))
         boxsizey=self.r.imheader['NAXIS2']*np.abs(float(pscale_deg))
