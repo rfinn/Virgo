@@ -324,7 +324,10 @@ class coadd_image():
         try:
             self.pscale = np.abs(self.imheader['PIXSCAL1'])
         except KeyError:
-            self.pscale = np.abs(self.imheader['CD1_1'])*3600
+            try:
+                self.pscale = np.abs(self.imheader['CD1_1'])*3600
+            except KeyError:
+                self.pscale = np.abs(self.imheader['CDELT1'])*3600
         try:
             self.exptime = self.imheader['ORIGEXPT']
         except KeyError:
