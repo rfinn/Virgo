@@ -10,7 +10,7 @@ b = glob.glob('VF*HDI*-r.fits')
 c = glob.glob('VF*HDI*-R.fits')
 d = glob.glob('VF*BOK*-r.fits')
 e = glob.glob('VF*MOS*-R.fits')         
-rfiles = a + b + c + e
+rfiles = a + b + c + d + e
 
 rfiles.sort()
 print(f"number of targets = {len(rfiles)}")
