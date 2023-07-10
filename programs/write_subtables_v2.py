@@ -1642,6 +1642,11 @@ class catalog:
         '''convert John's custom photometry file to line-matched version   '''
 
         photfile = '/home/rfinn/research/Virgo/legacy-phot/virgofilaments-v2-legacyphot.fits'
+
+        ##
+        # 2023-07-10 : Updating to use John's catalog from 4/29/2023
+        ## 
+        photfile = '/home/rfinn/research/Virgo/legacy-phot/virgofilaments-v3-legacyphot.fits'       
         mef_table = fits.open(photfile)
         # changing to extension 2 for file that john sent on Aug 14, 2021
         #ephot = Table.read(photfile,1) # first hdu is the elliptical photometry
