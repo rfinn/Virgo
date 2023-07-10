@@ -1498,7 +1498,7 @@ class catalog:
         # replace filament names
         newfilname = []
         for fname in alltab['filament']:
-            newfilname.append(f.replace('_Filament','').replace('Virgo_',''))
+            newfilname.append(fname.replace('_Filament','').replace('Virgo_',''))
         alltab.remove_column('filament')
 
         c = Column(newfilname,name='filament')
