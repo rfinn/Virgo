@@ -772,7 +772,7 @@ if __name__ == '__main__':
     vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_ha.fits')    
 
     
-    if args.cutoutdir not is None:
+    if args.cutoutdir is not None:
         os.chdir(args.cutoutdir)
 
     # get directory list to use with Previous and Next links
