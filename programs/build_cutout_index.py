@@ -149,7 +149,7 @@ class build_html_cutout():
                 
                 self.html.write('<td><a href="{}">{}</td>'.format(htmlpage,g))
             else:
-                self.html.write('<td colspan="2">Missing</td> <td></td>'
+                self.html.write('<td colspan="2">Missing</td> <td></td>')
             self.html.write('<td>{:.5f}</td>'.format(ra))
             self.html.write('<td>{:.5f}</td>'.format(dec))
             self.html.write('<td>{:.0f}</td>'.format(vfmain['vr'][vfindex]))
