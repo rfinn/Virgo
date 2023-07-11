@@ -98,8 +98,8 @@ def buildone(subdir,outdir,flist):
             os.mkdir(outdir)
         if not os.path.exists(gal_outdir):
             os.mkdir(gal_outdir)
-        cutoutdir = os.path.join(cutout_source_dir,subdir,"")
-        p = cutout_dir(cutoutdir=cutoutdir,outdir=gal_outdir)
+
+        p = cutout_dir(cutoutdir=subdir,outdir=gal_outdir)
         p.runall()
 
         i = flist.index(args.oneimage)            
