@@ -183,6 +183,7 @@ if __name__ == '__main__':
     vffil = fits.getdata(VFFIL_PATH)
     
     outdir = homedir+'/research/Virgo/html-dev/cutouts/'
+    outdir = '/data-pool/Halpha/html_dev/cutouts/'    
 
     # this should contain a list of all the galaxy folders
     flist1 = os.listdir(outdir)
