@@ -257,6 +257,8 @@ class cutout_dir():
         This creates the png images for different cutouts
         '''
         self.gname = os.path.basename(os.path.dirname(cutoutdir))
+        if len(self.gname) < 1:
+            self.gname = cutoutdir
         self.vfid = self.gname.split('-')[0]
         print('inside cutoutdir, gname = ',self.gname)
         print('cutoutdir = ',cutoutdir)
