@@ -149,7 +149,7 @@ class build_html_cutout():
                 
                 
             else:
-                self.html.write('<td colspan="2">Missing</td>')
+                self.html.write('<td colspan="2"><a href="{0}" target="_blank">Missing</td>'.format(legacy_link(ra,dec)))
             self.html.write('<td><a href="{}">{}</td>'.format(htmlpage,g))                
             self.html.write('<td>{:.5f}</td>'.format(ra))
             self.html.write('<td>{:.5f}</td>'.format(dec))
