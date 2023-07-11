@@ -147,9 +147,10 @@ class build_html_cutout():
                 self.html.write('<td colspan="2"><a href="{0}" target="_blank"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(legacy_link(ra,dec),relative_path_2legacyjpg))
 
                 
-                self.html.write('<td><a href="{}">{}</td>'.format(htmlpage,g))
+                
             else:
-                self.html.write('<td colspan="2">Missing</td> <td></td>')
+                self.html.write('<td colspan="2">Missing</td>')
+            self.html.write('<td><a href="{}">{}</td>'.format(htmlpage,g))                
             self.html.write('<td>{:.5f}</td>'.format(ra))
             self.html.write('<td>{:.5f}</td>'.format(dec))
             self.html.write('<td>{:.0f}</td>'.format(vfmain['vr'][vfindex]))
