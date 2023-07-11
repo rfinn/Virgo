@@ -28,9 +28,10 @@ from astropy.table import Table
 
 # get input files
 flist1 = glob.glob("v*.fits")
-flist2 = glob.glob("VF*.fits")
+flist2 = glob.glob("VF*rfinn*.fits")
 flist3 = glob.glob("nNGC*.fits")
 flist = flist1 + flist2 + flist3
+flist = flist2 = glob.glob("VF*data-rfinn*.fits")
 flist.sort()
 
 # get total number of lines
