@@ -700,40 +700,24 @@ class build_html_cutout():
 if __name__ == '__main__':
     # work through coadd directory
     #global vmain
-    vfmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
-    vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_ha.fits')    
+    #vfmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
+    #vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_ha.fits')    
+
+    vfmain = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_main.fits')
+    vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_ha.fits')    
     #cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-2019-june/cutouts/'
     #telescope='INT'
     #run='2019-Jun'
     
-
-    cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-2019/cutouts/'
-    telescope='INT'
-    run='2019-Feb'
-    os.chdir(cutout_source_dir)
-    hdiflag = False
+    #cutout_source_dir = '/home/rfinn/research/Virgo/all-cutouts-20210309/'        
     
-    # setup for HDI cutouts!
-    cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-all-hdi-20210308/cutouts/'
-    cutout_source_dir = '/home/rfinn/research/Virgo/all-cutouts-20210309/'    
-    telescope='WIYN'
-    run='HDI'
-    os.chdir(cutout_source_dir)
-    hdiflag = True
-
-
-    # setup for NGC cutouts!
-    #cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-NGC5846/cutouts/'
-    telescope='WIYN'
-    run='MOSAIC'
-    os.chdir(cutout_source_dir)
-    
-    
-    outdir = homedir+'/research/Virgo/html-dev/cutouts/'
+    outdir = '/data-pool/Halpha/html_dev/cutouts/'
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
     #outdir = homedir+'/research/Virgo/html-dev/cutouts/ngc5846-cutouts/'    
 
     # this should contain a list of all the galaxy folders
-    flist1 = os.listdir(cutout_source_dir)
+    flist1 = os.listdir()
 
     flist1.sort()
     galindex = np.arange(len(flist))
