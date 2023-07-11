@@ -61,6 +61,62 @@ residual_stretch = LinearStretch(slope=0.5, intercept=0.5) + SinhStretch() + \
 ###########################################################
 ####  FUNCTIONS
 ###########################################################
+def get_params_from_name(image_name):
+    t = os.path.basename(image_name).split('-')
+    #print(t)
+    if len(t) == 5:
+
+        telescope = t[2]
+        dateobs = t[3]
+        pointing = t[4]
+    elif len(t) == 6: # meant to catch negative declinations
+        telescope = t[3]
+        dateobs = t[4]
+        pointing = t[5]        
+    return telescope,dateobs,pointing
+
+def buildone(subdir,outdir,flist):
+    print(subdir)
+    telescope,dateobs,pointing = get_params_from_name(subdir)
+    run = dateobs+'-'+pointing
+    #if os.path.isdir(subdir) & (subdir.startswith('pointing')) & (subdir.find('-') > -1):
+    if os.path.isdir(subdir):
+        print('##########################################')
+        print('##########################################')        
+        print('WORKING ON DIRECTORY: ',subdir)
+        print('##########################################')
+        print('##########################################')
+        
+        try:
+            # move to subdirectory
+            # adding the telescope and run so that we don't write over
+            # images if galaxy was observed more than once
+            gal_outdir = os.path.join(outdir,subdir+"")
+            print('out directory for this galaxy = ',gal_outdir)
+            if not os.path.exists(outdir):
+                os.mkdir(outdir)
+            if not os.path.exists(gal_outdir):
+                os.mkdir(gal_outdir)
+            cutoutdir = os.path.join(cutout_source_dir,subdir,"")
+            p = cutout_dir(cutoutdir=cutoutdir,outdir=gal_outdir)
+            p.runall()
+            
+            # define previous gal for html links
+            if i > 0:
+                previous = (flist1[i-1])
+                #print('previous = ',previous)
+            else:
+                previous = None
+            if i < len(flist1)-1:
+                next = flist1[i+1]
+                #print('next = ',next)
+            else:
+                next = None
+            h = build_html_cutout(p,gal_outdir,previous=previous,next=next,tel=telescope,run=run)
+            h.build_html()
+        except:
+            print('WARNING: problem building webpage for ',subdir)
+    
 
 def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=None,sigclip=True):
     lowrange=False
@@ -698,79 +754,57 @@ class build_html_cutout():
 # wrap
 
 if __name__ == '__main__':
-    # work through coadd directory
-    #global vmain
-    #vfmain = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main.fits')
-    #vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v1/vf_north_v1_ha.fits')    
 
+
+    import argparse
+
+    parser = argparse.ArgumentParser(description ='create psf image from image that contains stars')
+
+    #parser.add_argument('--table-path', dest = 'tablepath', default = '/Users/rfinn/github/Virgo/tables/', help = 'path to github/Virgo/tables')
+    parser.add_argument('--cutoutdir',dest = 'cutoutdir', default=None, help='set to coadd directory. default is the current directory, like you are running from the cutouts/ directory')
+    parser.add_argument('--oneimage',dest = 'oneimage',default=None, help='give directory for one image')
+    parser.add_argument('--outdir',dest = 'outdir',default='/data-pool/Halpha/html_dev/cutouts/', help='output directory.  default is /data-pool/Halpha/html_dev/cutouts/')    
+     
+    args = parser.parse_args()
+
+    # get tables, define as a global variable
     vfmain = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_main.fits')
     vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_ha.fits')    
-    #cutout_source_dir = '/home/rfinn/research/Virgo/gui-output-2019-june/cutouts/'
-    #telescope='INT'
-    #run='2019-Jun'
+
     
-    #cutout_source_dir = '/home/rfinn/research/Virgo/all-cutouts-20210309/'        
-    
-    outdir = '/data-pool/Halpha/html_dev/cutouts/'
+    if args.cutoutdir not is None:
+        os.chdir(args.cutoutdir)
+
+    # get directory list to use with Previous and Next links
+    rfiles = os.listdir()
+
+    outdir = args.outdir
     if not os.path.exists(outdir):
         os.mkdir(outdir)
-    #outdir = homedir+'/research/Virgo/html-dev/cutouts/ngc5846-cutouts/'    
 
-    # this should contain a list of all the galaxy folders
-    flist1 = os.listdir()
+    if args.oneimage is not None:
+        # make sure that the image exists
+        if not os.path.exists(args.oneimage):
+            print(f"Could not find {args.oneimage} - please check the cutout directory name you provided")
+            sys.exit()
+        # find index in rfiles that corresponds to image
+        try:
+            coadd_index = rfiles.index(args.oneimage)
+            indices = [np.arange(len(rfiles))[coadd_index]]
+            print('when selecting one image, indices = ',indices,rfiles[indices[0]])
+            buildone(args.oneimage,outdir,rfiles):
+        except ValueError:
+            rfiles = [args.oneimage]
+            indices = np.arange(len(rfiles))
+    else:
+        indices = np.arange(len(rfiles))
 
-    flist1.sort()
-    galindex = np.arange(len(flist))
-    ngal = 0
-    startgal = None
-    startindex = 0
-    if startgal is not None:
-        for i,f in enumerate(flist1):
-            if f.startswith(startgal):
-                startindex=i
-                print('starting with galaxy ',startgal)
-                break
-    for i in galindex[startindex:]: # loop through list
-        subdir = flist[i]
-        print(subdir)
-        #if os.path.isdir(subdir) & (subdir.startswith('pointing')) & (subdir.find('-') > -1):
-        if os.path.isdir(subdir):
-            print('##########################################')
-            print('##########################################')        
-            print('WORKING ON DIRECTORY: ',subdir)
-            print('##########################################')
-            print('##########################################')
+        image_pool = mp.Pool(mp.cpu_count())
+        #image_pool = mp.pool.ThreadPool(mp.cpu_count())    
+        myresults = [image_pool.apply_async(buildone,args=(subdir,outdir,rfiles,)) for subdir in rfiles]
+    
+        image_pool.close()
+        image_pool.join()
+        image_results = [r.get() for r in myresults]
 
-            try:
-                # move to subdirectory
-                # adding the telescope and run so that we don't write over
-                # images if galaxy was observed more than once
-                gal_outdir = os.path.join(outdir,subdir+"")
-                print('out directory for this galaxy = ',gal_outdir)
-                if not os.path.exists(outdir):
-                    os.mkdir(outdir)
-                if not os.path.exists(gal_outdir):
-                    os.mkdir(gal_outdir)
-                cutoutdir = os.path.join(cutout_source_dir,subdir,"")
-                p = cutout_dir(cutoutdir=cutoutdir,outdir=gal_outdir)
-                p.runall()
-            
-                # define previous gal for html links
-                if i > 0:
-                    previous = (flist1[i-1])
-                    #print('previous = ',previous)
-                else:
-                    previous = None
-                if i < len(flist1)-1:
-                    next = flist1[i+1]
-                    #print('next = ',next)
-                else:
-                    next = None
-                h = build_html_cutout(p,gal_outdir,previous=previous,next=next,tel=telescope,run=run)
-                h.build_html()
-            except:
-                print('WARNING: problem building webpage for ',subdir)
-        # just running on one directory for testing purposes
-        #if i > 1:
-        #    break
-
+    
