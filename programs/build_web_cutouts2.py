@@ -385,7 +385,7 @@ class cutout_dir():
             
         self.fitsimages['mask'] = self.maskimage
         if self.nuv_flag:
-            self.fitsimages['nuv'] = self.nuv)
+            self.fitsimages['nuv'] = self.nuv
 
         for f in self.fitsimages: # loop over keys
             pngfile = os.path.join(self.outdir,os.path.basename(self.fitsimages[f]).replace('.fits','.png'))
