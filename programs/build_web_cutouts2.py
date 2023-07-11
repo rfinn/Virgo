@@ -367,7 +367,7 @@ class cutout_dir():
         if self.wise_flag:
             imlist = [self.w1,self.w2,self.w3,self.w4]
             for im in imlist:
-                self.fitsimages.append(im}
+                self.fitsimages.append(im)
         self.fitsimages.append(self.maskimage)
         if self.nuv_flag:
             self.fitsimages.append(self.nuv)
