@@ -132,9 +132,10 @@ class build_html_cutout():
             try:
                 legacy_jpg = glob.glob(search_path)[0]
             except:
+                legacy_flag = False
                 print('WARNING: no legacy image for ',g)
-                print('\t Skipping galaxy for now')
-                continue
+                #print('\t Skipping galaxy for now')
+                #continue
             self.html.write('<tr>')
             self.html.write('<td>{}</td>'.format(galindex))
             self.html.write('<td>{}</td>'.format(vfid))            
