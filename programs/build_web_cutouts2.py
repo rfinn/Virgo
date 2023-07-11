@@ -571,9 +571,11 @@ class build_html_cutout():
         self.write_header()
         self.write_navigation_links()
         self.write_image_stats()
-        self.write_legacy_images()        
+        self.write_legacy_images()
+
         self.write_sfr_images()
-        self.write_wise_images()
+        if self.cutout.wise_flag:
+            self.write_wise_images()
         self.write_halpha_images()
         if self.cutout.galimage is not None:
             self.write_galfit_images()
