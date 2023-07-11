@@ -77,6 +77,7 @@ def get_params_from_name(image_name):
 
 def buildone(subdir,outdir,flist):
     print(subdir)
+
     telescope,dateobs,pointing = get_params_from_name(subdir)
     run = dateobs+'-'+pointing
     #if os.path.isdir(subdir) & (subdir.startswith('pointing')) & (subdir.find('-') > -1):
@@ -87,35 +88,36 @@ def buildone(subdir,outdir,flist):
         print('##########################################')
         print('##########################################')
         
-        try:
-            # move to subdirectory
-            # adding the telescope and run so that we don't write over
-            # images if galaxy was observed more than once
-            gal_outdir = os.path.join(outdir,subdir+"")
-            print('out directory for this galaxy = ',gal_outdir)
-            if not os.path.exists(outdir):
-                os.mkdir(outdir)
-            if not os.path.exists(gal_outdir):
-                os.mkdir(gal_outdir)
-            cutoutdir = os.path.join(cutout_source_dir,subdir,"")
-            p = cutout_dir(cutoutdir=cutoutdir,outdir=gal_outdir)
-            p.runall()
-            
-            # define previous gal for html links
-            if i > 0:
-                previous = (flist1[i-1])
-                #print('previous = ',previous)
-            else:
-                previous = None
-            if i < len(flist1)-1:
-                next = flist1[i+1]
-                #print('next = ',next)
-            else:
-                next = None
+        #try:
+        # move to subdirectory
+        # adding the telescope and run so that we don't write over
+        # images if galaxy was observed more than once
+        gal_outdir = os.path.join(outdir,subdir+"")
+        print('out directory for this galaxy = ',gal_outdir)
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+        if not os.path.exists(gal_outdir):
+            os.mkdir(gal_outdir)
+        cutoutdir = os.path.join(cutout_source_dir,subdir,"")
+        p = cutout_dir(cutoutdir=cutoutdir,outdir=gal_outdir)
+        p.runall()
+
+        i = flist.index(args.oneimage)            
+        # define previous gal for html links
+        if i > 0:
+            previous = (flist1[i-1])
+            #print('previous = ',previous)
+        else:
+            previous = None
+        if i < len(flist1)-1:
+            next = flist1[i+1]
+            #print('next = ',next)
+        else:
+            next = None
             h = build_html_cutout(p,gal_outdir,previous=previous,next=next,tel=telescope,run=run)
             h.build_html()
-        except:
-            print('WARNING: problem building webpage for ',subdir)
+        #except:
+        #    print('WARNING: problem building webpage for ',subdir)
     
 
 def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=None,sigclip=True):
