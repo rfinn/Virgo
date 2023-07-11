@@ -361,9 +361,13 @@ class cutout_dir():
         self.fitsimages = [self.rimage,self.haimage,self.csimage]
 
         if self.legacy_flag:
-            self.fitsimages.append(self.legacy_g,self.legacy_r,self.legacy_z)
+            imlist = [self.legacy_g,self.legacy_r,self.legacy_z]
+            for im in imlist:
+                self.fitsimages.append(im)
         if self.wise_flag:
-            self.fitsimages.append(self.w1,self.w2,self.w3,self.w4)
+            imlist = [self.w1,self.w2,self.w3,self.w4]
+            for im in imlist:
+                self.fitsimages.append(im}
         self.fitsimages.append(self.maskimage)
         if self.nuv_flag:
             self.fitsimages.append(self.nuv)
