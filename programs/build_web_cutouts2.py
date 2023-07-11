@@ -282,11 +282,13 @@ class cutout_dir():
             self.legacy_flag = False
         try:
             self.get_wise_names()
+            self.wise_flag = True            
         except:
             print('WARNING: problem with wise images')
             self.wise_flag = False
         try:
             self.get_galex_names()
+            self.galex_flag = True            
         except:
             print('WARNING: problem with wise images')
             self.galex_flag = False
