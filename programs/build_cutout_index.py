@@ -130,9 +130,9 @@ class build_html_cutout():
             #print(search_path)
             #legacy_jpg = glob.glob(search_path)[0]            
             try:
-                print()
-                print("looking for legacy image")
-                print(glob.glob(search_path))
+                #print()
+                #print("looking for legacy image")
+                #print(glob.glob(search_path))
                 legacy_jpg = glob.glob(search_path)[0]
                 legacy_flag = True                
             except:

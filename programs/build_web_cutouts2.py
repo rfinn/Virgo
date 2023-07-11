@@ -358,10 +358,13 @@ class cutout_dir():
     def define_png_names(self):
         pass
     def make_png_plots(self):
-        self.fitsimages = [self.rimage,self.haimage,self.csimage,\
-                           self.legacy_g,self.legacy_r,self.legacy_z,\
-                           self.w1,self.w2,self.w3,self.w4,\
-                           self.maskimage]
+        self.fitsimages = [self.rimage,self.haimage,self.csimage]
+
+        if self.legacy_flag:
+            self.fitsimages.append(self.legacy_g,self.legacy_r,self.legacy_z)
+        if self.wise_flag:
+            self.fitsimages.append(self.w1,self.w2,self.w3,self.w4)
+        self.fitsimages.append(self.maskimage)
         if self.nuv_flag:
             self.fitsimages.append(self.nuv)
         self.pngimages=[]
