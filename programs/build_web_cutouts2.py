@@ -388,18 +388,19 @@ class cutout_dir():
             self.fitsimages['nuv'] = self.nuv
 
         for f in self.fitsimages: # loop over keys
+
             try:
                 pngfile = os.path.join(self.outdir,os.path.basename(self.fitsimages[f]).replace('.fits','.png'))
             except TypeError:
                 continue
             try:
-                make_png(f,pngfile)
-                self.pngimages[k] = pngfile
+                make_png(self.fitsimages[f],pngfile)
+                self.pngimages[f] = pngfile
             except FileNotFoundError:
-                print('WARNING: can not find ',f)
+                print('WARNING: can not find ',self.fitsimages[f])
 
             except TypeError:
-                print('WARNING: problem making png for ',f)
+                print('WARNING: problem making png for ',self.fitsimages[f])
 
 
     def make_cs_png(self):
