@@ -234,7 +234,7 @@ def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2
           fig = plt.figure(figsize=(6,6))          
           plt.subplot(1,1,1,projection=imwcs)
           plt.subplots_adjust(top=.95,right=.95,left=.2,bottom=.15)
-          plt.imshow(im,origin='lower',cmap=cmap,vmin=v1[i],vmax=v2[i],norm=norms[i])
+          plt.imshow(im,origin='lower',cmap=cmap,norm=norms[i])
           plt.xlabel('RA (deg)',fontsize=16)
           plt.ylabel('DEC (deg)',fontsize=16)
           #plt.title(titles[i],fontsize=16)
