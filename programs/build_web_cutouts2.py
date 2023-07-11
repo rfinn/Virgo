@@ -114,8 +114,8 @@ def buildone(subdir,outdir,flist):
             #print('next = ',next)
         else:
             next = None
-            h = build_html_cutout(p,gal_outdir,previous=previous,next=next,tel=telescope,run=run)
-            h.build_html()
+        h = build_html_cutout(p,gal_outdir,previous=previous,next=next,tel=telescope,run=run)
+        h.build_html()
         #except:
         #    print('WARNING: problem building webpage for ',subdir)
     
