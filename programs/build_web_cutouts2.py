@@ -358,31 +358,46 @@ class cutout_dir():
     def define_png_names(self):
         pass
     def make_png_plots(self):
-        self.fitsimages = [self.rimage,self.haimage,self.csimage]
-
+        # fitsimages and pngimages should be dictionaries
+        # so I am not relying on where they are in the list
+        imnames = ['r','ha','cs','legacy_g','legacy_r','legacy_z',\
+                   'w1','w2','w3','w4',\
+                   'mask','nuv']
+        self.image_keys = imnames
+        self.fitsimages = {i:None for i in imnames}
+        self.pngimages = {i:None for i in imnames}
+        keys = imnames[0:3]
+        imlist = [self.rimage,self.haimage,self.csimage]
+        for i,k in enumerate(keys):
+            self.fitsimages[k] = imlist[i]
+        
         if self.legacy_flag:
+            keys = imnames[3:6]
             imlist = [self.legacy_g,self.legacy_r,self.legacy_z]
-            for im in imlist:
-                self.fitsimages.append(im)
+            for i,k in enumerate(keys):
+                self.fitsimages[k] = imlist[i]
+            
         if self.wise_flag:
+            keys = imnames[6:10]            
             imlist = [self.w1,self.w2,self.w3,self.w4]
-            for im in imlist:
-                self.fitsimages.append(im)
-        self.fitsimages.append(self.maskimage)
+            for i,k in enumerate(keys):
+                self.fitsimages[k] = imlist[i]
+            
+        self.fitsimages['mask'] = self.maskimage
         if self.nuv_flag:
-            self.fitsimages.append(self.nuv)
-        self.pngimages=[]
-        for f in self.fitsimages:
-            pngfile = os.path.join(self.outdir,os.path.basename(f).replace('.fits','.png'))
+            self.fitsimages['nuv'] = self.nuv)
+
+        for f in self.fitsimages: # loop over keys
+            pngfile = os.path.join(self.outdir,os.path.basename(self.fitsimages[f]).replace('.fits','.png'))
             try:
                 make_png(f,pngfile)
-                self.pngimages.append(pngfile)                          
+                self.pngimages[k] = pngfile
             except FileNotFoundError:
                 print('WARNING: can not find ',f)
-                self.pngimages.append(None)
+
             except TypeError:
                 print('WARNING: problem making png for ',f)
-                self.pngimages.append(None)
+
 
     def make_cs_png(self):
         csdata,csheader = fits.getdata(self.csimage,header=True)
@@ -648,15 +663,15 @@ class build_html_cutout():
         #                   self.w1,self.w2,self.w3,self.w4] # 6,7,8,9
 
         if self.cutout.nuv_flag:
-            images = [self.cutout.pngimages[-1],\
+            images = [self.cutout.pngimages['nuv'],\
                       self.cutout.cs_png1,\
-                      self.cutout.pngimages[8],self.cutout.pngimages[9]]
+                      self.cutout.pngimages['w3'],self.cutout.pngimages['w4']]
             labels = ['NUV','Halpha','W3','W4']
         else:
             try:
                 images = [self.cutout.legacy_jpg,\
-                          self.cutout.pngimages[2],\
-                          self.cutout.pngimages[8],self.cutout.pngimages[9]]                      
+                          self.cutout.pngimages['cs'],\
+                          self.cutout.pngimages['w3'],self.cutout.pngimages['w4']]                      
 
                 labels = ['Legacy','Halpha','W3','W4']
             except IndexError:
@@ -670,7 +685,7 @@ class build_html_cutout():
     def write_halpha_images(self):
         '''  r, halpha, cs, and mask images '''
         self.html.write('<h2>Halpha Images</h2>\n')        
-        images = [self.cutout.pngimages[0],self.cutout.pngimages[1],self.cutout.cs_png1,self.cutout.cs_png2]
+        images = [self.cutout.pngimages['r'],self.cutout.pngimages['ha'],self.cutout.cs_png1,self.cutout.cs_png2]
         images = [os.path.basename(i) for i in images]
 
         labels = ['R','Halpha+Continuum','CS, stretch 1','CS, stretch 2']
@@ -681,7 +696,7 @@ class build_html_cutout():
         ''' jpg, g,r,z legacy images '''
         self.html.write('<h2>Legacy Images</h2>\n')
 
-        images = self.cutout.pngimages[3:6]
+        images = [self.cutout.pngimages['legacy_g'],self.cutout.pngimages['legacy_r'],self.cutout.pngimages['legacy_z']]
         images = [os.path.basename(i) for i in images]        
         images.insert(0,os.path.basename(self.cutout.legacy_jpg))        
         labels = ['grz','g','r','z']
@@ -689,8 +704,9 @@ class build_html_cutout():
 
     def write_wise_images(self):
         ''' w1 - w4 images '''
-        self.html.write('<h2>WISE Images</h2>\n')                
-        pngimages = self.cutout.pngimages[6:10]
+        self.html.write('<h2>WISE Images</h2>\n')
+        pngimages = [self.cutout.pngimages['w1'],self.cutout.pngimages['w2'],\
+                     self.cutout.pngimages['w3'],self.cutout.pngimages['w4']]
         wlabels = ['W1','W2','W3','W4']
         images=[]
         labels=[]
@@ -710,7 +726,7 @@ class build_html_cutout():
         ''' display galfit model and fit parameters for r-band image '''
         self.html.write('<h2>GALFIT r-band Modeling </h2>\n')                
         images = [self.cutout.galimage,self.cutout.galmodel,self.cutout.galresidual,\
-                  self.cutout.pngimages[10]]
+                  self.cutout.pngimages['mask']]
         images = [os.path.basename(i) for i in images]        
         labels = ['Image', 'Model', 'Residual','Mask']
         write_table(self.html,images=images,labels=labels)
