@@ -18,11 +18,15 @@ print(f"number of targets = {len(rfiles)}")
 # write out as a csv file
 outfile = open('virgo-coadds.csv','w')
 outfile2 = open('virgo-coadds-fullpath.txt','w')
+outfile3 = open('virgo-coadds-fullpath-test.txt','w')
 
 coadd_dir = '/data-pool/Halpha/coadds/all-virgo-coadds'
 for i in range(len(rfiles)):
     #basname = rfiles[i].replace("-r-shifted.fits","").replace("-r.fits","").replace("-R.fits","")
-    outfile.write(f"{rfiles[i]} \n")
-    outfile2.write(f"{coadd_dir}/{rfiles[i]} \n")
+    outfile.write(f"{rfiles[i]}\n")
+    outfile2.write(f"{coadd_dir}/{rfiles[i]}\n")
+    if i < 2:
+        outfile3.write(f"{coadd_dir}/{rfiles[i]}\n")
 outfile.close()
 outfile2.close()
+outfile3.close()
