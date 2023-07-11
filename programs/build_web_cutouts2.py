@@ -580,7 +580,8 @@ class build_html_cutout():
         self.write_header()
         self.write_navigation_links()
         self.write_image_stats()
-        self.write_legacy_images()
+        if self.cutout.legacy_flag:
+            self.write_legacy_images()
 
         self.write_sfr_images()
         if self.cutout.wise_flag:
