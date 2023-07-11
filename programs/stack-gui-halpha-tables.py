@@ -31,7 +31,7 @@ flist1 = glob.glob("v*.fits")
 flist2 = glob.glob("VF*rfinn*.fits")
 flist3 = glob.glob("nNGC*.fits")
 flist = flist1 + flist2 + flist3
-flist = flist2 = glob.glob("VF*data-rfinn*.fits")
+flist = glob.glob("VF*data-rfinn*.fits")
 flist.sort()
 print(f"Found {len(flist)} files to stack")
 print()
@@ -43,7 +43,7 @@ for f in flist:
     nlines += len(t)
 
 # create output table
-
+print(f"nlines = {nlines}")
 outtab = np.zeros(nlines,dtype=t.dtype)
 
 # loop through input tables and write the rows into the output table
