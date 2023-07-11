@@ -792,7 +792,7 @@ if __name__ == '__main__':
             coadd_index = rfiles.index(args.oneimage)
             indices = [np.arange(len(rfiles))[coadd_index]]
             print('when selecting one image, indices = ',indices,rfiles[indices[0]])
-            buildone(args.oneimage,outdir,rfiles):
+            buildone(args.oneimage,outdir,rfiles)
         except ValueError:
             rfiles = [args.oneimage]
             indices = np.arange(len(rfiles))
