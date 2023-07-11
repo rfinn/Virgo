@@ -541,6 +541,7 @@ class build_html_cutout():
 
     def __init__(self,cutoutdir,outdir,previous=None,next=None,tel=None,run=None):
         ''' pass in instance of cutout_dir class and output directory '''
+        print("in build_html_cutout!")
         self.cutout = cutoutdir
 
 
@@ -792,14 +793,14 @@ if __name__ == '__main__':
             print(f"Could not find {args.oneimage} - please check the cutout directory name you provided")
             sys.exit()
         # find index in rfiles that corresponds to image
-        try:
-            coadd_index = rfiles.index(args.oneimage)
-            indices = [np.arange(len(rfiles))[coadd_index]]
-            print('when selecting one image, indices = ',indices,rfiles[indices[0]])
-            buildone(args.oneimage,outdir,rfiles)
-        except ValueError:
-            rfiles = [args.oneimage]
-            indices = np.arange(len(rfiles))
+        #try:
+        coadd_index = rfiles.index(args.oneimage)
+        indices = [np.arange(len(rfiles))[coadd_index]]
+        print('when selecting one image, indices = ',indices,rfiles[indices[0]])
+        buildone(args.oneimage,outdir,rfiles)
+        #except ValueError:
+        #    rfiles = [args.oneimage]
+        #    indices = np.arange(len(rfiles))
     else:
         indices = np.arange(len(rfiles))
 
