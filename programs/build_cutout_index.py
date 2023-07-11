@@ -131,8 +131,10 @@ class build_html_cutout():
             #legacy_jpg = glob.glob(search_path)[0]            
             try:
                 legacy_jpg = glob.glob(search_path)[0]
+                legacy_flag = True                
             except:
                 legacy_flag = False
+                legacy_jpg = None
                 print('WARNING: no legacy image for ',g)
                 #print('\t Skipping galaxy for now')
                 #continue
@@ -140,11 +142,14 @@ class build_html_cutout():
             self.html.write('<td>{}</td>'.format(galindex))
             self.html.write('<td>{}</td>'.format(vfid))            
             htmlpage = "{}/{}.html".format(g,g)
-            relative_path_2legacyjpg = '{}/{}'.format(g,os.path.basename(legacy_jpg))
-            self.html.write('<td colspan="2"><a href="{0}" target="_blank"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(legacy_link(ra,dec),relative_path_2legacyjpg))
+            if legacy_flag:
+                relative_path_2legacyjpg = '{}/{}'.format(g,os.path.basename(legacy_jpg))
+                self.html.write('<td colspan="2"><a href="{0}" target="_blank"><img src="{1}" alt="Missing file {0}" height="auto" width="100%"></a></td>'.format(legacy_link(ra,dec),relative_path_2legacyjpg))
 
-            
-            self.html.write('<td><a href="{}">{}</td>'.format(htmlpage,g))
+                
+                self.html.write('<td><a href="{}">{}</td>'.format(htmlpage,g))
+            else:
+                self.html.write('<td colspan="2">Missing</td> <td></td>'
             self.html.write('<td>{:.5f}</td>'.format(ra))
             self.html.write('<td>{:.5f}</td>'.format(dec))
             self.html.write('<td>{:.0f}</td>'.format(vfmain['vr'][vfindex]))
