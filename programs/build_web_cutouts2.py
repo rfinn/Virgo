@@ -653,11 +653,15 @@ class build_html_cutout():
                       self.cutout.pngimages[8],self.cutout.pngimages[9]]
             labels = ['NUV','Halpha','W3','W4']
         else:
-            images = [self.cutout.legacy_jpg,\
-                      self.cutout.pngimages[2],\
-                      self.cutout.pngimages[8],self.cutout.pngimages[9]]                      
+            try:
+                images = [self.cutout.legacy_jpg,\
+                          self.cutout.pngimages[2],\
+                          self.cutout.pngimages[8],self.cutout.pngimages[9]]                      
 
-            labels = ['Legacy','Halpha','W3','W4']
+                labels = ['Legacy','Halpha','W3','W4']
+            except IndexError:
+                print("WARNING: problem plot sfr images")
+                return
         images = [os.path.basename(i) for i in images]            
         write_table(self.html,images=images,labels=labels)
         pass
