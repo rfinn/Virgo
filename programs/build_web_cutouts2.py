@@ -388,7 +388,10 @@ class cutout_dir():
             self.fitsimages['nuv'] = self.nuv
 
         for f in self.fitsimages: # loop over keys
-            pngfile = os.path.join(self.outdir,os.path.basename(self.fitsimages[f]).replace('.fits','.png'))
+            try:
+                pngfile = os.path.join(self.outdir,os.path.basename(self.fitsimages[f]).replace('.fits','.png'))
+            except TypeError:
+                continue
             try:
                 make_png(f,pngfile)
                 self.pngimages[k] = pngfile
