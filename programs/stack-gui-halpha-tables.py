@@ -33,7 +33,8 @@ flist3 = glob.glob("nNGC*.fits")
 flist = flist1 + flist2 + flist3
 flist = flist2 = glob.glob("VF*data-rfinn*.fits")
 flist.sort()
-
+print(f"Found {len(flist)} files to stack")
+print()
 # get total number of lines
 print('getting total number of lines')
 nlines=0
