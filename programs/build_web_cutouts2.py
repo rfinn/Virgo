@@ -105,12 +105,12 @@ def buildone(subdir,outdir,flist):
         i = flist.index(args.oneimage)            
         # define previous gal for html links
         if i > 0:
-            previous = (flist1[i-1])
+            previous = (flist[i-1])
             #print('previous = ',previous)
         else:
             previous = None
-        if i < len(flist1)-1:
-            next = flist1[i+1]
+        if i < len(flist)-1:
+            next = flist[i+1]
             #print('next = ',next)
         else:
             next = None
