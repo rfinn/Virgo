@@ -154,8 +154,8 @@ class build_html_cutout():
             else:
                 self.html.write('<td colspan="2"><a href="{0}" target="_blank">Missing</td>'.format(legacy_link(ra,dec)))
             self.html.write('<td><a href="{}">{}</td>'.format(htmlpage,g))                
-            self.html.write('<td>{:.5f}</td>'.format(ra))
-            self.html.write('<td>{:.5f}</td>'.format(dec))
+            self.html.write('<td>{:.3f}</td>'.format(ra))
+            self.html.write('<td>{:.3f}</td>'.format(dec))
             self.html.write('<td>{:.0f}</td>'.format(vfmain['vr'][vfindex]))
             self.html.write(f"<td>{vfmagphys['logMstar'][vfindex]:.2f}</td>")
             self.html.write(f"<td>{vfmagphys['logSFR'][vfindex]:.2f}</td>")
