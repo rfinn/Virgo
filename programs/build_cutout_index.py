@@ -100,7 +100,7 @@ class build_html_cutout():
     def write_gal_list(self):
         self.html.write('<table width="90%">\n')
         self.html.write('<tr>')
-        colnames = ['Index','VFID','Legacy Image<br> and link','Cutouts and <br>Analysis  ','RA','DEC','Recession Vel <br> (km/s)','CO Flag','ALFALFA','Filament member','Nearest Filament']
+        colnames = ['Index','VFID','Legacy Image<br> and link','Cutouts and <br>Analysis  ','RA','DEC','Recession Vel <br> (km/s)','logMstar','logSFR','CO Flag','ALFALFA','Filament member','Nearest Filament']
         for i,l in enumerate(colnames):
             if i == 1:
                 colspan=2

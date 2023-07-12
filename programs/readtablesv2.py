@@ -163,7 +163,9 @@ class vtables:
         #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
         #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
         #self.env = hstack([tab1,tab2,tab3])
-        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_07-Jul-2022.fits')    
+        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_10-Jul-2023.fits')
+        self.magphys_lext = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_11-Jul-2023.fits')
+        self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')                    
         pass
 
     def read_extinction(self):
