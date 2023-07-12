@@ -97,7 +97,7 @@ def buildone(subdir,outdir,flist):
         # adding the telescope and run so that we don't write over
         # images if galaxy was observed more than once
         gal_outdir = os.path.join(outdir,subdir+"")
-        print('out directory for this galaxy = ',gal_outdir)
+        #print('out directory for this galaxy = ',gal_outdir)
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         if not os.path.exists(gal_outdir):
@@ -305,9 +305,9 @@ class cutout_dir():
             print('WARNING: no phot files found - check this out')
     def get_halpha_names(self):
         search_string = os.path.join(self.cutoutdir,self.gname+'*-R.fits')
-        print(search_string)
+        #print(search_string)
         t = glob.glob(search_string)
-        print(t)
+        #print(t)
         
         self.rimage = t[0]
         self.haimage = glob.glob(os.path.join(self.cutoutdir,self.gname+'*-Ha.fits'))[0]
@@ -583,7 +583,7 @@ class build_html_cutout():
         self.vfindex = vfindices[vfmain['VFID'] == self.cutout.vfid]
         #print('inside build html')
         #print('coutdir = ',coutdir)
-        print('outfile = ',outfile)        
+        #print('outfile = ',outfile)        
         self.html = open(outfile,'w')
         self.htmlhome = 'index.html'
         self.next = next
@@ -683,7 +683,10 @@ class build_html_cutout():
 
                 labels = ['Legacy','Halpha','W3','W4']
             except IndexError:
-                print("WARNING: problem plot sfr images")
+                print("WARNING: problem plotting sfr images")
+                return
+            except AttributeError:
+                print("WARNING: problem plotting sfr images, probably with legacy jpg")
                 return
         images = [os.path.basename(i) for i in images]            
         write_table(self.html,images=images,labels=labels)
@@ -836,7 +839,7 @@ if __name__ == '__main__':
         #try:
         coadd_index = rfiles.index(args.oneimage)
         indices = [np.arange(len(rfiles))[coadd_index]]
-        print('when selecting one image, indices = ',indices,rfiles[indices[0]])
+        #print('when selecting one image, indices = ',indices,rfiles[indices[0]])
         buildone(args.oneimage,outdir,rfiles)
         #except ValueError:
         #    rfiles = [args.oneimage]
