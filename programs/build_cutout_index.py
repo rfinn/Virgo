@@ -157,7 +157,9 @@ class build_html_cutout():
             self.html.write('<td>{:.5f}</td>'.format(ra))
             self.html.write('<td>{:.5f}</td>'.format(dec))
             self.html.write('<td>{:.0f}</td>'.format(vfmain['vr'][vfindex]))
-            self.html.write('<td>{}</td>'.format(vfmain['COflag'][vfindex]))
+            self.html.write('<td>{}</td>'.format(vfmagphys['logMstar'][vfindex]))
+            self.html.write('<td>{}</td>'.format(vfmagphys['logSFR'][vfindex]))
+            self.html.write('<td>{}</td>'.format(vfmain['COflag'][vfindex]))            
             self.html.write('<td>{}</td>'.format(vfmain['A100flag'][vfindex]))
             self.html.write('<td>{}</td>'.format(vffil['filament_member'][vfindex]))
             self.html.write('<td>{}</td>'.format(vffil['filament'][vfindex]))            
@@ -191,6 +193,9 @@ if __name__ == '__main__':
     VFFIL_PATH = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_main_filament_membership_allgalaxies.fits'
     VFFIL_PATH = homedir+'/research/Virgo/tables-north/v2/vf_v2_environment.fits'    
     vffil = fits.getdata(VFFIL_PATH)
+
+    VFMAGPHYS_PATH = homedir+'/research/Virgo/tables-north/v2/vf_v2_magphys_10-Jul-2023.fits'    
+    vfmagphys = fits.getdata(VFMAGPHYS_PATH)
     
     outdir = homedir+'/research/Virgo/html-dev/cutouts/'
     outdir = '/data-pool/Halpha/html_dev/cutouts/'    
