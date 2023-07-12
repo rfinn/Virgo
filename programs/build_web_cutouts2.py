@@ -144,7 +144,7 @@ def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=Non
         mask = mask[xmin:xmax,ymin:ymax]
 
     if sigclip:
-        clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=1.5,sigma_upper=1.5)#,grow=3)
+        clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=1.5,sigma_upper=1.5,grow=3)
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
 
@@ -161,7 +161,7 @@ def make_png(fitsimage,outname):
     fig = plt.figure(figsize=(6,6))
     ax = plt.subplot(projection=wcs.WCS(imheader))
     plt.subplots_adjust(top=.95,right=.95,left=.2,bottom=.15)
-    display_image(imdata,sigclip=False)
+    display_image(imdata,sigclip=True)
     plt.xlabel('RA (deg)',fontsize=16)
     plt.ylabel('DEC (deg)',fontsize=16)        
     plt.savefig(outname)        
