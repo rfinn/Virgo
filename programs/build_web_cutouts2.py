@@ -415,7 +415,7 @@ class cutout_dir():
         mask = fits.getdata(self.maskimage)
         mask = mask > 0
         #galsize=60/(abs(csheader['CD1_1'])*3600)        
-        p2 = [99.9,95]
+        p2 = [99.9,99.9]
         stretchs = ['linear','asinh']
         for i,s in enumerate(stretchs):
             fig = plt.figure(figsize=(6,6))
@@ -426,7 +426,7 @@ class cutout_dir():
             display_image(csdata,stretch=s,percentile1=.5,percentile2=p2[i],mask=mask)
             # mark VF galaxies
             #plot_vf_gals(imx,imy,keepflag,vfmain,ax,galsize=galsize)
-            suffix = "-{}.png".format(p2)
+            suffix = "-{}.png".format(p2[i])
             pngfile = os.path.join(self.outdir,os.path.basename(self.csimage).replace('.fits',suffix))
             plt.xlabel('RA (deg)',fontsize=16)
             plt.ylabel('DEC (deg)',fontsize=16)        
