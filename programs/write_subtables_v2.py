@@ -305,7 +305,7 @@ class catalog:
 
         # routines that match to catalog
         self.get_CO()
-        #self.get_CO_paper1()
+        self.get_CO_paper1()
         # updating halpha routine to match to VFID_V1
         self.get_halpha()
         self.get_unwise()        
@@ -1082,7 +1082,7 @@ class catalog:
         #print(len(self.maintable),len(self.ha),len(self.hatable))        
         self.haflag = ~self.hatable['Date Obs'].mask
         self.hatable.add_column(Column(self.haflag),name='haflag')
-        self.hatable.write(outdir+file_root+'ha.fits',format='fits',overwrite=True)
+        self.hatable.write(outdir+file_root+'halpha.fits',format='fits',overwrite=True)
 
     def get_halpha(self,halphafile=None):
         print('\n######################')
@@ -1291,7 +1291,7 @@ class catalog:
         
         print('writing hafile')
         #fits.writeto(outdir+file_root+'ha.fits',np.array(self.hatable),overwrite=True)
-        self.hatable.write(outdir+file_root+'ha.fits',format='fits',overwrite=True)
+        self.hatable.write(outdir+file_root+'halpha.fits',format='fits',overwrite=True)
         print('finished writing hafile')                
     def get_2massflag(self,twomassfile=None):
         if twomassfile is None:
