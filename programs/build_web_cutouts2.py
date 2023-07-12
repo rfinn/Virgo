@@ -144,7 +144,7 @@ def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=Non
         mask = mask[xmin:xmax,ymin:ymax]
 
     if sigclip:
-        print('clipping')
+        #print('clipping')
         clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=1.5,sigma_upper=1.5,grow=10,stdfunc='mad_std')
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
@@ -413,6 +413,7 @@ class cutout_dir():
         imx,imy,keepflag = get_galaxies_fov(self.csimage,vfmain['RA'],vfmain['DEC'])
 
         mask = fits.getdata(self.maskimage)
+        mask = mask > 0
         #galsize=60/(abs(csheader['CD1_1'])*3600)        
         
         for i,p2 in enumerate([99.5,99.9]):
@@ -421,7 +422,7 @@ class cutout_dir():
             plt.subplots_adjust(bottom=.15,left=.2,right=.95,top=.95)
             ax = plt.gca()
             #clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=1.5,sigma_upper=1.5,grow=10,stdfunc='mad_std')            
-            display_image(csdata,stretch='asinh',percentile1=.5,percentile2=p2,mask=mask)
+            display_image(csdata,stretch='linear',percentile1=.5,percentile2=p2,mask=mask)
             # mark VF galaxies
             #plot_vf_gals(imx,imy,keepflag,vfmain,ax,galsize=galsize)
             suffix = "-{}.png".format(p2)
