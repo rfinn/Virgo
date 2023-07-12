@@ -1095,6 +1095,8 @@ class catalog:
             #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
             infile = '/home/rfinn/research/Virgo/halpha-tables/halpha-05Jul2020.fits'
             infile = '/home/rfinn/research/Virgo/halpha-tables-20210311/halphagui-output-combined-2021-Mar-25.fits'
+            # ids are v2 VFIDs
+            infile = '/home/rfinn/research/Virgo/halpha-tables/2023-July-11/halphagui-output-combined-2023-Jul-11.fits'
 
         else:
             infile = halphafile
@@ -1102,20 +1104,24 @@ class catalog:
 
 
         unique, counts = duplicates(self.ha,'VFID')
-        #print("Halpha sources that are listed multiple times in the halpha file:")
-        #print(unique[counts>1])
+        print("Halpha sources that are listed multiple times in the halpha file:")
+        print("\t1 observation : ",len(unique[(counts== 1)]))
+        print("\t2 observations: ",len(unique[(counts>1) & (counts < 3)]))
+        print("\t3 observations: ",len(unique[counts == 3]))        
 
         ### REMOVE DUPLICATE ROWS FOR NOW
         ### getting rid of second in each pair for now...
-        VFID = ['VFID2080','VFID2154','VFID2145','VFID2136','VFID2060',\
-                'VFID2157','VFID2076','VFID2089','VFID2095','VFID2095','VFID2141']
-        PID = ['v20p35','v17p12','v17p12','v17p12','v20p35',\
-                'v17p12','v18p54','v20p35','v20p35','v18p54','v17p12']
-        for i in range(len(VFID)):
-            idel = np.where((self.ha['VFID'] == VFID[i]) & (self.ha['POINTING'] == PID[i]))
-            #print(idel)
-            self.ha.remove_rows(idel)
-        print('number of lines in ha file after deleting rows = ',len(self.ha))
+
+        ### skipping this for now.  not sure if program will crash...
+        #VFID = ['VFID2080','VFID2154','VFID2145','VFID2136','VFID2060',\
+        #        'VFID2157','VFID2076','VFID2089','VFID2095','VFID2095','VFID2141']
+        #PID = ['v20p35','v17p12','v17p12','v17p12','v20p35',\
+        #        'v17p12','v18p54','v20p35','v20p35','v18p54','v17p12']
+        #for i in range(len(VFID)):
+        #    idel = np.where((self.ha['VFID'] == VFID[i]) & (self.ha['POINTING'] == PID[i]))
+        #    #print(idel)
+        #    self.ha.remove_rows(idel)
+        #print('number of lines in ha file after deleting rows = ',len(self.ha))
 
         ### DELETE SOME UNNECESSARY COLUMNS
         dcolnames = ['HA_FLAG','GAL_HRA','GAL_HDEC','GAL_2SERSIC','GAL_2SERSIC_ERR',\
@@ -1179,7 +1185,7 @@ class catalog:
         self.hatable[matchflag] = self.ha[idx[matchflag]]
 
         ############################################################################
-        ### READ IN HALPHA ANALYSIS FILES THAT WERE CREATED AFTER SWITCH TO V1
+        ### READ IN HALPHA ANALYSIS FILES THAT WERE CREATED BEFORE SWITCH TO V2
         ### match these by VFID
         ############################################################################
         if self.hav1flag:
@@ -1229,56 +1235,59 @@ class catalog:
 
         # read in file with list of VFIDs that were observed
         # set HAobsflag to true for these galaxies
-        htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-bok-21A.txt',format='ascii')
-        for i,v in enumerate(htab['VFID']):
-            flag =(self.hatable['VFID_V1'] == v.rstrip())
-            if sum(flag) > 0:
-                #print('found match to bok obs target')
-                self.hatable['HAobsflag'][flag] = True
-                #print(self.hatable['VFID'][flag],self.hatable['HAobsflag'][flag])
-            else:
-                print('no match to bok obs target ',v)
+
+        use_old_ha_tables = False
+        if use_old_ha_tables:
+            htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-bok-21A.txt',format='ascii')
+            for i,v in enumerate(htab['VFID']):
+                flag =(self.hatable['VFID_V1'] == v.rstrip())
+                if sum(flag) > 0:
+                    #print('found match to bok obs target')
+                    self.hatable['HAobsflag'][flag] = True
+                    #print(self.hatable['VFID'][flag],self.hatable['HAobsflag'][flag])
+                else:
+                    print('no match to bok obs target ',v)
         
 
-        print('after matching to spring 2021, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
+            print('after matching to spring 2021, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
 
-        # read in the list of targets from BOK 2022 Apr run
-        htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-bok-22A.csv',format='csv')
-        print("BOK 22A table colnames = ",htab.colnames)
+            # read in the list of targets from BOK 2022 Apr run
+            htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-bok-22A.csv',format='csv')
+            print("BOK 22A table colnames = ",htab.colnames)
 
-        for i,v in enumerate(htab['VFID_V1']):
-            #idnumber = v.replace('VFID','')
-            #print(idnumber)
-            flag =(self.hatable['VFID_V1'] == v)
-            if sum(flag) > 0:
-                #print('found match to bok obs target')
-                self.hatable['HAobsflag'][flag] = True
-                #print(self.hatable['VFID'][flag],self.hatable['HAobsflag'][flag])
-            else:
-                print('no match to bok obs target ',v)
-        
+            for i,v in enumerate(htab['VFID_V1']):
+                #idnumber = v.replace('VFID','')
+                #print(idnumber)
+                flag =(self.hatable['VFID_V1'] == v)
+                if sum(flag) > 0:
+                    #print('found match to bok obs target')
+                    self.hatable['HAobsflag'][flag] = True
+                    #print(self.hatable['VFID'][flag],self.hatable['HAobsflag'][flag])
+                else:
+                    print('no match to bok obs target ',v)
 
-        print('after matching to spring 2022, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
-        
 
-        # read in the list of targets from BOK 2022 Apr run
-        htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-int-may-22A.csv',format='csv')
-        print("INT MAY 22A table colnames = ",htab.colnames)
+            print('after matching to spring 2022, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
 
-        for i,v in enumerate(htab['VFID_V1']):
-            #idnumber = v.replace('VFID','')
-            #print(idnumber)
-            flag =(self.hatable['VFID_V1'] == v)
-            if sum(flag) > 0:
-                #print('found match to bok obs target')
-                self.hatable['HAobsflag'][flag] = True
-                #print(self.hatable['VFID'][flag],self.hatable['HAobsflag'][flag])
-            else:
-                print('no match to bok obs target ',v)
-        
 
-        print('after matching to spring 2022, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
-        
+            # read in the list of targets from BOK 2022 Apr run
+            htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-int-may-22A.csv',format='csv')
+            print("INT MAY 22A table colnames = ",htab.colnames)
+
+            for i,v in enumerate(htab['VFID_V1']):
+                #idnumber = v.replace('VFID','')
+                #print(idnumber)
+                flag =(self.hatable['VFID_V1'] == v)
+                if sum(flag) > 0:
+                    #print('found match to bok obs target')
+                    self.hatable['HAobsflag'][flag] = True
+                    #print(self.hatable['VFID'][flag],self.hatable['HAobsflag'][flag])
+                else:
+                    print('no match to bok obs target ',v)
+
+
+            print('after matching to spring 2022, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
+
         
         print('writing hafile')
         #fits.writeto(outdir+file_root+'ha.fits',np.array(self.hatable),overwrite=True)

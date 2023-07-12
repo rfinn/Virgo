@@ -11,12 +11,14 @@ NOTES:
 * using John Moustakas's code as a reference (https://github.com/moustakas/legacyhalos/blob/main/py/legacyhalos/virgofilaments.py#L1131-L1202)
 * https://docs.astropy.org/en/stable/visualization/normalization.html#:~:text=The%20astropy.visualization%20module%20provides%20a%20framework%20for%20transforming,x%20represents%20the%20values%20in%20the%20original%20image%3A
 
-TO DO:
+TO DO: (I think these are all fixed!)
 * need to figure out how to handle repeated observations
   - don't overwrite directory
 
 * fix how I combine unwise images when multiple images are returned
 * same for galex
+
+
 '''
 
 import os
