@@ -157,7 +157,7 @@ class build_html_cutout():
             self.html.write('<td>{:.5f}</td>'.format(ra))
             self.html.write('<td>{:.5f}</td>'.format(dec))
             self.html.write('<td>{:.0f}</td>'.format(vfmain['vr'][vfindex]))
-            self.html.write(r'<td>{vfmagphys['logMstar'][vfindex]:.2f}</td>')
+            self.html.write(f'<td>{vfmagphys['logMstar'][vfindex]:.2f}</td>')
             self.html.write(f'<td>{vfmagphys['logSFR'][vfindex]:.2f}</td>')
             self.html.write('<td>{}</td>'.format(vfmain['COflag'][vfindex]))            
             self.html.write('<td>{}</td>'.format(vfmain['A100flag'][vfindex]))
