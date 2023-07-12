@@ -49,6 +49,7 @@ class vtables:
         #self.read_rphot()
         self.read_legacy()
         self.read_ephot()
+        self.read_galfit()        
         #self.read_extinction()
     def read_main(self):
         ''' read in main table; store as self.main  '''
@@ -122,8 +123,20 @@ class vtables:
         ''' read in unWISE table; store as self.unwise  '''
         self.unwise = Table.read(self.tabledir+self.tableprefix+'unwise.fits')                               
         pass
+    def read_galfit(self):
+        ''' read in galfit tables of single-component Sersic fits; store as self.galfit_{} [g,r,z,W1,W2,W3,W4]'''
+        
+        self.galfit_g = Table.read(self.tabledir+self.tableprefix+'galfit_g.fits')
+        self.galfit_r = Table.read(self.tabledir+self.tableprefix+'galfit_r.fits')
+        self.galfit_z = Table.read(self.tabledir+self.tableprefix+'galfit_z.fits')
+
+        self.galfit_W1 = Table.read(self.tabledir+self.tableprefix+'galfit_W1.fits')
+        self.galfit_W2 = Table.read(self.tabledir+self.tableprefix+'galfit_W2.fits')        
+        self.galfit_W3 = Table.read(self.tabledir+self.tableprefix+'galfit_W3.fits')
+        self.galfit_W4 = Table.read(self.tabledir+self.tableprefix+'galfit_W4.fits')        
+
     def read_halpha(self):
-        ''' read in halpha observations table; store as self.ha; table generated from web coadds is self.haobs  '''
+        ''' read in halpha observations table; store as self.halpha; table generated from web coadds is self.haobs  '''
 
 
         self.ha = Table.read(self.tabledir+self.tableprefix+'halpha.fits')
