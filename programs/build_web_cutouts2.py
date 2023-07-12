@@ -415,7 +415,7 @@ class cutout_dir():
         mask = fits.getdata(self.maskimage)
         mask = mask > 0
         #galsize=60/(abs(csheader['CD1_1'])*3600)        
-        p2 = [99.9,99.9]
+        p2 = [99.9,99.99]
         stretchs = ['linear','asinh']
         for i,s in enumerate(stretchs):
             fig = plt.figure(figsize=(6,6))
