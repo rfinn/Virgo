@@ -417,7 +417,7 @@ class cutout_dir():
         #galsize=60/(abs(csheader['CD1_1'])*3600)        
         p2 = 99.5
         stretchs = ['linear','asinh']
-        for s in stretchs:
+        for i,s in enumerate(stretchs):
             fig = plt.figure(figsize=(6,6))
             plt.subplot(projection = wcs.WCS(csheader))
             plt.subplots_adjust(bottom=.15,left=.2,right=.95,top=.95)
