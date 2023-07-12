@@ -159,9 +159,21 @@ class build_html_cutout():
             self.html.write('<td>{:.0f}</td>'.format(vfmain['vr'][vfindex]))
             self.html.write(f"<td>{vfmagphys['logMstar'][vfindex]:.2f}</td>")
             self.html.write(f"<td>{vfmagphys['logSFR'][vfindex]:.2f}</td>")
-            self.html.write('<td>{}</td>'.format(vfmain['COflag'][vfindex]))            
-            self.html.write('<td>{}</td>'.format(vfmain['A100flag'][vfindex]))
-            self.html.write('<td>{}</td>'.format(vffil['filament_member'][vfindex]))
+            if vfmain['COflag'][vfindex]:
+                text='CO'
+            else:
+                text='-'
+            self.html.write('<td>{}</td>'.format(text))
+            if vfmain['A100flag'][vfindex]:
+                text='HI'
+            else:
+                text='-'
+            self.html.write('<td>{}</td>'.format(text))
+            if vffil['filament_member'][vfindex]:
+                text='memb'
+            else:
+                text='-'
+            self.html.write('<td>{}</td>'.format(text))
             self.html.write('<td>{}</td>'.format(vffil['filament'][vfindex]))            
 
             self.html.write('</tr>\n')
