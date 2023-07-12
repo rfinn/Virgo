@@ -64,17 +64,19 @@ residual_stretch = LinearStretch(slope=0.5, intercept=0.5) + SinhStretch() + \
 ####  FUNCTIONS
 ###########################################################
 def get_params_from_name(image_name):
-    t = os.path.basename(image_name).split('-')
     #print(t)
-    if len(t) == 5:
+    tels = ['BOK','HDI','INT','MOS']
+    for t in tels:
+        if t in image_name:
+            telescope = t
+            break
+    t = os.path.basename(image_name).split('-')
+    for item in t:
+        if item.startswith('20'):
+            dateobs = item
+            break
+    pointing = t[-1]
 
-        telescope = t[2]
-        dateobs = t[3]
-        pointing = t[4]
-    elif len(t) == 6: # meant to catch negative declinations
-        telescope = t[3]
-        dateobs = t[4]
-        pointing = t[5]        
     return telescope,dateobs,pointing
 
 def buildone(subdir,outdir,flist):
