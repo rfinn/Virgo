@@ -262,9 +262,9 @@ class cutout_dir():
         if len(self.gname) < 1:
             self.gname = cutoutdir
         self.vfid = self.gname.split('-')[0]
-        print('inside cutoutdir, gname = ',self.gname)
-        print('cutoutdir = ',cutoutdir)
-        print('outdir = ',outdir)        
+        #print('inside cutoutdir, gname = ',self.gname)
+        #print('cutoutdir = ',cutoutdir)
+        #print('outdir = ',outdir)        
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         self.outdir = outdir
@@ -571,7 +571,7 @@ class build_html_cutout():
 
     def __init__(self,cutoutdir,outdir,previous=None,next=None,tel=None,run=None):
         ''' pass in instance of cutout_dir class and output directory '''
-        print("in build_html_cutout!")
+        #print("in build_html_cutout!")
         self.cutout = cutoutdir
 
 
@@ -657,7 +657,7 @@ class build_html_cutout():
                 "{:.2f}".format(myrow['H_FWHM'][0]),\
                 "{:.4f}".format(myrow['FILTER_RATIO'][0]),\
                 "{:.2f}".format(myrow['FILT_COR'][0])]
-        print('self.run = ',self.run)
+        #print('self.run = ',self.run)
         data.insert(0,self.run)
         data.insert(0,self.telescope)
         write_text_table(self.html,labels,data)        
@@ -820,7 +820,7 @@ if __name__ == '__main__':
 
     # get directory list to use with Previous and Next links
     rfiles = os.listdir()
-
+    rfiles.sort()
     outdir = args.outdir
     if not os.path.exists(outdir):
         os.mkdir(outdir)
