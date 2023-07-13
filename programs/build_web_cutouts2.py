@@ -234,7 +234,7 @@ def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2
                 scoreatpercentile(res,p2residual)]
           norms = [simple_norm(im,'asinh',max_percent=percentile2),
                    simple_norm(im,'asinh',max_percent=percentile2),
-                   simple_norm(res,'linear',max_percent=p2residual)]
+                   simple_norm(res,'asinh',max_percent=percentile2,min_percent=20)]
 
       else:
           v1 = [scoreatpercentile(image,percentile1),
@@ -245,7 +245,7 @@ def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2
                 scoreatpercentile(residual,p2residual)]
           norms = [simple_norm(image,'asinh',max_percent=percentile2),
                    simple_norm(image,'asinh',max_percent=percentile2),
-                   simple_norm(residual,'linear',max_percent=p2residual)]
+                   simple_norm(residual,'asinh',max_percent=percentile2)]
 
       outim = ['galfit_image.png','galfit_model.png','galfit_residual.png']
       if outdir is not None:
@@ -255,11 +255,13 @@ def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2
           plt.subplot(1,1,1,projection=imwcs)
           plt.subplots_adjust(top=.95,right=.95,left=.2,bottom=.15)
           plt.imshow(im,origin='lower',cmap=cmap,norm=norms[i])
+          #plt.colorbar(fraction=.08)
           plt.xlabel('RA (deg)',fontsize=16)
           plt.ylabel('DEC (deg)',fontsize=16)
           #plt.title(titles[i],fontsize=16)
           plt.savefig(outim[i])
-          plt.close(fig)
+          #plt.close(fig)
+
 ###########################################################
 ####  CLASSES
 ###########################################################
@@ -437,14 +439,14 @@ class cutout_dir():
         mask = mask > 0
         #galsize=60/(abs(csheader['CD1_1'])*3600)        
         p2 = [99.5,99.9]
-        stretchs = ['linear','asinh']
+        stretchs = ['asinh','linear']
         for i,s in enumerate(stretchs):
             fig = plt.figure(figsize=(6,6))
             plt.subplot(projection = wcs.WCS(csheader))
             plt.subplots_adjust(bottom=.15,left=.2,right=.95,top=.95)
             ax = plt.gca()
             #clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=1.5,sigma_upper=1.5,grow=10,stdfunc='mad_std')            
-            display_image(csdata,stretch=s,percentile1=.5,percentile2=p2[i],mask=mask)
+            display_image(csdata,stretch=s,percentile1=.15,percentile2=p2[i],mask=mask)
             # mark VF galaxies
             #plot_vf_gals(imx,imy,keepflag,vfmain,ax,galsize=galsize)
             suffix = "-{}.png".format(p2[i])
