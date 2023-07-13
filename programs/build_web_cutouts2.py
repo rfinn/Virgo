@@ -875,7 +875,7 @@ class build_html_cutout():
         data = ["{:.2f}".format(myrow[c][0]) for c in colnames]
         write_text_table(self.html,labels,data)        
 
-        self.html.write('<h2>Halpha-band AB Magnitudes/SFR</h2>\n')        
+        self.html.write('<h2>Halpha AB Magnitudes/SFR</h2>\n')        
         labels=['mag16','mag17','mag_petro','SSFR_IN','SSFR_OUT'] 
         myrow = vfha[self.vfindex]
         colnames = ['HM16','HM17','HPETRO_MAG','SSFR_IN','SSFR_OUT']
