@@ -696,10 +696,11 @@ class build_html_cutout():
                 return
         newim = []
         for i in images:
-            if images[i] is not None:
+            if i is not None:
                 newim.append(os.path.basename(i))
             else:
                 newim.append(i)
+        images = newim
         #images = [os.path.basename(i) for i in images]            
         write_table(self.html,images=images,labels=labels)
         pass
