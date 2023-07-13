@@ -795,7 +795,7 @@ class build_html_cutout():
         #images = [self.cutout.pngimages['ha'],self.cutout.pngimages['r'],self.cutout.cs_png1,self.cutout.cs_png2]        
         images = [os.path.basename(i) for i in images]
 
-        labels = ['R','H&alpha;+Cont','CS, stretch 1','CS, stretch 2']
+        labels = ['R-band Image','H&alpha;+Cont','CS, stretch 1','CS, stretch 2']
         #labels = ['Halpha+Cont','R','CS, stretch 1','CS, stretch 2']        
         write_table(self.html,images=images,labels=labels)
 
