@@ -709,7 +709,8 @@ class build_html_cutout():
         #print(myrow)
         colnames = ['POINTING','R_FWHM','H_FWHM','FILTER_RATIO','FILT_COR']
         
-        data = [myrow['POINTING'][0], "{:.2f}".format(myrow['R_FWHM'][0]),\
+        data = [f'<a href="../../../coadds/{myrow['POINTING'][0]}/{myrow['POINTING'][0]}.html"</a>', \
+                "{:.2f}".format(myrow['R_FWHM'][0]),\
                 "{:.2f}".format(myrow['H_FWHM'][0]),\
                 "{:.4f}".format(myrow['FILTER_RATIO'][0]),\
                 "{:.2f}".format(myrow['FILT_COR'][0])]
