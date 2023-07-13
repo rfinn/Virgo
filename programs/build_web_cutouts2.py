@@ -528,7 +528,7 @@ class cutout_dir():
                 y0=y0*100
                 y1 = y1*100
                 y2 = y2*100
-            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],c=mycolors[ncolor])
+            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],color=mycolors[ncolor])
             # also plot line because you can't see the result when the error is small
             # this should fix issue #18 in Virgo github
             plt.plot(t['sma_arcsec'],y0,'k-',lw=2,color=mycolors[ncolor])
