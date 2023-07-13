@@ -141,34 +141,34 @@ def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=Non
     v2 = scoreatpercentile(imdata,percentile2)
     
     if mask is not None:
-        mask = mask[xmin:xmax,ymin:ymax]
+        cutmask = mask[xmin:xmax,ymin:ymax]
 
     if sigclip:
         #print('clipping')
-        clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=1.5,sigma_upper=1.5,grow=10,stdfunc='mad_std')
+        clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax][~cutmask],sigma_lower=1.5,sigma_upper=1.5,grow=10,stdfunc='mad_std')
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
 
     if mask is not None:
-        norm = simple_norm(clipped_data[mask], stretch=stretch,max_percent=percentile2,min_percent=percentile1)
+        norm = simple_norm(clipped_data[~mask], stretch=stretch,max_percent=percentile2,min_percent=percentile1)
     else:
         norm = simple_norm(clipped_data, stretch=stretch,max_percent=percentile2,min_percent=percentile1)
 
     plt.imshow(image, norm=norm,cmap='gray_r',origin='lower')#,vmin=v1,vmax=v2)
     
 
-def make_png(fitsimage,outname):
+def make_png(fitsimage,outname,mask=None):
     imdata,imheader = fits.getdata(fitsimage,header=True)
     fig = plt.figure(figsize=(6,6))
     ax = plt.subplot(projection=wcs.WCS(imheader))
     plt.subplots_adjust(top=.95,right=.95,left=.2,bottom=.15)
-    display_image(imdata,sigclip=True)
+    display_image(imdata,sigclip=True,mask=mask)
     plt.xlabel('RA (deg)',fontsize=16)
     plt.ylabel('DEC (deg)',fontsize=16)        
     plt.savefig(outname)        
     plt.close(fig)
 
-def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2residual=99,cmap='viridis',zoom=None,outdir=None):
+def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2residual=99,cmap='viridis',zoom=None,outdir=None,mask=None):
       '''
       ARGS:
       galfile = galfit output image (with image, model, residual)
@@ -222,16 +222,30 @@ def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2
       imwcs = wcs.WCS(h)
       images = [image,model,residual]
       titles = ['image','model','residual']
-      v1 = [scoreatpercentile(image,percentile1),
-            scoreatpercentile(image,percentile1),
-            scoreatpercentile(residual,p1residual)]
-      v2 = [scoreatpercentile(image,percentile2),
-            scoreatpercentile(image,percentile2),
-            scoreatpercentile(residual,p2residual)]
-      norms = [simple_norm(image,'asinh',max_percent=percentile2),
-               simple_norm(image,'asinh',max_percent=percentile2),
-               simple_norm(residual,'linear',max_percent=p2residual)]
-      
+      if mask is not None:
+          im = image[~mask]
+          res = residual[~mask]
+          v1 = [scoreatpercentile(im,percentile1),
+                scoreatpercentile(im,percentile1),
+                scoreatpercentile(res,p1residual)]
+          v2 = [scoreatpercentile(im,percentile2),
+                scoreatpercentile(im,percentile2),
+                scoreatpercentile(res,p2residual)]
+          norms = [simple_norm(im,'asinh',max_percent=percentile2),
+                   simple_norm(im,'asinh',max_percent=percentile2),
+                   simple_norm(res,'linear',max_percent=p2residual)]
+
+      else:
+          v1 = [scoreatpercentile(image,percentile1),
+                scoreatpercentile(image,percentile1),
+                scoreatpercentile(residual,p1residual)]
+          v2 = [scoreatpercentile(image,percentile2),
+                scoreatpercentile(image,percentile2),
+                scoreatpercentile(residual,p2residual)]
+          norms = [simple_norm(image,'asinh',max_percent=percentile2),
+                   simple_norm(image,'asinh',max_percent=percentile2),
+                   simple_norm(residual,'linear',max_percent=p2residual)]
+
       outim = ['galfit_image.png','galfit_model.png','galfit_residual.png']
       if outdir is not None:
           outim = [os.path.join(outdir,f) for f in outim]
@@ -473,8 +487,6 @@ class cutout_dir():
     def get_phot_tables(self):
         ''' read in phot tables and make plot of flux and sb vs sma '''
 
-        # define colors - need this for plotting line and fill_between in the same color
-        mycolors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
         # open data files
         cs_galfit_phot = self.csimage.replace('.fits','-GAL-phot.fits')
@@ -490,8 +502,11 @@ class cutout_dir():
         r_galfit_phot = self.rimage.replace('.fits','-phot.fits')
         r_phot = fits.getdata(r_galfit_phot)
         
-        # plot enclosed flux
+
+        # define colors - need this for plotting line and fill_between in the same color
+        mycolors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         ncolor=0
+        # plot enclosed flux        
         fig = plt.figure(figsize=(6,6))
         plt.subplots_adjust(left=.15,bottom=.1,right=.95,top=.95)
         tabs = [r_gphot,cs_gphot,r_phot,cs_phot]
@@ -506,10 +521,10 @@ class cutout_dir():
                 y0=y0*100
                 y1 = y1*100
                 y2 = y2*100
-            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],c=colors[ncolor])
+            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],c=mycolors[ncolor])
             # also plot line because you can't see the result when the error is small
             # this should fix issue #18 in Virgo github
-            plt.plot(t['sma_arcsec'],y0,'k-',lw=2,color=colors[ncolor])
+            plt.plot(t['sma_arcsec'],y0,'k-',lw=2,color=mycolors[ncolor])
             ncolor += 1
         plt.xlabel('SMA (arcsec)',fontsize=16)
         plt.ylabel('Flux (erg/s/cm^2/Hz)',fontsize=16)
