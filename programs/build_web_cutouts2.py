@@ -708,8 +708,35 @@ class build_html_cutout():
         #print(self.vfindex)
         #print(myrow)
         colnames = ['POINTING','R_FWHM','H_FWHM','FILTER_RATIO','FILT_COR']
+
+        # the pointing name from the vfha table might not be correct
+        # b/c if the galaxy was observed multiple times, only one pointing will be included
+        # I should instead construct the pointing from the image names
+        pointing = myrow['POINTING'][0]
+
+        # get telescope name to use to split on
+        if 'BOK' in self.cutout:
+            tel = 'BOK'
+        elif 'HDI' in self.cutout:
+            tel = 'HDI'
+        elif 'INT' in self.cutout:
+            tel = 'INT'
+        elif 'MOS' in self.cutout:
+            tel = 'MOS'
+        t = self.cutout.split(tel)
         
-        data = [f'<a href="../../../coadds/{myrow['POINTING'][0]}/{myrow['POINTING'][0]}.html"</a>', \
+        matchstring =  f"{tel}{t[1]}"
+
+        # check in coadd list for matching file name
+        coadd_list = open('../virgo-coadds-fullpath.txt')
+        
+        for line in coadd_list:
+            if matchstring in line:
+                pointing = line.rstrip()
+                print("found matching coadd")
+                break
+            
+        data = [f'<a href="../../../coadds/{pointing}/{pointing}.html"</a>', \
                 "{:.2f}".format(myrow['R_FWHM'][0]),\
                 "{:.2f}".format(myrow['H_FWHM'][0]),\
                 "{:.4f}".format(myrow['FILTER_RATIO'][0]),\
