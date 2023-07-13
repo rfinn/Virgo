@@ -472,6 +472,11 @@ class cutout_dir():
 
     def get_phot_tables(self):
         ''' read in phot tables and make plot of flux and sb vs sma '''
+
+        # define colors - need this for plotting line and fill_between in the same color
+        mycolors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+        # open data files
         cs_galfit_phot = self.csimage.replace('.fits','-GAL-phot.fits')
         cs_gphot = fits.getdata(cs_galfit_phot)
         #cs_phot = self.csimage.replace('.fits','-phot.fits')        
@@ -486,18 +491,26 @@ class cutout_dir():
         r_phot = fits.getdata(r_galfit_phot)
         
         # plot enclosed flux
+        ncolor=0
         fig = plt.figure(figsize=(6,6))
         plt.subplots_adjust(left=.15,bottom=.1,right=.95,top=.95)
         tabs = [r_gphot,cs_gphot,r_phot,cs_phot]
         labels = ['galfit r','galfit Halphax100','photutil r','photutil Halphax100']
         alphas = [1,.4,.6,.4]
         for i,t in enumerate(tabs):
+            y0 = t['flux_erg']            
             y1 = t['flux_erg']+t['flux_erg_err']
             y2 = t['flux_erg']-t['flux_erg_err']
+
             if (i == 1) + (i == 3):
+                y0=y0*100
                 y1 = y1*100
                 y2 = y2*100
-            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i])
+            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],c=colors[ncolor])
+            # also plot line because you can't see the result when the error is small
+            # this should fix issue #18 in Virgo github
+            plt.plot(t['sma_arcsec'],y0,'k-',lw=2,color=colors[ncolor])
+            ncolor += 1
         plt.xlabel('SMA (arcsec)',fontsize=16)
         plt.ylabel('Flux (erg/s/cm^2/Hz)',fontsize=16)
         plt.gca().set_yscale('log')
