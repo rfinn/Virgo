@@ -605,7 +605,7 @@ class cutout_dir():
         labels = ['galfit r','galfit Halpha','photutil r','photutil Halpha']
         
         for i,t in enumerate(tabs):
-            y\0 = t['sb_mag_sqarcsec']
+            y0 = t['sb_mag_sqarcsec']
             y1 = t['sb_mag_sqarcsec']+t['sb_mag_sqarcsec_err']
             y2 = t['sb_mag_sqarcsec']-t['sb_mag_sqarcsec_err']
 
