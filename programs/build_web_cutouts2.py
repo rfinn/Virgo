@@ -178,10 +178,11 @@ def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2
       p1residual = min percentile for stretch of residual
       p2residual = max percentile for stretch of residual
       cmap = colormap, default is viridis
+      mask = bad pixel mask, with bad values set to True
       '''
       # model name
 
-      print("inside display_galfit_model, mask = ",mask)
+      #print("inside display_galfit_model, mask = ",mask)
       image,h = fits.getdata(galfile,1,header=True)
       model = fits.getdata(galfile,2)
       residual = fits.getdata(galfile,3)
