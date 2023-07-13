@@ -715,7 +715,8 @@ class build_html_cutout():
         pointing = myrow['POINTING'][0]
 
         # get telescope name to use to split on
-        if 'BOK' in self.cutout:
+        print('I think the cutout directory name is ',self.cutout)
+        if 'BOK' is in self.cutout:
             tel = 'BOK'
         elif 'HDI' in self.cutout:
             tel = 'HDI'
