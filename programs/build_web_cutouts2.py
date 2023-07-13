@@ -734,6 +734,7 @@ class build_html_cutout():
         for line in coadd_list:
             if matchstring in line:
                 pointing = line.rstrip()
+                pointing = os.path.basename(pointing).replace("-r.fits","").replace('-r-shifted.fits','').replace('-R.fits','')
                 print("found matching coadd")
                 break
             
