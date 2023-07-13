@@ -17,7 +17,7 @@ def write_coadd_prop_table(html,filter,zp,fwhm_arcsec):
     html.write('</table>\n')
 
 def write_table(html,images=None,labels=None,images2=None):    
-    html.write('<table width="90%">\n')
+    html.write('<table width="90%"; table-layout: fixed>>\n')
     html.write('<tr>')
     for l in labels:
         html.write('<th>{}</th>'.format(l))
@@ -36,7 +36,7 @@ def write_table(html,images=None,labels=None,images2=None):
     html.write('</table>\n')
 
 def write_text_table(html,labels,data,data2=None):    
-    html.write('<table width="90%">\n')
+    html.write('<table width="90%"; table-layout: fixed>\n')
     html.write('<tr>')
     for l in labels:
         html.write('<th>{}</th>'.format(l))
