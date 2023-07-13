@@ -788,11 +788,12 @@ class build_html_cutout():
         '''  r, halpha, cs, and mask images '''
         self.html.write('<h2>Halpha Images</h2>\n')        
         images = [self.cutout.pngimages['r'],self.cutout.pngimages['ha'],self.cutout.cs_png1,self.cutout.cs_png2]
+        # just changing order to see if halpha image is still the biggest in the table, re issue #15
+        images = [self.cutout.pngimages['ha'],self.cutout.pngimages['r'],self.cutout.cs_png1,self.cutout.cs_png2]        
         images = [os.path.basename(i) for i in images]
 
         labels = ['R','Halpha+Cont','CS, stretch 1','CS, stretch 2']
         write_table(self.html,images=images,labels=labels)
-        pass
 
     def write_legacy_images(self):
         ''' jpg, g,r,z legacy images '''
