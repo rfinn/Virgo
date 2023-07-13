@@ -507,7 +507,7 @@ class cutout_dir():
 
         # define colors - need this for plotting line and fill_between in the same color
         mycolors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-        ncolor=0
+
         # plot enclosed flux        
         fig = plt.figure(figsize=(6,6))
         plt.subplots_adjust(left=.15,bottom=.1,right=.95,top=.95)
@@ -523,11 +523,11 @@ class cutout_dir():
                 y0=y0*100
                 y1 = y1*100
                 y2 = y2*100
-            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],color=mycolors[ncolor])
+            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],color=mycolors[i])
             # also plot line because you can't see the result when the error is small
             # this should fix issue #18 in Virgo github
-            plt.plot(t['sma_arcsec'],y0,'-',lw=2,color=mycolors[ncolor])
-            ncolor += 1
+            plt.plot(t['sma_arcsec'],y0,'-',lw=2,color=mycolors[i])
+
         plt.xlabel('SMA (arcsec)',fontsize=16)
         plt.ylabel('Flux (erg/s/cm^2/Hz)',fontsize=16)
         plt.gca().set_yscale('log')
@@ -544,16 +544,22 @@ class cutout_dir():
         #labels = ['r','Halpha']
         tabs = [r_gphot,cs_gphot,r_phot,cs_phot]
         labels = ['galfit r','galfit Halpha','photutil r','photutil Halpha']
-        
+        ncolor = 0
         for i,t in enumerate(tabs):
+            y0 = t['mag']
             y1 = t['mag']+t['mag_err']
             y2 = t['mag']-t['mag_err']
             if (i == 1) + (i == 3):
                 alpha=.4
             else:
                 alpha=1
+
+            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],color=mycolors[i])
+            # also plot line because you can't see the result when the error is small
+            # this should fix issue #18 in Virgo github
+            plt.plot(t['sma_arcsec'],y0,'-',lw=2,color=mycolors[i])
+
             
-            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alpha)
         plt.xlabel('SMA (arcsec)',fontsize=16)
         plt.ylabel('magnitude (AB)',fontsize=16)
         plt.gca().set_xscale('log')
@@ -568,14 +574,21 @@ class cutout_dir():
         plt.subplots_adjust(left=.15,bottom=.1,right=.95,top=.95)
         tabs = [r_gphot,cs_gphot,r_phot,cs_phot]
         labels = ['galfit r','galfit Halphax100','photutil r','photutil Halphax100']
-        
+
         for i,t in enumerate(tabs):
+            y0 = t['sb_erg_sqarcsec']
             y1 = t['sb_erg_sqarcsec']+t['sb_erg_sqarcsec_err']
             y2 = t['sb_erg_sqarcsec']-t['sb_erg_sqarcsec_err']
             if (i == 1) + (i == 3):
+                y0 = y0*100
                 y1 = y1*100
                 y2 = y2*100
-            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i])
+            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],color=mycolors[i])
+            # also plot line because you can't see the result when the error is small
+            # this should fix issue #18 in Virgo github
+            plt.plot(t['sma_arcsec'],y0,'-',lw=2,color=mycolors[i])
+
+                
         plt.xlabel('SMA (arcsec)',fontsize=16)
         plt.ylabel('SB (erg/s/cm^2/Hz/arcsec^2)',fontsize=16)
         plt.gca().set_yscale('log')
@@ -592,10 +605,15 @@ class cutout_dir():
         labels = ['galfit r','galfit Halpha','photutil r','photutil Halpha']
         
         for i,t in enumerate(tabs):
+            y\0 = t['sb_mag_sqarcsec']
             y1 = t['sb_mag_sqarcsec']+t['sb_mag_sqarcsec_err']
             y2 = t['sb_mag_sqarcsec']-t['sb_mag_sqarcsec_err']
+
+            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],color=mycolors[i])
+            # also plot line because you can't see the result when the error is small
+            # this should fix issue #18 in Virgo github
+            plt.plot(t['sma_arcsec'],y0,'-',lw=2,color=mycolors[i])
             
-            plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i])
         plt.xlabel('SMA (arcsec)',fontsize=16)
         plt.ylabel('Surface Brightness (mag/arcsec^2)',fontsize=16)
         plt.gca().set_xscale('log')
@@ -742,7 +760,7 @@ class build_html_cutout():
         images = [self.cutout.pngimages['r'],self.cutout.pngimages['ha'],self.cutout.cs_png1,self.cutout.cs_png2]
         images = [os.path.basename(i) for i in images]
 
-        labels = ['R','Halpha+Continuum','CS, stretch 1','CS, stretch 2']
+        labels = ['R','Halpha+Cont','CS, stretch 1','CS, stretch 2']
         write_table(self.html,images=images,labels=labels)
         pass
 
