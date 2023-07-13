@@ -181,7 +181,7 @@ def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2
       '''
       # model name
 
-
+      print("inside display_galfit_model, mask = ",mask)
       image,h = fits.getdata(galfile,1,header=True)
       model = fits.getdata(galfile,2)
       residual = fits.getdata(galfile,3)
@@ -226,23 +226,11 @@ def display_galfit_model(galfile,percentile1=.5,percentile2=99.5,p1residual=5,p2
       if mask is not None:
           im = image[~mask]
           res = residual[~mask]
-          v1 = [scoreatpercentile(im,percentile1),
-                scoreatpercentile(im,percentile1),
-                scoreatpercentile(res,p1residual)]
-          v2 = [scoreatpercentile(im,percentile2),
-                scoreatpercentile(im,percentile2),
-                scoreatpercentile(res,p2residual)]
           norms = [simple_norm(im,'asinh',max_percent=percentile2),
                    simple_norm(im,'asinh',max_percent=percentile2),
                    simple_norm(res,'asinh',max_percent=percentile2,min_percent=20)]
 
       else:
-          v1 = [scoreatpercentile(image,percentile1),
-                scoreatpercentile(image,percentile1),
-                scoreatpercentile(residual,p1residual)]
-          v2 = [scoreatpercentile(image,percentile2),
-                scoreatpercentile(image,percentile2),
-                scoreatpercentile(residual,p2residual)]
           norms = [simple_norm(image,'asinh',max_percent=percentile2),
                    simple_norm(image,'asinh',max_percent=percentile2),
                    simple_norm(residual,'asinh',max_percent=percentile2)]
