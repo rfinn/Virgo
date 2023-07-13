@@ -148,6 +148,8 @@ def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=Non
     if sigclip:
         if mask is not None:
             clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax][~mask[xmin:xmax,ymin:ymax]],sigma_lower=1.5,sigma_upper=1.5,grow=10,stdfunc='mad_std')
+        else:
+            clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax],sigma_lower=1.5,sigma_upper=1.5,grow=10,stdfunc='mad_std')            
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
 
