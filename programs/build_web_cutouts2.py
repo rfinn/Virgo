@@ -715,7 +715,7 @@ class build_html_cutout():
         pointing = myrow['POINTING'][0]
 
         # get telescope name to use to split on
-        print('I think the cutout directory name is ',self.cutout.cutoutdir)
+        #print('I think the cutout directory name is ',self.cutout.cutoutdir)
         if 'BOK' in self.cutout.cutoutdir:
             tel = 'BOK'
         elif 'HDI' in self.cutout.cutoutdir:
@@ -735,10 +735,10 @@ class build_html_cutout():
             if matchstring in line:
                 pointing = line.rstrip()
                 pointing = os.path.basename(pointing).replace("-r.fits","").replace('-r-shifted.fits','').replace('-R.fits','')
-                print("found matching coadd")
+                #print("found matching coadd")
                 break
             
-        data = [f'<a href="../../../coadds/{pointing}/{pointing}.html">{pointing}</a>', \
+        data = [f'<a href="http://facultyweb.siena.edu/~rfinn/virgo/coadds/{pointing}/{pointing}.html">{pointing}</a>', \
                 "{:.2f}".format(myrow['R_FWHM'][0]),\
                 "{:.2f}".format(myrow['H_FWHM'][0]),\
                 "{:.4f}".format(myrow['FILTER_RATIO'][0]),\
