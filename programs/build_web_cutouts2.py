@@ -702,7 +702,7 @@ class build_html_cutout():
 
     def write_image_stats(self):
         self.html.write('<h2>Image Statistics</h2>\n')        
-        labels=['Telescope','Run','Pointing','R FWHM <br> (arcsec)','Halpha FWHM <br> (arcsec)','Filter Ratio','Filter Correction']
+        labels=['Telescope','Run','Pointing','R FWHM <br> (arcsec)','H&alpha; FWHM <br> (arcsec)','Filter Ratio','Filter Correction']
         myrow = vfha[self.vfindex]
         #print('HALPHA FILE')
         #print(self.vfindex)
@@ -758,14 +758,14 @@ class build_html_cutout():
             images = [self.cutout.pngimages['nuv'],\
                       self.cutout.cs_png1,\
                       self.cutout.pngimages['w3'],self.cutout.pngimages['w4']]
-            labels = ['NUV','Halpha','W3','W4']
+            labels = ['NUV','H&alpha;','W3','W4']
         else:
             try:
                 images = [self.cutout.legacy_jpg,\
                           self.cutout.pngimages['cs'],\
                           self.cutout.pngimages['w3'],self.cutout.pngimages['w4']]                      
 
-                labels = ['Legacy','Halpha','W3','W4']
+                labels = ['Legacy','H&alpha;','W3','W4']
             except IndexError:
                 print("WARNING: problem plotting sfr images")
                 return
@@ -791,11 +791,12 @@ class build_html_cutout():
         # just changing order to see if halpha image is still the biggest in the table, re issue #15
         # the second was still the biggest
         # so what if we also change the label
-        images = [self.cutout.pngimages['ha'],self.cutout.pngimages['r'],self.cutout.cs_png1,self.cutout.cs_png2]        
+        # seems to scale with label
+        #images = [self.cutout.pngimages['ha'],self.cutout.pngimages['r'],self.cutout.cs_png1,self.cutout.cs_png2]        
         images = [os.path.basename(i) for i in images]
 
-        labels = ['R','Halpha+Cont','CS, stretch 1','CS, stretch 2']
-        labels = ['Halpha+Cont','R','CS, stretch 1','CS, stretch 2']        
+        labels = ['R','H&alpha;+Cont','CS, stretch 1','CS, stretch 2']
+        #labels = ['Halpha+Cont','R','CS, stretch 1','CS, stretch 2']        
         write_table(self.html,images=images,labels=labels)
 
     def write_legacy_images(self):
