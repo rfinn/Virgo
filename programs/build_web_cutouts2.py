@@ -464,7 +464,11 @@ class cutout_dir():
         self.galfit = self.rimage.replace('.fits','-1Comp-galfit-out.fits')
         if os.path.exists(self.galfit):
             # store fit results
-            display_galfit_model(self.galfit,outdir=self.outdir)
+
+            mask = fits.getdata(self.maskimage)
+            mask = mask > 0
+            
+            display_galfit_model(self.galfit,outdir=self.outdir,mask=mask)
 
             outim = ['galfit_image.png','galfit_model.png','galfit_residual.png']
         
