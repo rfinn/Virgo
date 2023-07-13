@@ -737,7 +737,7 @@ class build_html_cutout():
                 print("found matching coadd")
                 break
             
-        data = [f'<a href="../../../coadds/{pointing}/{pointing}.html"</a>', \
+        data = [f'<a href="../../../coadds/{pointing}/{pointing}.html">{pointing}</a>', \
                 "{:.2f}".format(myrow['R_FWHM'][0]),\
                 "{:.2f}".format(myrow['H_FWHM'][0]),\
                 "{:.4f}".format(myrow['FILTER_RATIO'][0]),\
