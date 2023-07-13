@@ -531,7 +531,7 @@ class cutout_dir():
             plt.fill_between(t['sma_arcsec'],y1,y2,label=labels[i],alpha=alphas[i],color=mycolors[ncolor])
             # also plot line because you can't see the result when the error is small
             # this should fix issue #18 in Virgo github
-            plt.plot(t['sma_arcsec'],y0,'k-',lw=2,color=mycolors[ncolor])
+            plt.plot(t['sma_arcsec'],y0,'-',lw=2,color=mycolors[ncolor])
             ncolor += 1
         plt.xlabel('SMA (arcsec)',fontsize=16)
         plt.ylabel('Flux (erg/s/cm^2/Hz)',fontsize=16)
