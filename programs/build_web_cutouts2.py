@@ -151,10 +151,7 @@ def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=Non
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
 
-    if mask is not None:
-        norm = simple_norm(clipped_data[~mask], stretch=stretch,max_percent=percentile2,min_percent=percentile1)
-    else:
-        norm = simple_norm(clipped_data, stretch=stretch,max_percent=percentile2,min_percent=percentile1)
+    norm = simple_norm(clipped_data, stretch=stretch,max_percent=percentile2,min_percent=percentile1)
 
     plt.imshow(image, norm=norm,cmap='gray_r',origin='lower')#,vmin=v1,vmax=v2)
     
