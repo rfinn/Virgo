@@ -141,11 +141,13 @@ def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=Non
     v2 = scoreatpercentile(imdata,percentile2)
     
     if mask is not None:
-        cutmask = mask[xmin:xmax,ymin:ymax]
+        statim = image[~mask]
+    else:
+        statim = image
 
     if sigclip:
-        #print('clipping')
-        clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax][~cutmask],sigma_lower=1.5,sigma_upper=1.5,grow=10,stdfunc='mad_std')
+        if mask is not None:
+            clipped_data = sigma_clip(image[xmin:xmax,ymin:ymax][~mask[xmin:xmax,ymin:ymax]],sigma_lower=1.5,sigma_upper=1.5,grow=10,stdfunc='mad_std')
     else:
         clipped_data = image[xmin:xmax,ymin:ymax]
 
@@ -406,14 +408,20 @@ class cutout_dir():
         if self.nuv_flag:
             self.fitsimages['nuv'] = self.nuv
 
-        for f in self.fitsimages: # loop over keys
+        mask = fits.getdata(self.maskimage)
+        mask = mask > 0
+            
+        for i,f in enumerate(self.fitsimages): # loop over keys
 
             try:
                 pngfile = os.path.join(self.outdir,os.path.basename(self.fitsimages[f]).replace('.fits','.png'))
             except TypeError:
                 continue
             try:
-                make_png(self.fitsimages[f],pngfile)
+                if i < 3:
+                    make_png(self.fitsimages[f],pngfile,mask=mask)
+                else:
+                    make_png(self.fitsimages[f],pngfile)                    
                 self.pngimages[f] = pngfile
             except FileNotFoundError:
                 print('WARNING: can not find ',self.fitsimages[f])
