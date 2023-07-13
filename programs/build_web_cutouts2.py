@@ -715,16 +715,16 @@ class build_html_cutout():
         pointing = myrow['POINTING'][0]
 
         # get telescope name to use to split on
-        print('I think the cutout directory name is ',self.cutout)
-        if 'BOK' in self.cutout:
+        print('I think the cutout directory name is ',self.cutout.cutoutdir)
+        if 'BOK' in self.cutout.cutoutdir:
             tel = 'BOK'
-        elif 'HDI' in self.cutout:
+        elif 'HDI' in self.cutout.cutoutdir:
             tel = 'HDI'
-        elif 'INT' in self.cutout:
+        elif 'INT' in self.cutout.cutoutdir:
             tel = 'INT'
-        elif 'MOS' in self.cutout:
+        elif 'MOS' in self.cutout.cutoutdir:
             tel = 'MOS'
-        t = self.cutout.split(tel)
+        t = self.cutout.cutoutdir.split(tel)
         
         matchstring =  f"{tel}{t[1]}"
 
