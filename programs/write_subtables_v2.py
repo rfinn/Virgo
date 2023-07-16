@@ -1097,7 +1097,7 @@ class catalog:
             infile = '/home/rfinn/research/Virgo/halpha-tables-20210311/halphagui-output-combined-2021-Mar-25.fits'
             # ids are v2 VFIDs
             infile = '/home/rfinn/research/Virgo/halpha-tables/2023-July-11/halphagui-output-combined-2023-Jul-11.fits'
-            infile = '/home/rfinn/research/Virgo/halpha-tables/halphagui-output-combined-2023-Jul-13.fits'            
+            infile = '/home/rfinn/research/Virgo/halpha-tables/halphagui-output-combined-2023-Jul-13.fits'
 
         else:
             infile = halphafile
