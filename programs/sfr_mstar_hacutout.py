@@ -76,7 +76,7 @@ class vplots(vtables):
         # require SNR > 3
         self.hadetect = (self.halpha['HF_TOT']/self.halpha['HF_TOT_ERR']) > snr
         pass
-    def plot_sfr_mstar_hacutout(self,xmin=7,xmax=10,ymin=-3,ymax=0,nbins=11):
+    def plot_sfr_mstar_hacutout(self,xmin=7.5,xmax=10.5,ymin=-2,ymax=0.5,nbins=11):
         """plot halpha  cutouts   """
         
         
@@ -141,8 +141,12 @@ class vplots(vtables):
                             break
                     # increment plot in the subplot
                     print("did not find an image")
+                    plt.xticks([],[])
+                    plt.yticks([],[])
                 else:
                     print("no galaxies in this bin")
+                    plt.xticks([],[])
+                    plt.yticks([],[])
 
         plt.savefig('sfr-mstar-hamorph.png')
         plt.savefig('sfr-mstar-hamorph.pdf')            
