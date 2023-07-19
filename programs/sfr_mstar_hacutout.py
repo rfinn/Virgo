@@ -100,7 +100,7 @@ class vplots(vtables):
                     # once one image is found, break out of loop and
                     # move on to the next mstar-sfr bin
                     for k in vfindices:
-                        imname = get_imname(v.main['prefix'][vfindex],\
+                        imname = get_imagenames(v.main['prefix'][vfindex],\
                                             v.halpha['TEL'][vfindex],\
                                             v.halpha['DATE-OBS'][vfindex],\
                                             v.halpha['POINTING'][vfindex])
