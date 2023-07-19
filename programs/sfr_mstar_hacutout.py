@@ -97,8 +97,8 @@ class vplots(vtables):
                 plt.subplot(nbins,nbins,nplot)
                 xlo = xedge[j]
                 xhi = xedge[j+1]
-                ylo = yedge[i]
-                yhi = yedge[i+1]
+                ylo = yedge[i+1]
+                yhi = yedge[i]
                 print(xlo,xhi,ylo,yhi)
                 if i == 0:
                     plt.title(f"{0.5*(xlo+xhi):.1f}")
