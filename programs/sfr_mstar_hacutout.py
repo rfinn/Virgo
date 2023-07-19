@@ -1,0 +1,137 @@
+#!/usr/bin/env python
+
+
+"""
+GOAL: 
+
+* create a SFR-Mstar relation, with cutouts of halpha morphologies
+
+
+APPROACH:
+
+- could break SFR-Mstar plane into subplots, and plot an image in each subplot
+
+
+"""
+
+
+from matplotlib import pyplot as plt
+
+
+import os
+import sys
+from astropy.table import Table,hstack
+import numpy as np
+homedir = os.getenv("HOME")
+sys.path.append(os.path.join(homedir,'github/Virgo/programs/'))
+
+from readtablesv2 import vtables
+from build_web_cutouts2 import display_image
+H0 = 70.
+
+
+
+
+cutoutdir = '/data-pool/Halpha/halphagui-output-20230713/cutouts/'
+
+cutoutdir = os.path.join(homedir,'/research/Virgo/plots/')
+
+def construct_dirname(prefix,tel,dateobs,pointing):
+    return f"{prefix}-{tel}-{dateobs}-{pointing}"
+    pass
+def get_imagenames(prefix,tel,dateobs,pointing):
+    """get CS halpha cutout name """
+    dirname = construct_dirname(vfid,prefix,tel,dateobs)
+    cs_imname = os.path.join(dirname,dirname+'-CS.fits')
+    
+    return cs_imname
+        
+class vplots(vtables):
+    def plot_sfr_mstar(self):
+        """plot SFR vs mstar   """
+
+        plt.figure(figsize=(8,6))
+        plt.scatter(self.magphys['logMstar'],self.magphys['logSFR'])
+        plt.xlabel('$\log_{10}(M_\star/M_\odot)$',fontsize=22)
+        plt.xlabel('$\log_{10}(SFR/M_\odot/yr)$',fontsize=22)        
+    def get_hadetect(self,snr=3):
+        """ define halpha detection flag """
+
+        # require SNR > 3
+        self.hadetect = (self.halpha['HF_TOT']/self.halpha['HF_TOT_ERR']) > snr
+        pass
+    def plot_sfr_mstar_hacutout(self,xmin=8,xmax=10,ymin=-2,ymax=1,nbins=10):
+        """plot halpha  cutouts   """
+        
+        
+        dx = (xmax-xmin)/nbins
+        xedge = np.linspace(xmin,xmax,nbins)
+
+        dy = (ymax-ymin)/nbins
+        yedge = np.linspace(xmin,xmax,nbins)
+        # step over x
+        plt.figure(12,10)
+        nplot = 1
+        for i in range(nbins-1):
+            # step over y
+            for j in range(nbins-1):
+                plt.subplots(nbins,nbins,nplot)
+                xlo = xedge[j]
+                xhi = xedge[j+1]
+                ylo = yedge[i]
+                yhi = yedge[i+1]
+
+                # select galaxies in dx and dy range
+                flag = (self.magphys['logMstar'] > xlo) & \
+                  (self.magphys['logMstar'] < xhi) & \
+                  (self.magphys['logSFR'] > ylo) & \
+                  (self.magphys['logSFR'] > yhi)
+                # select halpha detections in this bin
+                flag = flag  & self.hadetect
+                if np.sum(flag) > 1:
+                    vfids = np.arange(len(self.magphys))[flag]
+
+                    # now select one vfid at random
+                    vfindices = np.random.choice(vfids,size=len(vfids))
+                    # this will check all galaxies in the mstar-sfr bin
+                    # in a random order
+                    # once one image is found, break out of loop and
+                    # move on to the next mstar-sfr bin
+                    for k in vfindices:
+                        imname = get_imname(v.main['prefix'][vfindex],\
+                                            v.halpha['TEL'][vfindex],\
+                                            v.halpha['DATE-OBS'][vfindex],\
+                                            v.halpha['POINTING'][vfindex])
+                        maskname = imname.replace('-CS.fits','-R-mask.fits')
+                        # check if image exist
+                        if os.path.exists(imname):
+                            imdata = fits.getdata(imname)
+                            maskdata = fits.getdata(maskname)
+                            plt.display_image(imdata,mask=maskname)
+                            # remove ticks on axes
+                            plt.xticks([],[])
+                            plt.yticks([],[])                            
+                            break
+                    # increment plot in the subplot
+                    nplot += 1
+
+        plt.savefig(plotdir+'/sfr-mstar-hamorph.png')
+        plt.savefig(plotdir+'/sfr-mstar-hamorph.pdf')            
+
+        
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description ='Read in all virgo filament tables')
+    parser.add_argument('--tabledir', dest = 'tabledir', default = '/home/rfinn/research/Virgo/tables-north/v2/', help = 'directory where tables are stored')
+    parser.add_argument('--tableprefix', dest = 'tableprefix', default = 'vf_v2_', help = 'prefix for tables; default is vf_v2')                               
+    args = parser.parse_args()
+
+    if args.tabledir.startswith('/home/rfinn/'):
+        homedir = os.getenv("HOME")
+        args.tabledir = args.tabledir.replace('/home/rfinn',homedir)
+    v = vplots(args.tabledir,args.tableprefix) 
+    v.get_hadetect(snr=3)
+    v.plot_sfr_mstar_hacutout()
+    
