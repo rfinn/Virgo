@@ -913,7 +913,7 @@ if __name__ == '__main__':
 
     # get tables, define as a global variable
     vfmain = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_main.fits')
-    vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_ha.fits')    
+    vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_halpha.fits')    
 
     
     if args.cutoutdir is not None:

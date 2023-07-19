@@ -249,7 +249,7 @@ class catalog:
         # has 6780 lines.  Need to make sure self.cat does as well
 
         # read in table
-        fixedNED = Table.read('/home/rfinn/research/Virgo/tables-north/vf_v2_corrected_NEDname_for_NSAsourcegals.fits')
+        fixedNED = Table.read(homedir+'/research/Virgo/tables-north/vf_v2_corrected_NEDname_for_NSAsourcegals.fits')
         nindices = np.arange(len(fixedNED))[fixedNED['NSAsourceflag']]
 
         # check to make sure self.cat and fixedNED are same length
@@ -1056,8 +1056,8 @@ class catalog:
     def get_halpha_old(self,halphafile=None):
         # read in Halpha observing summary file
         if halphafile is None:
-            #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
-            infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'            
+            #infile = homedir+'/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
+            infile = homedir+'/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'            
         else:
             infile = halphafile
         self.ha = Table.read(infile,format='csv')
@@ -1091,13 +1091,13 @@ class catalog:
         
         # read in Halpha observing summary file
         if halphafile is None:
-            #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
-            #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
-            infile = '/home/rfinn/research/Virgo/halpha-tables/halpha-05Jul2020.fits'
-            infile = '/home/rfinn/research/Virgo/halpha-tables-20210311/halphagui-output-combined-2021-Mar-25.fits'
+            #infile = homedir+'/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
+            #infile = homedir+'/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
+            infile = homedir+'/research/Virgo/halpha-tables/halpha-05Jul2020.fits'
+            infile = homedir+'/research/Virgo/halpha-tables-20210311/halphagui-output-combined-2021-Mar-25.fits'
             # ids are v2 VFIDs
-            infile = '/home/rfinn/research/Virgo/halpha-tables/2023-July-11/halphagui-output-combined-2023-Jul-11.fits'
-            infile = '/home/rfinn/research/Virgo/halpha-tables/halphagui-output-combined-2023-Jul-13.fits'            
+            infile = homedir+'/research/Virgo/halpha-tables/2023-July-11/halphagui-output-combined-2023-Jul-11.fits'
+            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Jul-13.fits'            
 
         else:
             infile = halphafile
@@ -1191,11 +1191,11 @@ class catalog:
         ############################################################################
         if self.hav1flag:
             if halphafile is None:
-                #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
-                #infile = '/home/rfinn/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
-                infile = '/home/rfinn/research/Virgo/halpha-tables-v1/halpha-10Feb2021.fits'
-                infile = '/home/rfinn/research/Virgo/halpha-tables-v1/halpha-10Feb2021.fits'
-                infile = '/home/rfinn/research/Virgo/halpha-tables-v1/halpha-26Feb2021.fits'                
+                #infile = homedir+'/research/Virgo/Halpha/observing-summary-Halpha-latest.csv'
+                #infile = homedir+'/research/Virgo/Halpha/observing-summary-Halpha-clean-04Jun2020.csv'
+                infile = homedir+'/research/Virgo/halpha-tables-v1/halpha-10Feb2021.fits'
+                infile = homedir+'/research/Virgo/halpha-tables-v1/halpha-10Feb2021.fits'
+                infile = homedir+'/research/Virgo/halpha-tables-v1/halpha-26Feb2021.fits'                
 
             else:
                 infile = halphafile
@@ -1310,10 +1310,10 @@ class catalog:
         # write out north version of file
     def get_z0MGS_flag(self,mgsfile=None):
         # get z0MGS
-        #cat = Table.read('/home/rfinn/research/Virgo/tables/vf-z0MGS.tbl',format='ipac')
-        #cat = Table.read('/home/rfinn/research/Virgo/tables/vf_z0mgs_30arcsec_051920.tbl',format='ipac')
-        #cat = Table.read('/home/rfinn/research/Virgo/tables/vf_v1_z0mgs_30arcsec_102820.tbl',format='ipac')
-        #cat = Table.read('/home/rfinn/research/Virgo/tables/vf_v1_z0mgs_10arcsec_102920_9153gal.tbl',format='ipac')
+        #cat = Table.read(homedir+'/research/Virgo/tables/vf-z0MGS.tbl',format='ipac')
+        #cat = Table.read(homedir+'/research/Virgo/tables/vf_z0mgs_30arcsec_051920.tbl',format='ipac')
+        #cat = Table.read(homedir+'/research/Virgo/tables/vf_v1_z0mgs_30arcsec_102820.tbl',format='ipac')
+        #cat = Table.read(homedir+'/research/Virgo/tables/vf_v1_z0mgs_10arcsec_102920_9153gal.tbl',format='ipac')
         cat = Table.read(z0mgs_cat,format='ipac')
         print('number of lines in z0MGS cat = ',len(cat))
         print('length of keepnorth_flag = ',len(self.keepnorth_flag))
@@ -1338,7 +1338,7 @@ class catalog:
         cat.write(outdir+file_root+'z0mgs.fits',format='fits',overwrite=True)
     def get_steer17(self):
         # match to GL's steer catalog
-        steercat = '/home/rfinn/research/Virgo/ancil-tables/Steer2017_cat_Virgo_field_H0_74_0.fits'
+        steercat = homedir+'/research/Virgo/ancil-tables/Steer2017_cat_Virgo_field_H0_74_0.fits'
         self.steer = Table(fits.getdata(steercat))
         # GL suggests using
         # np.searchsorted(names1,names2)
@@ -1651,12 +1651,12 @@ class catalog:
     def get_JMphot_table(self):
         '''convert John's custom photometry file to line-matched version   '''
 
-        photfile = '/home/rfinn/research/Virgo/legacy-phot/virgofilaments-v2-legacyphot.fits'
+        photfile = homedir+'/research/Virgo/legacy-phot/virgofilaments-v2-legacyphot.fits'
 
         ##
         # 2023-07-10 : Updating to use John's catalog from 4/29/2023
         ## 
-        photfile = '/home/rfinn/research/Virgo/legacy-phot/virgofilaments-v3-legacyphot.fits'       
+        photfile = homedir+'/research/Virgo/legacy-phot/virgofilaments-v3-legacyphot.fits'       
         mef_table = fits.open(photfile)
         # changing to extension 2 for file that john sent on Aug 14, 2021
         #ephot = Table.read(photfile,1) # first hdu is the elliptical photometry
@@ -1680,13 +1680,13 @@ class catalog:
         phottable['photFlag'][ephot['VF_ID']] = np.ones(len(ephot),'bool')        
         phottable.add_column(self.cat['VFID'],index=0)
         
-        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
+        out_prefix = homedir+'/research/Virgo/tables-north/v2/vf_v2_'
         phottable.write(out_prefix+'legacy_ephot.fits',format='fits',overwrite=True)
         pass
     def convert_kourchi_v1_2_v2(self):
         # read in the v1 environment tables, remove bad sources, and save for v2
-        prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
-        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
+        prefix = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_'
+        out_prefix = homedir+'/research/Virgo/tables-north/v2/vf_v2_'
         
         alltables = ['main_Tempelgroups_infos.fits','matchTempel_groupinfo.fits']
 
@@ -1704,18 +1704,18 @@ class catalog:
         # BV Kourchi table
         # change name to include v2, and change last column from 0/1 to boolean
         # I downloaded the input table from google drive v2 table
-        infile = '/home/rfinn/research/Virgo/tables-north/BV-kourchi-tables/vf_kourkchi_galaxies.fits'
+        infile = homedir+'/research/Virgo/tables-north/BV-kourchi-tables/vf_kourkchi_galaxies.fits'
         ktab = Table.read(infile)
         # convert Kflag to boolean
         newflag = np.array(ktab['Kflag'],'bool')
         ktab.remove_column('Kflag')
         ktab.add_column(newflag,name='Kflag')
-        outfile = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_kourkchi_galaxies.fits'
+        outfile = homedir+'/research/Virgo/tables-north/v2/vf_v2_kourkchi_galaxies.fits'
         ktab.write(outfile,format='fits',overwrite=True)
     def convert_rphot_v1_2_v2(self):
         # read in the v1 environment tables, remove bad sources, and save for v2
-        prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
-        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
+        prefix = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_'
+        out_prefix = homedir+'/research/Virgo/tables-north/v2/vf_v2_'
         
         alltables = ['r_photometry.fits']
 
@@ -1732,8 +1732,8 @@ class catalog:
     def combine_env_v1_2_v2(self):
         # read in the v1 environment tables, remove bad sources, and save for v2
         # also need to pare down the columns
-        prefix = '/home/rfinn/research/Virgo/tables-north/v1/vf_north_v1_'
-        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'
+        prefix = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_'
+        out_prefix = homedir+'/research/Virgo/tables-north/v2/vf_v2_'
         
         alltables = ['main_env_prop_H0_74_0_Mr_max_-15_7.fits','main_finalenvironments.fits',
                      'main_filament_membership_allgalaxies.fits','main_cluster_membership.fits']
@@ -1823,7 +1823,7 @@ class catalog:
 
         ### NOTE: THESE TABLES ARE SAVED TO A SEPARATE DIRECTORY B/C
         ### THEY ARE NOT OF GENERAL INTEREST TO VF COLLABORATION
-        out_prefix = '/home/rfinn/research/Virgo/tables-north/v2/vf_v2_'        
+        out_prefix = homedir+'/research/Virgo/tables-north/v2/vf_v2_'        
         size = 2*np.ones(len(self.cat),'f')
         
         irsa_input = Table([self.cat['RA'],self.cat['DEC'],size],names=['RA','DEC','size'])
@@ -1921,8 +1921,8 @@ if __name__ == '__main__':
     ###################################################################
     masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_'+version+'.fits'
     masterfile = homedir+'/research/Virgo/supersample/vf_clean_sample_wNEDname_v1_evcc.fits'
-    z0mgs_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_v1_z0mgs_30arcsec_120220.tbl'
-    unwise_cat = '/home/rfinn/research/Virgo/ancil-tables/vf_north_v1_unwise_dl_30arcsec_20201205.fits'
+    z0mgs_cat = homedir+'/research/Virgo/ancil-tables/vf_v1_z0mgs_30arcsec_120220.tbl'
+    unwise_cat = homedir+'/research/Virgo/ancil-tables/vf_north_v1_unwise_dl_30arcsec_20201205.fits'
     ###################################################################
     #### SET UP TABLE DIRECTORIES
     ###################################################################
