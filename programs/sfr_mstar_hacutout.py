@@ -100,7 +100,10 @@ class vplots(vtables):
                 ylo = yedge[i]
                 yhi = yedge[i+1]
                 print(xlo,xhi,ylo,yhi)
-
+                if i == 0:
+                    plt.title(f"{0.5*(xlo+xhi):.1f}")
+                if j == 0:
+                    plt.ylabel(f"{0.5*(ylo+yhi):.1f}")                    
                 # select galaxies in dx and dy range
                 flag = (self.magphys['logMstar'] > xlo) & \
                   (self.magphys['logMstar'] < xhi) & \
