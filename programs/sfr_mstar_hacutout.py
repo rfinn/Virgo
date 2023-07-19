@@ -76,7 +76,7 @@ class vplots(vtables):
         # require SNR > 3
         self.hadetect = (self.halpha['HF_TOT']/self.halpha['HF_TOT_ERR']) > snr
         pass
-    def plot_sfr_mstar_hacutout(self,xmin=7,xmax=10,ymin=-3,ymax=0,nbins=10=2):
+    def plot_sfr_mstar_hacutout(self,xmin=7,xmax=10,ymin=-3,ymax=0,nbins=12):
         """plot halpha  cutouts   """
         
         
