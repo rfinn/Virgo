@@ -76,7 +76,7 @@ class vplots(vtables):
         # require SNR > 3
         self.hadetect = (self.halpha['HF_TOT']/self.halpha['HF_TOT_ERR']) > snr
         pass
-    def plot_sfr_mstar_hacutout(self,xmin=7,xmax=10,ymin=-3,ymax=0,nbins=10):
+    def plot_sfr_mstar_hacutout(self,xmin=7,xmax=10,ymin=-3,ymax=0,nbins=10=2):
         """plot halpha  cutouts   """
         
         
@@ -86,7 +86,7 @@ class vplots(vtables):
         dy = (ymax-ymin)/nbins
         yedge = np.linspace(ymin,ymax,nbins)
         # step over x
-        plt.figure(figsize=(12,10))
+        plt.figure(figsize=(12,8))
         nplot = 0
         for i in range(nbins-1):
             print('nplot = ',nplot)
