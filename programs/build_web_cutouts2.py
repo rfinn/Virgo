@@ -24,9 +24,9 @@ TO DO: (I think these are all fixed!)
 import os
 import numpy as np
 import glob
-from scipy.stats import scoreatpercentile
-from matplotlib import pyplot as plt
 
+from matplotlib import pyplot as plt
+from scipy.stats import scoreatpercentile
 from astropy.io import fits
 from astropy import wcs
 from astropy.coordinates import SkyCoord
