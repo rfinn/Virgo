@@ -111,7 +111,8 @@ class vplots(vtables):
                             plt.display_image(imdata,mask=maskname)
                             # remove ticks on axes
                             plt.xticks([],[])
-                            plt.yticks([],[])                            
+                            plt.yticks([],[])
+                            nplot += 1
                             break
                     # increment plot in the subplot
                     nplot += 1
