@@ -87,11 +87,13 @@ class vplots(vtables):
         yedge = np.linspace(ymin,ymax,nbins)
         # step over x
         plt.figure(figsize=(12,10))
-        nplot = 1
+        nplot = 0
         for i in range(nbins-1):
             print('nplot = ',nplot)
             # step over y
             for j in range(nbins-1):
+                nplot += 1
+                print(nbins,nbins,nplot)
                 plt.subplot(nbins,nbins,nplot)
                 xlo = xedge[j]
                 xhi = xedge[j+1]
@@ -136,14 +138,11 @@ class vplots(vtables):
                             # remove ticks on axes
                             plt.xticks([],[])
                             plt.yticks([],[])
-                            nplot += 1
                             break
                     # increment plot in the subplot
                     print("did not find an image")
-                    nplot += 1
                 else:
                     print("no galaxies in this bin")
-                    nplot += 1
 
         plt.savefig('sfr-mstar-hamorph.png')
         plt.savefig('sfr-mstar-hamorph.pdf')            
