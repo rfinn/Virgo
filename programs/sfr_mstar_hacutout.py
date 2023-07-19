@@ -34,7 +34,7 @@ H0 = 70.
 
 cutoutdir = '/data-pool/Halpha/halphagui-output-20230713/cutouts/'
 
-cutoutdir = os.path.join(homedir,'/research/Virgo/plots/')
+#cutoutdir = os.path.join(homedir,'/research/Virgo/plots/')
 
 def construct_dirname(prefix,tel,dateobs,pointing):
     return f"{prefix}-{tel}-{dateobs}-{pointing}"
