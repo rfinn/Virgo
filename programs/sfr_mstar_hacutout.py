@@ -116,6 +116,8 @@ class vplots(vtables):
                             break
                     # increment plot in the subplot
                     nplot += 1
+                else:
+                    nplot += 1
 
         plt.savefig('sfr-mstar-hamorph.png')
         plt.savefig('sfr-mstar-hamorph.pdf')            
