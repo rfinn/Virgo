@@ -84,7 +84,7 @@ class vplots(vtables):
         xedge = np.linspace(xmin,xmax,nbins)
 
         dy = (ymax-ymin)/nbins
-        yedge = np.linspace(ymin,ymax,nbins)
+        yedge = np.linspace(ymax,ymin,nbins)
         # step over x
         plt.figure(figsize=(12,8))
         nplot = 0
