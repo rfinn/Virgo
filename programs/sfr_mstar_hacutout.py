@@ -131,7 +131,8 @@ class vplots(vtables):
                             print()
                             imdata = fits.getdata(imname)
                             maskdata = fits.getdata(maskname)
-                            display_image(imdata,mask=maskname)
+                            maskdata = maskdata > 0
+                            display_image(imdata,mask=maskdata)
                             # remove ticks on axes
                             plt.xticks([],[])
                             plt.yticks([],[])
