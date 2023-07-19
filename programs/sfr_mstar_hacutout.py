@@ -76,7 +76,7 @@ class vplots(vtables):
         # require SNR > 3
         self.hadetect = (self.halpha['HF_TOT']/self.halpha['HF_TOT_ERR']) > snr
         pass
-    def plot_sfr_mstar_hacutout(self,xmin=7,xmax=10,ymin=-3,ymax=0,nbins=8):
+    def plot_sfr_mstar_hacutout(self,xmin=7,xmax=10,ymin=-3,ymax=0,nbins=10):
         """plot halpha  cutouts   """
         
         
@@ -105,7 +105,7 @@ class vplots(vtables):
                 flag = (self.magphys['logMstar'] > xlo) & \
                   (self.magphys['logMstar'] < xhi) & \
                   (self.magphys['logSFR'] > ylo) & \
-                  (self.magphys['logSFR'] > yhi)
+                  (self.magphys['logSFR'] < yhi)
                 # select halpha detections in this bin
                 flag = flag  & self.hadetect
                 if np.sum(flag) > 1:
