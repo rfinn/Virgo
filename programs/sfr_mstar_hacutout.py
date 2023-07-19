@@ -111,6 +111,8 @@ class vplots(vtables):
                         print(maskname)
                         # check if image exist
                         if os.path.exists(imname):
+                            print("FOUND AN IMAGE!!!!")
+                            print()
                             imdata = fits.getdata(imname)
                             maskdata = fits.getdata(maskname)
                             plt.display_image(imdata,mask=maskname)
