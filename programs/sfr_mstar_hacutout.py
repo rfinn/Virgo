@@ -105,6 +105,10 @@ class vplots(vtables):
                                             v.halpha['DATE-OBS'][k],\
                                             v.halpha['POINTING'][k])
                         maskname = imname.replace('-CS.fits','-R-mask.fits')
+                        imname = os.path.join(cutoutdir,imname)
+                        maskname = os.path.join(cutoutdir,maskname)                        
+                        print(imname)
+                        print(maskname)
                         # check if image exist
                         if os.path.exists(imname):
                             imdata = fits.getdata(imname)
