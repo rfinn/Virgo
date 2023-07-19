@@ -75,7 +75,7 @@ class vplots(vtables):
         for i in range(nbins-1):
             # step over y
             for j in range(nbins-1):
-                plt.subplots(nbins,nbins,nplot)
+                plt.subplot(nbins,nbins,nplot)
                 xlo = xedge[j]
                 xhi = xedge[j+1]
                 ylo = yedge[i]
