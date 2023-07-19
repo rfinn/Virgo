@@ -115,8 +115,8 @@ class vplots(vtables):
                     # increment plot in the subplot
                     nplot += 1
 
-        plt.savefig(plotdir+'/sfr-mstar-hamorph.png')
-        plt.savefig(plotdir+'/sfr-mstar-hamorph.pdf')            
+        plt.savefig('sfr-mstar-hamorph.png')
+        plt.savefig('sfr-mstar-hamorph.pdf')            
 
         
 
