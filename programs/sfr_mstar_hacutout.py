@@ -81,17 +81,17 @@ class vplots(vtables):
         
         
         dx = (xmax-xmin)/nbins
-        xedge = np.linspace(xmin,xmax,nbins)
+        xedge = np.linspace(xmin,xmax,nbins+1)
 
         dy = (ymax-ymin)/nbins
-        yedge = np.linspace(ymax,ymin,nbins)
+        yedge = np.linspace(ymax,ymin,nbins+1)
         # step over x
         plt.figure(figsize=(12,8))
         nplot = 0
-        for i in range(nbins-1):
+        for i in range(nbins):
             print('nplot = ',nplot)
             # step over y
-            for j in range(nbins-1):
+            for j in range(nbins):
                 nplot += 1
                 print(nbins,nbins,nplot)
                 plt.subplot(nbins,nbins,nplot)
