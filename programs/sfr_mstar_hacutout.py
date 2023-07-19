@@ -131,7 +131,8 @@ if __name__ == "__main__":
     if args.tabledir.startswith('/home/rfinn/'):
         homedir = os.getenv("HOME")
         args.tabledir = args.tabledir.replace('/home/rfinn',homedir)
-    v = vplots(args.tabledir,args.tableprefix) 
+    v = vplots(args.tabledir,args.tableprefix)
+    v.read_all()
     v.get_hadetect(snr=3)
     v.plot_sfr_mstar_hacutout()
     
