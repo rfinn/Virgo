@@ -81,6 +81,7 @@ class vplots(vtables):
                 xhi = xedge[j+1]
                 ylo = yedge[i]
                 yhi = yedge[i+1]
+                print(xlo,xhi,ylo,yhi)
 
                 # select galaxies in dx and dy range
                 flag = (self.magphys['logMstar'] > xlo) & \
