@@ -100,10 +100,10 @@ class vplots(vtables):
                     # once one image is found, break out of loop and
                     # move on to the next mstar-sfr bin
                     for k in vfindices:
-                        imname = get_imagenames(v.main['prefix'][vfindex],\
-                                            v.halpha['TEL'][vfindex],\
-                                            v.halpha['DATE-OBS'][vfindex],\
-                                            v.halpha['POINTING'][vfindex])
+                        imname = get_imagenames(v.main['prefix'][k],\
+                                            v.halpha['TEL'][k],\
+                                            v.halpha['DATE-OBS'][k],\
+                                            v.halpha['POINTING'][k])
                         maskname = imname.replace('-CS.fits','-R-mask.fits')
                         # check if image exist
                         if os.path.exists(imname):
