@@ -73,6 +73,7 @@ class vplots(vtables):
         plt.figure(figsize=(12,10))
         nplot = 1
         for i in range(nbins-1):
+            print('nplot = ',nplot)
             # step over y
             for j in range(nbins-1):
                 plt.subplot(nbins,nbins,nplot)
