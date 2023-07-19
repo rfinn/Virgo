@@ -41,7 +41,7 @@ def construct_dirname(prefix,tel,dateobs,pointing):
     pass
 def get_imagenames(prefix,tel,dateobs,pointing):
     """get CS halpha cutout name """
-    dirname = construct_dirname(vfid,prefix,tel,dateobs)
+    dirname = construct_dirname(prefix,tel,dateobs,pointing)
     cs_imname = os.path.join(dirname,dirname+'-CS.fits')
     
     return cs_imname
