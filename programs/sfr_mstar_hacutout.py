@@ -103,7 +103,7 @@ class vplots(vtables):
                         imname = get_imagenames(v.main['prefix'][k],\
                                             v.halpha['TEL'][k],\
                                             v.halpha['DATE-OBS'][k],\
-                                            v.halpha['POINTING'][k])
+                                            v.halpha['POINTING'][k].split('-')[-1])
                         maskname = imname.replace('-CS.fits','-R-mask.fits')
                         imname = os.path.join(cutoutdir,imname)
                         maskname = os.path.join(cutoutdir,maskname)                        
