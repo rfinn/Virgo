@@ -24,9 +24,9 @@ TO DO: (I think these are all fixed!)
 import os
 import numpy as np
 import glob
-from scipy.stats import scoreatpercentile
-from matplotlib import pyplot as plt
 
+from matplotlib import pyplot as plt
+from scipy.stats import scoreatpercentile
 from astropy.io import fits
 from astropy import wcs
 from astropy.coordinates import SkyCoord
@@ -124,8 +124,42 @@ def buildone(subdir,outdir,flist):
         #    print('WARNING: problem building webpage for ',subdir)
     
 
-def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=None,sigclip=True):
+def display_image(image,percentile1=.5,percentile2=99.5,stretch='asinh',mask=None,sigclip=True,zoom=None):
     lowrange=False
+
+      if zoom is not None:
+         print("who's zoomin' who?")
+         # display central region of image
+
+         # get image dimensions and center
+         xmax,ymax = image.shape
+         xcenter = int(xmax/2)
+         ycenter = int(ymax/2)
+
+         # calculate new size to display based on zoom factor
+         new_xradius = int(xmax/2/(float(zoom)))
+         new_yradius = int(ymax/2/(float(zoom)))
+
+         # calculate pixels to keep based on zoom factor
+         x1 = xcenter - new_xradius
+         x2 = xcenter + new_xradius
+         y1 = ycenter - new_yradius
+         y2 = ycenter + new_yradius
+         
+         # check to make sure limits are not outsize image dimensions
+         if (x1 < 1):
+            x1 = 1
+         if (y1 < 1):
+            y1 = 1
+         if (x2 > xmax):
+            x2 = xmax
+         if (y2 > ymax):
+            y2 = ymax
+
+         # cut images to new size
+         image = image[x1:x2,y1:y2]
+         if mask is not None:
+             mask = mask[x1:x2,y1:y2]
     # use inner 80% of image
     xdim,ydim = image.shape
     xmin = int(.1*xdim)
@@ -913,7 +947,7 @@ if __name__ == '__main__':
 
     # get tables, define as a global variable
     vfmain = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_main.fits')
-    vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_ha.fits')    
+    vfha = fits.getdata(homedir+'/research/Virgo/tables-north/v2/vf_v2_halpha.fits')    
 
     
     if args.cutoutdir is not None:

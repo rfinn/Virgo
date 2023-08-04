@@ -139,7 +139,7 @@ class vtables:
         ''' read in halpha observations table; store as self.halpha; table generated from web coadds is self.haobs  '''
 
 
-        self.ha = Table.read(self.tabledir+self.tableprefix+'halpha.fits')
+        self.halpha = Table.read(self.tabledir+self.tableprefix+'halpha.fits')
         # read in table that is created from making web pages for gui
         self.haobs = Table.read(self.tabledir+self.tableprefix+'halpha_obs.fits')
         pass
