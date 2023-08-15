@@ -1096,13 +1096,11 @@ class catalog:
             infile = homedir+'/research/Virgo/halpha-tables/halpha-05Jul2020.fits'
             infile = homedir+'/research/Virgo/halpha-tables-20210311/halphagui-output-combined-2021-Mar-25.fits'
             # ids are v2 VFIDs
-<<<<<<< HEAD
             infile = '/home/rfinn/research/Virgo/halpha-tables/2023-July-11/halphagui-output-combined-2023-Jul-11.fits'
             infile = '/home/rfinn/research/Virgo/halpha-tables/halphagui-output-combined-2023-Jul-13.fits'
-=======
             infile = homedir+'/research/Virgo/halpha-tables/2023-July-11/halphagui-output-combined-2023-Jul-11.fits'
-            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Jul-13.fits'            
->>>>>>> e35c0907d983c0d63db1a2de38981485228ca1a8
+            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Jul-13.fits'
+            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-15.fits'                        
 
         else:
             infile = halphafile
@@ -1952,4 +1950,4 @@ if __name__ == '__main__':
 
     print('outdir = ',outdir)
     c = catalog(masterfile,hav1=args.hav1,version=args.version)
-    #c.runall()
+    c.runall()
