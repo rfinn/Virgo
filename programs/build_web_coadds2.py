@@ -1323,8 +1323,8 @@ if __name__ == '__main__':
         b = glob.glob(coadd_dir+'VF*HDI*-r.fits')
         c = glob.glob(coadd_dir+'VF*HDI*-R.fits')
         d = glob.glob(coadd_dir+'VF*BOK*-r.fits')
-        d = glob.glob(coadd_dir+'VF*MOS*-R.fits')                 
-        rfiles = a + b + c + d
+        e = glob.glob(coadd_dir+'VF*MOS*-R.fits')                 
+        rfiles = a + b + c + d + e
 
         # changing this b/c I now store the halpha image name in the r-band header
         #halpha_names = ['ha4','Halpha','Ha6657','Ha4']        
