@@ -1341,6 +1341,7 @@ if __name__ == '__main__':
     # just use one image if the argument flag was set
 
     if args.oneimage is not None:
+        print("running one image ",args.oneimage)
         # make sure that the image exists
         if not os.path.exists(args.oneimage):
             print(f"Could not find {args.oneimage} - please check the r-band coadd name you provided")

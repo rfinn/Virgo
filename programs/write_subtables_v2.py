@@ -1100,22 +1100,40 @@ class catalog:
             infile = '/home/rfinn/research/Virgo/halpha-tables/halphagui-output-combined-2023-Jul-13.fits'
             infile = homedir+'/research/Virgo/halpha-tables/2023-July-11/halphagui-output-combined-2023-Jul-11.fits'
             infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Jul-13.fits'
-            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-15.fits'                        
+            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-19.fits'
+            # in the notebook duplicates, I select the best option of the duplicates
+            # and write out a file with no duplicates
+            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-27.noduplicates.fits'            
 
         else:
             infile = halphafile
         self.ha = Table.read(infile,format='fits')            
 
-
+        ##
+        # should add some code to clean the halpha table?
+        # like a cut on filter correction, or if M16 is zero?
+        # maybe not, just want to decide how to handle the duplicates
+        ##
         unique, counts = duplicates(self.ha,'VFID')
         print("Halpha sources that are listed multiple times in the halpha file:")
         print("\t1 observation : ",len(unique[(counts== 1)]))
         print("\t2 observations: ",len(unique[(counts>1) & (counts < 3)]))
         print("\t3 observations: ",len(unique[counts == 3]))        
 
-        ### REMOVE DUPLICATE ROWS FOR NOW
-        ### getting rid of second in each pair for now...
+        ##
+        # NEED TO REMOVE DUPLICATE ROWS
+        # could give preference to galaxies that have
+        # - more measurements reported: GALFIT, ELLIP, SMORPH
+        # - lower filter correction
+        # - better seeing
+        # - lower sky noise
+        # - better coverage on CCD (like not near edge) - but I don't really track this...
+        #   - maybe a square image vs rectangle?
+        ##
 
+        vfid_haduplicates = unique[counts > 1]
+
+        # need to 
         ### skipping this for now.  not sure if program will crash...
         #VFID = ['VFID2080','VFID2154','VFID2145','VFID2136','VFID2060',\
         #        'VFID2157','VFID2076','VFID2089','VFID2095','VFID2095','VFID2141']
@@ -1140,7 +1158,7 @@ class catalog:
                      'GAL_HSERSASYM_ERROR','GAL_HSERSASYM_CHISQ',\
                      'GAL_HSERSASYM_RA','GAL_HSERSASYM_DEC',\
                      'CONTSUB_FLAG','MERGER_FLAG','SCATLIGHT_FLAG',\
-                     'ASYMR_FLAG','ASYMHA_FLAG','OVERSTAR_FLAG','OVERGAL_FLAG',\
+                     'OVERSTAR_FLAG','OVERGAL_FLAG',\
                      'PARTIAL_FLAG','EDGEON_FLAG','NUC_HA']
 
         self.ha.remove_columns(dcolnames)
@@ -1161,6 +1179,12 @@ class catalog:
 
         self.hatable = QTable(np.zeros(len(self.basictable),dtype=self.ha.dtype))
 
+
+        ##
+        # Duplicates are removed in duplicates.ipynb
+        # TODO - this is probably not ideal - should convert notebook cells into script
+        ##
+
         ### ADD VFID FOR ALL
         self.hatable['VFID'] = self.basictable['VFID']
 
@@ -1169,17 +1193,34 @@ class catalog:
         self.hatable['RA'] = self.basictable['RA']
         #### ADD DEC FOR ALL
         self.hatable['DEC'] = self.basictable['DEC']
+
+        ##
+        # TODO - REMOVE ADDITIONAL COLUMNS THAT ARE DUPLICATED IN OTHER TABLES
+        ##
+        
+
+
+        
         self.hatable.add_column(Column(self.cat['VFID_V1'],name='VFID_V1'))
 
         ### ADD HALPHA SOURCES TO THEIR CORRESPONDING ROWS
 
+
+        ##
+        # why am I matching by RA and DEC, when both catalogs have the VFID?
+        ##
+
+        
         ## for halpha measurements that reference the input catalogs, match by RA and DEC
         ## this will make the matching independent of the version number of the VFID 
-        ha_in_coord = SkyCoord(self.ha['RA'],self.ha['DEC'],unit='deg',frame='icrs')
+        ha_input_coord = SkyCoord(self.ha['RA'],self.ha['DEC'],unit='deg',frame='icrs')
 
-
+        ##
+        # what happens with the duplicate observations here?
+        ##
+        
         # match steer to vf catalog
-        idx, d2d, d3d = self.catcoord.match_to_catalog_sky(ha_in_coord)
+        idx, d2d, d3d = self.catcoord.match_to_catalog_sky(ha_input_coord)
         # consider as matches any galaxies within 30 arcsec
         matchflag = d2d < 20./3600*u.deg
         print('number of Halpha matches = ',sum(matchflag))
@@ -1187,7 +1228,9 @@ class catalog:
         #print(matchflag)
         #print(idx)
         self.hatable[matchflag] = self.ha[idx[matchflag]]
-
+        dcolnames = ['RA','DEC','vr','NEDname','REDSHIFT','ZDIST'] 
+        self.hatable.remove_columns(dcolnames)
+        
         ############################################################################
         ### READ IN HALPHA ANALYSIS FILES THAT WERE CREATED BEFORE SWITCH TO V2
         ### match these by VFID
@@ -1242,6 +1285,21 @@ class catalog:
 
         use_old_ha_tables = False
         if use_old_ha_tables:
+            self.use_old_hafiles(True)
+        print('writing hafile')
+        #fits.writeto(outdir+file_root+'ha.fits',np.array(self.hatable),overwrite=True)
+        self.hatable.write(outdir+file_root+'halpha.fits',format='fits',overwrite=True)
+        print('finished writing hafile')
+        
+    def use_old_hafiles(self,use_old_ha_tables):
+        """
+        obsolete,this uses hand-kept lists that I created 
+        to keep track of what was observed while observations 
+        were still being carried out and before data were reduced.
+        keeping for posterity.
+        """
+
+        if use_old_ha_tables:
             htab = Table.read(homedir+'/github/Virgo/halpha/ha-observed-bok-21A.txt',format='ascii')
             for i,v in enumerate(htab['VFID']):
                 flag =(self.hatable['VFID_V1'] == v.rstrip())
@@ -1293,10 +1351,6 @@ class catalog:
             print('after matching to spring 2022, number of halpha obs = {}'.format(np.sum(self.hatable['HAobsflag'])))
 
         
-        print('writing hafile')
-        #fits.writeto(outdir+file_root+'ha.fits',np.array(self.hatable),overwrite=True)
-        self.hatable.write(outdir+file_root+'halpha.fits',format='fits',overwrite=True)
-        print('finished writing hafile')                
     def get_2massflag(self,twomassfile=None):
         if twomassfile is None:
             print('need to provide the twomass file name')
