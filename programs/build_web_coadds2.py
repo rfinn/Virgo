@@ -1358,8 +1358,11 @@ if __name__ == '__main__':
 
         except ValueError:
             print("Warning: Value Error")
+            print()
+            print("rfiles: ",rfiles)
             rfiles = [args.oneimage]
             indices = np.arange(len(rfiles))
+            coadd_index = 0
         buildone(rfiles,coadd_index,coadd_dir,psfdir,zpdir,fratiodir)
     else:
         indices = np.arange(len(rfiles))
