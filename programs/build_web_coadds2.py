@@ -1341,11 +1341,15 @@ if __name__ == '__main__':
     # just use one image if the argument flag was set
 
     if args.oneimage is not None:
+        print()
         print("running one image ",args.oneimage)
+        print()
+        
         # make sure that the image exists
         if not os.path.exists(args.oneimage):
             print(f"Could not find {args.oneimage} - please check the r-band coadd name you provided")
             sys.exit()
+            
         # find index in rfiles that corresponds to image
         try:
             coadd_index = rfiles.index(args.oneimage)
@@ -1353,6 +1357,7 @@ if __name__ == '__main__':
             print('when selecting one image, indices = ',indices,rfiles[indices[0]])
             buildone(rfiles,coadd_index,coadd_dir,psfdir,zpdir,fratiodir)
         except ValueError:
+            print("Warning: Value Error")
             rfiles = [args.oneimage]
             indices = np.arange(len(rfiles))
     else:
