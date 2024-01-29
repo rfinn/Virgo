@@ -185,6 +185,7 @@ class vtables:
 
         Nflag = (self.main['DEC'] >= 32.375)
         Sflag = (self.main['DEC'] < 32.375)
+        # combine results
         self.magphys[Nflag] = self.magphys_noz_lext[Nflag]
         pass
 
