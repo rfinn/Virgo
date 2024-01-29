@@ -34,10 +34,9 @@ class vtables:
         self.read_steer17()
         self.read_z0mgs()
         self.read_unwise()        
-        # these aren't updated for v2 yet
         self.read_env()
         self.read_filaments()
-        self.read_magphys()
+        #self.read_magphys()
         self.read_paper1()
         #except FileNotFoundError:
         #    print("WARNING: magphys file not found (this is probably ok)")
@@ -176,9 +175,17 @@ class vtables:
         #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
         #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
         #self.env = hstack([tab1,tab2,tab3])
-        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_10-Jul-2023.fits')
+        self.magphys_noext = Table.read(self.tabledir+self.tableprefix+'magphys_10-Jul-2023.fits')
         self.magphys_lext = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_11-Jul-2023.fits')
-        self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')                    
+        self.magphys_noz_lext = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_legacyExt_28-Jan-2024.fits')        
+        self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')
+
+        # construct a magphys table that uses z band in the south but not in the north
+        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_11-Jul-2023.fits')
+
+        Nflag = (self.main['DEC'] >= 32.375)
+        Sflag = (self.main['DEC'] < 32.375)
+        self.magphys[Nflag] = self.magphys_noz_lext[Nflag]
         pass
 
     def read_extinction(self):
