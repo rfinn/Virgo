@@ -326,6 +326,9 @@ class catalog:
         
         # convert John's legacy ellip phot to line-matched for v2
         self.get_JMphot_table()
+
+        # combine magphys tables, no zband N of 32 dec, zband in south
+        self.get_magphys()
         
         self.ned_table() # NED input, ra, dec, and NEDname
         self.print_stats()
@@ -343,7 +346,9 @@ class catalog:
         self.merge_legacy_phot_tables()
         self.make_legacy_viewer_table()
 
-        self.get_extinction()        
+        self.get_extinction()
+
+        # write the combined magphys table
         
     def print_stats(self):
         print('Number in sample = ',len(self.cat))
@@ -1713,7 +1718,10 @@ class catalog:
         ##
         # 2023-07-10 : Updating to use John's catalog from 4/29/2023
         ## 
-        photfile = homedir+'/research/Virgo/legacy-phot/virgofilaments-v3-legacyphot.fits'       
+        photfile = homedir+'/research/Virgo/legacy-phot/virgofilaments-v3-legacyphot.fits'
+
+        # updating Feb 2024 to use John's catalog after correcting for the phot bug
+        photfile = homedir+'/research/Virgo/legacy-phot/virgofilaments-v3b-legacyphot.fits'
         mef_table = fits.open(photfile)
         # changing to extension 2 for file that john sent on Aug 14, 2021
         #ephot = Table.read(photfile,1) # first hdu is the elliptical photometry
@@ -1740,6 +1748,29 @@ class catalog:
         out_prefix = homedir+'/research/Virgo/tables-north/v2/vf_v2_'
         phottable.write(out_prefix+'legacy_ephot.fits',format='fits',overwrite=True)
         pass
+
+    def get_magphys(self):
+        tabledir = homedir+'/research/Virgo/tables-north/v2/vf_v2_'
+        self.magphys_lext = Table.read(tabledir+'magphys_legacyExt_16-Feb-2024.fits')
+        self.magphys_noz_lext = Table.read(tabledir+'magphys_nozband_legacyExt_16-Feb-2024.fits')
+
+        
+        #self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')
+
+
+        outtab = tabledir+'magphys_legacyExt_final.fits'
+        self.magphys = Table.read(tabledir+'magphys_legacyExt_16-Feb-2024.fits')
+        Nflag = (self.maintable['DEC'] >= 32.375)
+        Sflag = (self.maintable['DEC'] < 32.375)
+
+        # combine results
+        self.magphys[Nflag] = self.magphys_noz_lext[Nflag]
+        
+        # write out this table as magphys_final.fits
+            
+        self.magphys.write(outtab,format='fits',overwrite=True)
+
+        
     def convert_kourchi_v1_2_v2(self):
         # read in the v1 environment tables, remove bad sources, and save for v2
         prefix = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_'

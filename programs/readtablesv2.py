@@ -170,24 +170,30 @@ class vtables:
 
         
     def read_magphys(self):
-        ''' read in magphys table; store as self.magphys  '''
+        """
+        self.magphys_lext = read in magphys table for legacy extinction with z-band
+        self.magphys_noz_lext = read in magphys table for legacy extinction, without z-band
+        self.magphys = no zband in the North, and zband in the South
+        """
         #tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0_Mr_max_-15_7.fits')
         #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
         #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
         #self.env = hstack([tab1,tab2,tab3])
-        self.magphys_noext = Table.read(self.tabledir+self.tableprefix+'magphys_10-Jul-2023.fits')
-        self.magphys_lext = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_11-Jul-2023.fits')
-        self.magphys_noz_lext = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_legacyExt_28-Jan-2024.fits')        
-        self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')
 
-        # construct a magphys table that uses z band in the south but not in the north
-        self.magphys = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_11-Jul-2023.fits')
+        # not keeping all of these variations - just the Legacy Extinction, with and w/out zband
+        #self.magphys_noext = Table.read(self.tabledir+self.tableprefix+'magphys_10-Jul-2023.fits')
 
-        Nflag = (self.main['DEC'] >= 32.375)
-        Sflag = (self.main['DEC'] < 32.375)
-        # combine results
-        self.magphys[Nflag] = self.magphys_noz_lext[Nflag]
-        pass
+
+        # these are using version V3b on John Moustakas's tables
+        self.magphys_lext = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_16-Feb-2024.fits')
+        self.magphys_noz_lext = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_legacyExt_16-Feb-2024.fits')
+
+        
+        #self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')
+
+
+        outtab = self.tabledir+self.tableprefix+'magphys_legacyExt_final.fits'
+        self.magphys = Table.read(outtab)
 
     def read_extinction(self):
         ''' read in extinction table '''
