@@ -1731,8 +1731,12 @@ class catalog:
         mef_table.close()
         
         # keep SGA_ID from parent table for now
-
         ephot.add_column(ephot1['SGA_ID'],index=0)
+        # keeping other columns associated with group
+        ephot.add_column(ephot1['GROUP_NAME'])
+        ephot.add_column(ephot1['GROUP_MULT'])
+        ephot.add_column(ephot1['GROUP_PRIMARY'])                
+
         ephot.add_column(np.zeros(len(ephot),'bool'),index=0,name='photFlag')
 
         # add tables about parent/group status from PARENT table
