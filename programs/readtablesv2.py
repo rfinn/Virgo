@@ -185,8 +185,8 @@ class vtables:
 
 
         # these are using version V3b on John Moustakas's tables
-        self.magphys_lext = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_16-Feb-2024.fits')
-        self.magphys_noz_lext = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_legacyExt_16-Feb-2024.fits')
+        self.magphys_lext = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_17-Feb-2024.fits')
+        self.magphys_noz_lext = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_legacyExt_17-Feb-2024.fits')
 
         
         #self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')

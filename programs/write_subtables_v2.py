@@ -1735,6 +1735,9 @@ class catalog:
         ephot.add_column(ephot1['SGA_ID'],index=0)
         ephot.add_column(np.zeros(len(ephot),'bool'),index=0,name='photFlag')
 
+        # add tables about parent/group status from PARENT table
+        
+
         # not keeping anything from tractor table
 
         ### MAKE A TABLE - ALL ZEROS, WITH DATA TYPE LIKE HALPHA TABLE
@@ -1751,15 +1754,15 @@ class catalog:
 
     def get_magphys(self):
         tabledir = homedir+'/research/Virgo/tables-north/v2/vf_v2_'
-        self.magphys_lext = Table.read(tabledir+'magphys_legacyExt_16-Feb-2024.fits')
-        self.magphys_noz_lext = Table.read(tabledir+'magphys_nozband_legacyExt_16-Feb-2024.fits')
+        self.magphys_lext = Table.read(tabledir+'magphys_legacyExt_17-Feb-2024.fits')
+        self.magphys_noz_lext = Table.read(tabledir+'magphys_nozband_legacyExt_17-Feb-2024.fits')
 
         
         #self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')
 
 
         outtab = tabledir+'magphys_legacyExt_final.fits'
-        self.magphys = Table.read(tabledir+'magphys_legacyExt_16-Feb-2024.fits')
+        self.magphys = Table.read(tabledir+'magphys_legacyExt_17-Feb-2024.fits')
         Nflag = (self.maintable['DEC'] >= 32.375)
         Sflag = (self.maintable['DEC'] < 32.375)
 
