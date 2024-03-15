@@ -125,14 +125,17 @@ class vtables:
     def read_galfit(self):
         ''' read in galfit tables of single-component Sersic fits; store as self.galfit_{} [g,r,z,W1,W2,W3,W4]'''
         
-        self.galfit_g = Table.read(self.tabledir+self.tableprefix+'galfit_g.fits')
-        self.galfit_r = Table.read(self.tabledir+self.tableprefix+'galfit_r.fits')
-        self.galfit_z = Table.read(self.tabledir+self.tableprefix+'galfit_z.fits')
+        self.galfitg = Table.read(self.tabledir+self.tableprefix+'galfit_g.fits')
+        self.galfitr = Table.read(self.tabledir+self.tableprefix+'galfit_r.fits')
+        self.galfitz = Table.read(self.tabledir+self.tableprefix+'galfit_z.fits')
 
-        self.galfit_W1 = Table.read(self.tabledir+self.tableprefix+'galfit_W1.fits')
-        self.galfit_W2 = Table.read(self.tabledir+self.tableprefix+'galfit_W2.fits')        
-        self.galfit_W3 = Table.read(self.tabledir+self.tableprefix+'galfit_W3.fits')
-        self.galfit_W4 = Table.read(self.tabledir+self.tableprefix+'galfit_W4.fits')        
+        self.galfitW1 = Table.read(self.tabledir+self.tableprefix+'galfit_W1.fits')
+        self.galfitW2 = Table.read(self.tabledir+self.tableprefix+'galfit_W2.fits')        
+        self.galfitW3 = Table.read(self.tabledir+self.tableprefix+'galfit_W3.fits')
+        self.galfitW4 = Table.read(self.tabledir+self.tableprefix+'galfit_W4.fits')
+
+        self.galfitW1fixBA = Table.read(self.tabledir+self.tableprefix+'galfit_W1-fixBA.fits')
+        self.galfitW3fixBA = Table.read(self.tabledir+self.tableprefix+'galfit_W3-fixBA.fits')                
 
     def read_halpha(self):
         ''' read in halpha observations table; store as self.halpha; table generated from web coadds is self.haobs  '''

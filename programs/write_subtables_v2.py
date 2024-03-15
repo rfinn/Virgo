@@ -1733,6 +1733,7 @@ class catalog:
         # keep SGA_ID from parent table for now
         ephot.add_column(ephot1['SGA_ID'],index=0)
         # keeping other columns associated with group
+        #ephot.add_column(ephot1['GALAXY']) # this is already in the ellipse table
         ephot.add_column(ephot1['GROUP_NAME'])
         ephot.add_column(ephot1['GROUP_MULT'])
         ephot.add_column(ephot1['GROUP_PRIMARY'])                
