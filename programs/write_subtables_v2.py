@@ -340,7 +340,7 @@ class catalog:
         self.update_spine_filenames_v1_2_v2()
 
         # fix table name and convert flag column from 0/1 to boolean
-        self.convert_kourchi_v1_2_v2()
+        self.convert_kourkchi_v1_2_v2()
         
         #self.convert_v1_2_v2()
         self.merge_legacy_phot_tables()
@@ -1108,8 +1108,13 @@ class catalog:
             infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-19.fits'
             # in the notebook duplicates, I select the best option of the duplicates
             # and write out a file with no duplicates
-            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-27.noduplicates.fits'            
-
+            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-27.noduplicates.fits'
+            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2024-Mar-17.fits'
+            # in the notebook duplicates, I select the best option of the duplicates
+            # and write out a file with no duplicates
+            
+            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-27.noduplicates.fits'
+            infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2024-Mar-22.noduplicates.fits'            
         else:
             infile = halphafile
         self.ha = Table.read(infile,format='fits')            
@@ -1759,15 +1764,18 @@ class catalog:
 
     def get_magphys(self):
         tabledir = homedir+'/research/Virgo/tables-north/v2/vf_v2_'
-        self.magphys_lext = Table.read(tabledir+'magphys_legacyExt_17-Feb-2024.fits')
-        self.magphys_noz_lext = Table.read(tabledir+'magphys_nozband_legacyExt_17-Feb-2024.fits')
+        #self.magphys_lext = Table.read(tabledir+'magphys_legacyExt_17-Feb-2024.fits')
+        #self.magphys_noz_lext = Table.read(tabledir+'magphys_nozband_legacyExt_17-Feb-2024.fits')
+        self.magphys_lext = Table.read(tabledir+'magphys_legacyExt_23-Mar-2024.fits')
+        self.magphys_noz_lext = Table.read(tabledir+'magphys_nozband_legacyExt_23-Mar-2024.fits')
 
         
         #self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')
 
 
-        outtab = tabledir+'magphys_legacyExt_final.fits'
-        self.magphys = Table.read(tabledir+'magphys_legacyExt_17-Feb-2024.fits')
+        outtab = tabledir+'magphys_legacyExt_mergedNS.fits'
+        #self.magphys = Table.read(tabledir+'magphys_legacyExt_17-Feb-2024.fits')
+        self.magphys = Table.read(tabledir+'magphys_legacyExt_23-Mar-2024.fits')        
         Nflag = (self.maintable['DEC'] >= 32.375)
         Sflag = (self.maintable['DEC'] < 32.375)
 
@@ -1779,7 +1787,7 @@ class catalog:
         self.magphys.write(outtab,format='fits',overwrite=True)
 
         
-    def convert_kourchi_v1_2_v2(self):
+    def convert_kourkchi_v1_2_v2(self):
         # read in the v1 environment tables, remove bad sources, and save for v2
         prefix = homedir+'/research/Virgo/tables-north/v1/vf_north_v1_'
         out_prefix = homedir+'/research/Virgo/tables-north/v2/vf_v2_'
@@ -1802,6 +1810,11 @@ class catalog:
         # I downloaded the input table from google drive v2 table
         infile = homedir+'/research/Virgo/tables-north/BV-kourchi-tables/vf_kourkchi_galaxies.fits'
         ktab = Table.read(infile)
+        # keep v2 members
+        ktab = ktab[self.v2keepflag]
+        ktab.remove_column('VFID')
+        # add v2 VFIDs in first columns
+        ktab.add_column(self.cat['VFID'],index=0)        
         # convert Kflag to boolean
         newflag = np.array(ktab['Kflag'],'bool')
         ktab.remove_column('Kflag')

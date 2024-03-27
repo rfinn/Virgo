@@ -16,7 +16,7 @@ from reproject import reproject_interp
 from astropy.io import fits
 from astropy.wcs import WCS
 
-from astropy.visualization import simple_norm
+from astropy.visualization import simple_norm,contourFlag=True,clevels=[3.55]
 from astropy import units as u
 from astropy.nddata.utils import Cutout2D
 

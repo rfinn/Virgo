@@ -35,6 +35,7 @@ class vtables:
         self.read_z0mgs()
         self.read_unwise()        
         self.read_env()
+        self.read_kourkchi()        
         self.read_filaments()
         #self.read_magphys()
         self.read_paper1()
@@ -44,7 +45,7 @@ class vtables:
             self.read_magphys()
         except FileNotFoundError:
             print("WARNING: magphys file not found (this is probably ok)")
-        #self.read_tempel()        
+        self.read_tempel()        
         #self.read_rphot()
         self.read_legacy()
         self.read_ephot()
@@ -85,6 +86,14 @@ class vtables:
         #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
         #self.env = hstack([tab1,tab2,tab3])
         self.env = Table.read(self.tabledir+self.tableprefix+'environment.fits')    
+        pass
+    def read_kourkchi(self):
+        ''' read in BV's match to Kourchi & Tully table; store as self.kt  '''
+        #tab1 = Table.read(self.tabledir+self.tableprefix+'main_env_prop_H0_74_0_Mr_max_-15_7.fits')
+        #tab2 = Table.read(self.tabledir+self.tableprefix+'main_envsummary.fits')
+        #tab3 = Table.read(self.tabledir+self.tableprefix+'main_environment.fits')        
+        #self.env = hstack([tab1,tab2,tab3])
+        self.kt = Table.read(self.tabledir+self.tableprefix+'kourkchi_galaxies.fits')    
         pass
     def read_filaments(self):
         ''' read in GC's filament_membership catalog  '''
@@ -147,9 +156,11 @@ class vtables:
         pass
     def read_tempel(self):
         ''' read in Tempel table; store as self.tempel  '''
-        tab1 = Table.read(self.tabledir+self.tableprefix+'main_Tempelgroups_infos.fits')
-        tab2 = Table.read(self.tabledir+self.tableprefix+'matchTempel_groupinfo.fits')
-        self.tempel = hstack([tab1,tab2])
+        #tab1 = Table.read(self.tabledir+self.tableprefix+'main_Tempelgroups_infos.fits')
+        #tab2 = Table.read(self.tabledir+self.tableprefix+'matchTempel_groupinfo.fits')
+        #self.tempel = hstack([tab1,tab2])
+
+        self.tempel = Table.read(self.tabledir+self.tableprefix+'matchTempel_groupinfo.fits')
         # should merge these, and maybe remove the columns from main
         
     def read_rphot(self):
@@ -188,14 +199,16 @@ class vtables:
 
 
         # these are using version V3b on John Moustakas's tables
-        self.magphys_lext = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_17-Feb-2024.fits')
-        self.magphys_noz_lext = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_legacyExt_17-Feb-2024.fits')
+        #self.magphys_lext = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_17-Feb-2024.fits')
+        #self.magphys_noz_lext = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_legacyExt_17-Feb-2024.fits')
+        self.magphys_lext = Table.read(self.tabledir+self.tableprefix+'magphys_legacyExt_23-Mar-2024.fits')
+        self.magphys_noz_lext = Table.read(self.tabledir+self.tableprefix+'magphys_nozband_legacyExt_23-Mar-2024.fits')
 
         
         #self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')
 
 
-        outtab = self.tabledir+self.tableprefix+'magphys_legacyExt_final.fits'
+        outtab = self.tabledir+self.tableprefix+'magphys_legacyExt_mergedNS.fits'
         self.magphys = Table.read(outtab)
 
     def read_extinction(self):
