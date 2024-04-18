@@ -1833,21 +1833,27 @@ class catalog:
         #ephot.add_column(ephot1['GALAXY']) # this is already in the ellipse table
         ephot.add_column(ephot1['GROUP_NAME'])
         ephot.add_column(ephot1['GROUP_MULT'])
-        ephot.add_column(ephot1['GROUP_PRIMARY'])                
+        ephot.add_column(ephot1['GROUP_PRIMARY'])
+
+        # adding information from Tractor catalog
         # https://www.legacysurvey.org/dr9/bitmasks/#maskbits
         ephot.add_column(ephot_tractor['MASKBITS'])
 
         # calculate flags to see if galaxy is saturated in g,r,z
+        # also track presence of nearby star
         # then add columns to ephot tables
-        
+
+        bitflag = [2,3,4,11]
+        flagname= ['GSATURATE','RSATURATE','ZSATURATE','NEARBYSTAR']
+        for i,b in enumerate(bitflag):
+            maskflag = (ephot_tractor['MASKBITS'] & 2**b) == 2**b
+            ephot.add_column(maskflag,name=flagname[i])
+
+
+        # set up flag to indicate presence of photometry
         ephot.add_column(np.zeros(len(ephot),'bool'),index=0,name='photFlag')
 
-
-        
-
-        # not keeping anything from tractor table
-
-        ### MAKE A TABLE - ALL ZEROS, WITH DATA TYPE LIKE HALPHA TABLE
+        ### MAKE A TABLE - ALL ZEROS, WITH DATA TYPE LIKE EPHOT TABLE
         ### AND LENGTH OF BASICTABLE
 
         phottable = QTable(np.empty(len(self.basictable),dtype=ephot.dtype))
