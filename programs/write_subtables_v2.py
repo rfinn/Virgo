@@ -1843,8 +1843,8 @@ class catalog:
         # also track presence of nearby star
         # then add columns to ephot tables
 
-        bitflag = [2,3,4,11]
-        flagname= ['GSATURATE','RSATURATE','ZSATURATE','NEARBYSTAR']
+        bitflag = [2,3,4,8,9,11]
+        flagname= ['GSATURATE','RSATURATE','ZSATURATE','WISEM1','WISEM2','NEARBYSTAR']
         for i,b in enumerate(bitflag):
             maskflag = (ephot_tractor['MASKBITS'] & 2**b) == 2**b
             ephot.add_column(maskflag,name=flagname[i])
