@@ -1875,16 +1875,22 @@ class catalog:
         ################################################################################
         # fixed error in gatherMagphys.py in how I was parsing the percentile lines 
         ################################################################################       
-        self.magphys_lext = Table.read(tabledir+'magphys_legacyExt_18-Apr-2024.fits')
-        self.magphys_noz_lext = Table.read(tabledir+'magphys_nozband_legacyExt_18-Apr-2024.fits')
+        self.magphys_lext = Table.read(tabledir+'magphys_legacyExt_25-Apr-2024.fits')
+        self.magphys_noz_lext = Table.read(tabledir+'magphys_nozband_legacyExt_25-Apr-2024.fits')
+
+        # testing to see if the number of weird galaxies changes
+        #self.magphys_lext = Table.read(tabledir+'magphys_legacyExt_18-Apr-2024.fits')
+        #self.magphys_noz_lext = Table.read(tabledir+'magphys_nozband_legacyExt_18-Apr-2024.fits')
 
         
         #self.magphys_sext = Table.read(self.tabledir+self.tableprefix+'magphys_salimExt_11-Jul-2023.fits')
 
 
         outtab = tabledir+'magphys_legacyExt_mergedNS.fits'
-        #self.magphys = Table.read(tabledir+'magphys_legacyExt_17-Feb-2024.fits')
-        self.magphys = Table.read(tabledir+'magphys_legacyExt_23-Mar-2024.fits')        
+        self.magphys = Table.read(tabledir+'magphys_legacyExt_17-Feb-2024.fits')
+        self.magphys = Table.read(tabledir+'magphys_legacyExt_23-Mar-2024.fits')
+        #self.magphys = Table.read(tabledir+'magphys_legacyExt_25-Apr-2024.fits')
+        #self.magphys = Table.read(tabledir+'magphys_legacyExt_18-Apr-2024.fits') 
         Nflag = (self.maintable['DEC'] >= 32.375)
         Sflag = (self.maintable['DEC'] < 32.375)
 
