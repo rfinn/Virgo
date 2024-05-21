@@ -8,7 +8,13 @@ import glob
 a = glob.glob('VF*INT*-r-shifted.fits')
 b = glob.glob('VF*HDI*-r.fits')
 c = glob.glob('VF*HDI*-R.fits')
-d = glob.glob('VF*BOK*-r.fits')
+
+#d = glob.glob('VF*BOK*-r.fits')
+#######################################################
+# updating to use the shifted r-band images
+#######################################################    
+d = glob.glob(args.coadd_dir+'VF*BOK*-r-shifted.fits')
+
 e = glob.glob('VF*MOS*-R.fits')         
 rfiles = a + b + c + d + e
 

@@ -1838,13 +1838,15 @@ class catalog:
         # adding information from Tractor catalog
         # https://www.legacysurvey.org/dr9/bitmasks/#maskbits
         ephot.add_column(ephot_tractor['MASKBITS'])
+        ephot.add_column(ephot_tractor['WISEMASK_W1'])
+        ephot.add_column(ephot_tractor['WISEMASK_W2'])        
 
         # calculate flags to see if galaxy is saturated in g,r,z
         # also track presence of nearby star
         # then add columns to ephot tables
 
-        bitflag = [2,3,4,8,9,11]
-        flagname= ['GSATURATE','RSATURATE','ZSATURATE','WISEM1','WISEM2','NEARBYSTAR']
+        bitflag = [2,3,4,8,9,11,1]
+        flagname= ['GSATURATE','RSATURATE','ZSATURATE','WISEM1','WISEM2','MEDIUMSTAR','BRIGHTSTAR']
         for i,b in enumerate(bitflag):
             maskflag = (ephot_tractor['MASKBITS'] & 2**b) == 2**b
             ephot.add_column(maskflag,name=flagname[i])
