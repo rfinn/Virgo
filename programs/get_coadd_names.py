@@ -13,7 +13,7 @@ c = glob.glob('VF*HDI*-R.fits')
 #######################################################
 # updating to use the shifted r-band images
 #######################################################    
-d = glob.glob(args.coadd_dir+'VF*BOK*-r-shifted.fits')
+d = glob.glob('VF*BOK*-r-shifted.fits')
 
 e = glob.glob('VF*MOS*-R.fits')         
 rfiles = a + b + c + d + e
