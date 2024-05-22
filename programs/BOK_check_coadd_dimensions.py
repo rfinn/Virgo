@@ -5,7 +5,7 @@ import glob
 
 
 rfiles = glob.glob("*r-shifted.fits")
-
+badfiles = open('redo_alignment_bok.txt','w')
 nbad=0
 for r in rfiles:
     rheader = fits.getheader(r)
@@ -28,14 +28,14 @@ for r in rfiles:
         nbad += 1
 
         # realign images
-        im1 = himage
-        im2 = r.replace("-shifted.fits",".fits")
-        weight2 = im2.replace(".fits",".weight.fits")
-        os.system(r"python ~/github/HalphaImaging/python3/INT_align_images.py --image1 {im1} --image2 {im2} --weight2 {weight2}"
+        # add halpha image name to file of images to realign
+        badfiles.write(f"{himage}\n")
 
-print
+badfiles.close()
 print(f"number of problems = {nbad} out of {len(rfiles)}")
 if nbad > 0:
     print(":(")
 else:
     print(":)")
+
+print("to fix the problems, type:\n\n parallel --eta python ~/github/HalphaImaging/python3/BOK_align_images_wrapper.py  :::: redo_alignment_bok.txt"
