@@ -27,6 +27,12 @@ for r in rfiles:
         print(f"\thalpha dimensions = {hnaxis1},{hnaxis2}")             
         nbad += 1
 
+        # realign images
+        im1 = himage
+        im2 = r.replace("-shifted.fits",".fits")
+        weight2 = im2.replace(".fits",".weight.fits")
+        os.system(r"python ~/github/HalphaImaging/python3/INT_align_images.py --image1 {im1} --image2 {im2} --weight2 {weight2}"
+
 print
 print(f"number of problems = {nbad} out of {len(rfiles)}")
 if nbad > 0:
