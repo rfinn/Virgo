@@ -1322,7 +1322,7 @@ if __name__ == '__main__':
         a = glob.glob(coadd_dir+'VF*INT*-r-shifted.fits')
         b = glob.glob(coadd_dir+'VF*HDI*-r.fits')
         c = glob.glob(coadd_dir+'VF*HDI*-R.fits')
-        d = glob.glob(coadd_dir+'VF*BOK*-r.fits')
+        d = glob.glob(coadd_dir+'VF*BOK*-r-shifted.fits')
         e = glob.glob(coadd_dir+'VF*MOS*-R.fits')                 
         rfiles = a + b + c + d + e
 
