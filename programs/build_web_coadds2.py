@@ -465,7 +465,7 @@ class coadd_image():
         imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','')
         print(self.zpdir,imagebase,"-getzp-xyresidual-fitted.png")
         test = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")
-        if not os.path.exists(zpsurf):
+        if not os.path.exists(test):
             imagebase = imagebase.replace("-shifted","")
         zpsurf = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")            
         self.zpplot_png = os.path.join(self.plotdir,imagebase+"-getzp-xyresidual-fitted.png")
