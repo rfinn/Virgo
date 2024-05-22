@@ -22,5 +22,5 @@ for r in rfiles:
         continue
     else:
         print("HOLD UP: ",r)
-        print(f"\tr-band dimensions = {rnaxis1},{rnaxis2}"
-        print(f"\thalpha dimensions = {hnaxis1},{hnaxis2}"              
+        print(f"\tr-band dimensions = {rnaxis1},{rnaxis2}")
+        print(f"\thalpha dimensions = {hnaxis1},{hnaxis2}")             
