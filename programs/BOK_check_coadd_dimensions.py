@@ -10,13 +10,13 @@ for r in rfiles:
     rheader = fits.getheader(r)
     rdata = fits.getdata(r)
     himage = rheader['HAIMAGE']
-    rnaxis1,rnaxis2 = rdata.shape()
+    rnaxis1,rnaxis2 = rdata.shape
 
 
     # get dimensions of halpha image
     hdata = fits.getdata(himage)
 
-    hnaxis1,hnaxis2 = hdata.shape()    
+    hnaxis1,hnaxis2 = hdata.shape    
 
     if (rnaxis1 == hnaxis1) & (rnaxis2 == hnaxis2):
         continue
