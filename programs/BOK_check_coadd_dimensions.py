@@ -6,6 +6,7 @@ import glob
 
 rfiles = glob.glob("*r-shifted.fits")
 
+nbad=0
 for r in rfiles:
     rheader = fits.getheader(r)
     rdata = fits.getdata(r)
@@ -24,3 +25,11 @@ for r in rfiles:
         print("HOLD UP: ",r)
         print(f"\tr-band dimensions = {rnaxis1},{rnaxis2}")
         print(f"\thalpha dimensions = {hnaxis1},{hnaxis2}")             
+        nbad += 1
+
+print
+print("number of problems = ",nbad)
+if nbad > 0:
+    print(":(")
+else:
+    print(":)"
