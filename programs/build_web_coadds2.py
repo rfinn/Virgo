@@ -464,7 +464,10 @@ class coadd_image():
         ''' get the zp image, first pass'''
         imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','')
         print(self.zpdir,imagebase,"-getzp-xyresidual-fitted.png")
-        zpsurf = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")
+        test = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")
+        if not os.path.exists(zpsurf):
+            imagebase = imagebase.replace("-shifted","")
+        zpsurf = os.path.join(self.zpdir,imagebase+"-getzp-xyresidual-fitted.png")            
         self.zpplot_png = os.path.join(self.plotdir,imagebase+"-getzp-xyresidual-fitted.png")
         os.system('cp '+zpsurf+' '+self.zpplot_png)
 
@@ -540,6 +543,9 @@ class coadd_image():
 
         # flux comp
         fluxcomp = os.path.join(self.zpdir,imagebase+"-se-pan-flux.png")
+        if not os.path.exists(fluxcomp):
+            imagebase = imagebase.replace("-shifted","")
+            fluxcomp = os.path.join(self.zpdir,imagebase+"-se-pan-flux.png")
         self.pancomp_png = os.path.join(self.plotdir,imagebase+"-se-pan-flux.png")
         os.system('cp '+fluxcomp+' '+self.pancomp_png)
         
@@ -551,8 +557,12 @@ class coadd_image():
         #print('imagename = ',self.imagename)
         try:
             imagebase = os.path.basename(self.imagename).replace('-noback-coadd.fits','').replace('.fits','-fits')
+            
             #print('imagebase = ',imagebase)        
             pancomp = glob.glob(self.zpdir+'/'+'f'+imagebase+"*se-pan-flux.png")[0]
+            if len(pancomp) < 1:
+                imagebase = imagebase.replace("-shifted","")
+                pancomp = glob.glob(self.zpdir+'/'+'f'+imagebase+"*se-pan-flux.png")[0]
             self.pancomp2_png = self.plotdir+'/'+'f'+imagebase+"-se-pan-flux.png"
             #print('pancomp_png = ',self.pancomp_png)
             os.system('cp '+pancomp+' '+self.pancomp2_png)
