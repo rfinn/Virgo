@@ -113,7 +113,7 @@ def buildone(rimages,i,coadd_dir,psfdir,zpdir,fratiodir):
             print("couldn't find the halpha image ",haimage, rimage)                
             return
 
-
+        print("\nhaimage = ",haimage)
 
         csimage = haimage.replace('.fits','-CS.fits')
         if not os.path.exists(csimage):
@@ -685,10 +685,12 @@ class pointing():
         self.rpsf_image = self.psfdir+'/'+os.path.basename(self.rimage).replace('-shifted','').split('.fits')[0]+'-psf.fits'
         if os.path.exists(self.rpsf_image):
             self.rpsf_flag=True
+            print("found r-band psf image: ",self.rpsf_image)
         else:
             self.rpsf_image = self.psfdir+'/'+os.path.basename(self.rimage).split('.fits')[0]+'-psf.fits'
             if os.path.exists(self.rpsf_image):
                 self.rpsf_flag=True
+                print("found r-band psf image: ",self.rpsf_image)
             else:
                 self.rpsf_flag=False
                 print('could not find r psf image: ',self.rpsf_image)
