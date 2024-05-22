@@ -38,4 +38,4 @@ if nbad > 0:
 else:
     print(":)")
 
-print("to fix the problems, type:\n\n parallel --eta python ~/github/HalphaImaging/python3/BOK_align_images_wrapper.py  :::: redo_alignment_bok.txt"
+print("to fix the problems, type:\n\n parallel --eta python ~/github/HalphaImaging/python3/BOK_align_images_wrapper.py  :::: redo_alignment_bok.txt")
