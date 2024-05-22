@@ -28,7 +28,7 @@ for r in rfiles:
         nbad += 1
 
 print
-print("number of problems = ",nbad)
+print(f"number of problems = {nbad} out of {len(rfiles)}")
 if nbad > 0:
     print(":(")
 else:
