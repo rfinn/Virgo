@@ -772,14 +772,14 @@ class pointing():
         
         # loop over galaxies in FOV
         gindex=np.arange(len(self.r.galfov_imx))
-        galnames = Table(self.r.cat)['prefix'][self.cs.keepflag]
-        galra = Table(self.r.cat)['RA'][self.cs.keepflag]
-        galdec = Table(self.r.cat)['DEC'][self.cs.keepflag]        
+        galnames = Table(self.r.cat)['prefix'][self.r.keepflag]
+        galra = Table(self.r.cat)['RA'][self.r.keepflag]
+        galdec = Table(self.r.cat)['DEC'][self.r.keepflag]        
 
         ##
         # set size to 2.5 time size in coadd images
         ##
-        galsizes = Table(self.r.cat)['radius'][self.cs.keepflag]*2
+        galsizes = Table(self.r.cat)['radius'][self.r.keepflag]*2
         
         #galsizes = size#self.rcat['radius']/.4*2
         if 'INT' in self.rimage:
@@ -822,7 +822,7 @@ class pointing():
         figsize = (12,3*np.sum(self.cs.keepflag))            
         plt.figure(figsize=figsize)
         plt.subplots_adjust(top=.95,right=.95,left=.05,bottom=.05)        
-        for j in range(len(galra)):
+        for j in range(len(self.r.galfov_imx)):
             #print(sizes[j][0])
             try:
                 imsize = galsizes[j]/pixscale*2.
