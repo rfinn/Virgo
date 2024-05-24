@@ -337,17 +337,11 @@ class coadd_image():
         except KeyError:
             try:
                 # look at the unshifted image - because I made a boo boo
-                imdata,imheader = fits.getdata(self.imagename.replace('-shifted','').replace('VF','/INT-unshifted/VF'),header=True)            
-                self.sefwhm_arcsec = imheader['SEFWHM']
+                timdata,timheader = fits.getdata(self.imagename.replace('-shifted','').replace('VF','/INT-unshifted/VF'),header=True)            
+                self.sefwhm_arcsec = timheader['SEFWHM']
                 self.imheader.set('SEFWHM',self.sefwhm_arcsec)
             except KeyError:
-                try:
-                    # look at the unshifted image - because I made a boo boo
-                    imdata,imheader = fits.getdata(self.imagename,header=True)            
-                    self.sefwhm_arcsec = imheader['SEFWHM']
-                    self.imheader.set('SEFWHM',self.sefwhm_arcsec)
-                except KeyError:
-                    self.sefwhm_arcsec = None
+                self.sefwhm_arcsec = None
         try:
             t = self.imheader['DATE-OBS']
             t = Time(t,format='isot')
