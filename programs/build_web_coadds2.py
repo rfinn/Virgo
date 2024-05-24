@@ -342,6 +342,8 @@ class coadd_image():
                 self.imheader.set('SEFWHM',self.sefwhm_arcsec)
             except KeyError:
                 self.sefwhm_arcsec = None
+            except FileNotFoundError:
+                self.sefwhm_arcsec = None                
         try:
             t = self.imheader['DATE-OBS']
             t = Time(t,format='isot')
