@@ -337,7 +337,7 @@ class coadd_image():
         except KeyError:
             try:
                 # look at the unshifted image - because I made a boo boo
-                imdata,imheader = fits.getdata(self.imagename.replace('-shifted','').replace('VF','INT-shifted/'),header=True)            
+                imdata,imheader = fits.getdata(self.imagename.replace('-shifted','').replace('VF','INT-shifted/VF'),header=True)            
                 self.sefwhm_arcsec = imheader['SEFWHM']
                 self.imheader.set('SEFWHM',self.sefwhm_arcsec)
             except KeyError:
