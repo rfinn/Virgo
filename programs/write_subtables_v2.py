@@ -1196,7 +1196,7 @@ class catalog:
             # and write out a file with no duplicates
             infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-27.noduplicates.fits'
             infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2024-Mar-17.fits'
-            # in the notebook duplicates, I select the best option of the duplicates
+            # in the notebook duplicates-dev, I select the best option of the duplicates
             # and write out a file with no duplicates
             
             infile = homedir+'/research/Virgo/halpha-tables/halphagui-output-combined-2023-Aug-27.noduplicates.fits'
