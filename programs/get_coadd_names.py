@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 """
 run from directory that contains the coadds
+
+this will create the list of coadded images that I can then use 
+as input for other files
+
+
 """
 import glob
 import argparse
 
 # get list of r-band coadded images
-parser = argparse.ArgumentParser(description ='run the halpha gui in automatic mode.  Run this from the directory where you want the output data stored.  For example: /home/rfinn/research/Virgo/gui-output-NGC5846/')
+parser = argparse.ArgumentParser(description ='Get the list of coadded images.')
 parser.add_argument('--bokonly',dest = 'bokonly', default = False, action='store_true', help = 'set this to create file with bok filenames only.  needed this for rerunning gui after alignment.')
 args = parser.parse_args()
 
