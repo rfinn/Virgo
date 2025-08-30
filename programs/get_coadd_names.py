@@ -56,3 +56,4 @@ for i in range(len(rfiles)):
 outfile.close()
 outfile2.close()
 outfile3.close()
+outfile4.close()
