@@ -17,7 +17,9 @@ args = parser.parse_args()
 
 
 
-a = glob.glob('VF*INT*-r-shifted.fits')
+#a = glob.glob('VF*INT*-r-shifted.fits')
+# updating for 2025/2026 build of coadds
+a = glob.glob('VF*INT*-r.fits')
 b = glob.glob('VF*HDI*-r.fits')
 c = glob.glob('VF*HDI*-R.fits')
 
@@ -25,7 +27,8 @@ c = glob.glob('VF*HDI*-R.fits')
 #######################################################
 # updating to use the shifted r-band images
 #######################################################    
-d = glob.glob('VF*BOK*-r-shifted.fits')
+#d = glob.glob('VF*BOK*-r-shifted.fits')
+d = glob.glob('VF*BOK*-r.fits')
 
 e = glob.glob('VF*MOS*-R.fits')         
 rfiles = a + b + c + d + e
