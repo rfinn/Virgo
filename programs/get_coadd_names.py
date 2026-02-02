@@ -49,6 +49,7 @@ if args.bokonly:
     outfile3 = open('virgo-bok-coadds-fullpath-test.txt','w')
     outfile4 = open('virgo-bok-coadds-test.csv','w')    
 coadd_dir = '/data-pool/Halpha/coadds/all-virgo-coadds'
+coadd_dir = '/data-pool/Halpha/coadds-2025DEC'
 for i in range(len(rfiles)):
     #basname = rfiles[i].replace("-r-shifted.fits","").replace("-r.fits","").replace("-R.fits","")
     outfile.write(f"{rfiles[i]}\n")
